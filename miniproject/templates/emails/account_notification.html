@@ -1,0 +1,21 @@
+{% extends "emails/base_email.html" %}
+
+{% block email_title %}{{ subject|default:"ReuseHub Notification" }}{% endblock %}
+
+{% block email_content %}
+  <h2 class="greeting">{{ headline|default:"Account Notification" }}</h2>
+
+  <p class="lead-text">
+    Hello <strong>{{ user.username }}</strong>,
+  </p>
+
+  <div style="background-color: #f8fafc; border-left: 4px solid #10b981; border-radius: 6px; padding: 18px; margin: 20px 0; font-size: 15px; color: #1e293b; line-height: 1.6;">
+    {{ message_body|linebreaks }}
+  </div>
+
+  {% if action_url %}
+    <div style="text-align: center; margin: 26px 0;">
+      <a href="{{ action_url }}" class="btn-primary">{{ action_text|default:"Go to Dashboard" }}</a>
+    </div>
+  {% endif %}
+{% endblock %}

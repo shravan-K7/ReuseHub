@@ -1,0 +1,560 @@
+/* ==============================================================================
+   ReuseHub - Streamlined About Page Stylesheet (about.css)
+   Target: app/about.html
+   Structure:
+     1. Hero with simplified text & hero banner image
+     2. What is ReuseHub? spotlight
+     3. Why ReuseHub? problem / approach & visual flow
+     4. Our Mission statement
+     5. Our Core Values grid
+     6. The Reuse Impact (live database statistics)
+     7. How ReuseHub Creates Impact (Give -> Discover -> Connect -> Reuse)
+     8. Call to Action
+   ============================================================================== */
+
+/* Section Utility */
+.about-section {
+  padding: 56px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.about-section-header {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 36px;
+}
+
+.about-pill-label {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--primary);
+  background-color: var(--primary-light);
+  border: 1px solid rgba(30, 58, 43, 0.16);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  margin-bottom: 12px;
+}
+
+.about-heading {
+  font-size: 2.1rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-main);
+  line-height: 1.2;
+}
+
+/* ------------------------------------------------------------------------------
+   1. HERO SECTION & HERO BANNER
+   ------------------------------------------------------------------------------ */
+
+.about-hero {
+  padding: 52px 0 44px;
+  background: linear-gradient(180deg, rgba(235, 243, 238, 0.6) 0%, rgba(250, 249, 246, 0.9) 70%, var(--bg-page) 100%);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.about-hero-header {
+  text-align: center;
+  max-width: 780px;
+  margin: 0 auto 32px;
+}
+
+.about-hero-title {
+  font-size: clamp(2.1rem, 4vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  color: var(--text-main);
+  line-height: 1.15;
+  margin-bottom: 14px;
+}
+
+.about-hero-title .text-highlight {
+  color: var(--primary);
+}
+
+.about-hero-desc {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 660px;
+  margin: 0 auto;
+}
+
+.about-hero-banner-wrap {
+  max-width: 1040px;
+  margin: 0 auto;
+  border-radius: var(--radius-xl);
+  padding: 8px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(235, 243, 238, 0.7) 100%);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 16px 36px -10px rgba(30, 58, 43, 0.12),
+              0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.about-hero-banner-inner {
+  border-radius: calc(var(--radius-xl) - 4px);
+  overflow: hidden;
+  background-color: #f7f6f0;
+}
+
+.about-hero-banner-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  aspect-ratio: 1024 / 436;
+}
+
+/* ------------------------------------------------------------------------------
+   2. WHAT IS REUSEHUB?
+   ------------------------------------------------------------------------------ */
+
+.about-what-section {
+  background-color: var(--bg-surface);
+}
+
+.about-card-spotlight {
+  max-width: 820px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 36px 32px;
+  background-color: var(--bg-page);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
+}
+
+.about-text-lead {
+  font-size: 1.12rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 14px 0 0;
+}
+
+/* ------------------------------------------------------------------------------
+   3. WHY REUSEHUB? (PROBLEM, APPROACH, VISUAL FLOW)
+   ------------------------------------------------------------------------------ */
+
+.about-why-section {
+  background-color: var(--bg-page);
+}
+
+.why-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 900px;
+  margin: 0 auto 36px;
+}
+
+.why-card {
+  padding: 28px 24px;
+  border-radius: var(--radius-lg);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-xs);
+}
+
+.why-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  margin-bottom: 12px;
+}
+
+.problem-badge {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fee2e2;
+}
+
+.approach-badge {
+  background-color: #ecfdf5;
+  color: #047857;
+  border: 1px solid #d1fae5;
+}
+
+.why-card h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 8px;
+}
+
+.why-card p {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Visual Flow Container */
+.why-flow-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px 24px;
+  background-color: var(--bg-surface);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-xl);
+}
+
+.flow-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background-color: var(--bg-page);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.flow-step.highlight-step {
+  background-color: var(--primary-light);
+  border-color: rgba(30, 58, 43, 0.25);
+  color: var(--primary);
+}
+
+.flow-step.success-step {
+  background-color: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+.flow-icon {
+  font-size: 1.1rem;
+}
+
+.flow-arrow {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------------------------------
+   4. OUR MISSION
+   ------------------------------------------------------------------------------ */
+
+.about-mission-section {
+  background-color: var(--bg-surface);
+}
+
+.mission-card {
+  max-width: 820px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 40px 36px;
+  background: linear-gradient(135deg, rgba(235, 243, 238, 0.8) 0%, rgba(250, 249, 246, 0.9) 100%);
+  border: 1px solid rgba(30, 58, 43, 0.15);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
+}
+
+.mission-heading {
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  margin-bottom: 14px;
+}
+
+.mission-statement {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--primary);
+  line-height: 1.5;
+  font-style: italic;
+  max-width: 660px;
+  margin: 0 auto;
+}
+
+/* ------------------------------------------------------------------------------
+   5. OUR CORE VALUES
+   ------------------------------------------------------------------------------ */
+
+.about-values-section {
+  background-color: var(--bg-page);
+}
+
+.values-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.value-item-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 26px 20px;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.value-item-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.value-icon-box {
+  font-size: 1.8rem;
+  margin-bottom: 12px;
+}
+
+.value-item-card h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.value-item-card p {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------------------
+   6. THE REUSE IMPACT (LIVE DATABASE STATISTICS)
+   ------------------------------------------------------------------------------ */
+
+.about-impact-section {
+  background-color: var(--bg-surface);
+}
+
+.impact-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.impact-stat-card {
+  background-color: var(--bg-page);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 24px 20px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.impact-stat-card:hover {
+  border-color: var(--border-color);
+  box-shadow: var(--shadow-xs);
+}
+
+.impact-stat-number {
+  font-size: 2.3rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--primary);
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+
+.impact-stat-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.impact-stat-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ------------------------------------------------------------------------------
+   7. HOW REUSEHUB CREATES IMPACT (CYCLE FLOW)
+   ------------------------------------------------------------------------------ */
+
+.about-how-impact-section {
+  background-color: var(--bg-page);
+}
+
+.impact-cycle-grid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.cycle-node {
+  flex: 1;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 24px 18px;
+  text-align: center;
+  position: relative;
+  box-shadow: var(--shadow-xs);
+}
+
+.cycle-num {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background-color: var(--bg-subtle);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cycle-node-icon {
+  font-size: 1.7rem;
+  margin-bottom: 10px;
+}
+
+.cycle-node h4 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.cycle-node p {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.cycle-connector {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ------------------------------------------------------------------------------
+   8. CALL TO ACTION
+   ------------------------------------------------------------------------------ */
+
+.about-cta-section {
+  padding: 64px 0;
+  background-color: var(--bg-surface);
+  border-bottom: none;
+}
+
+.about-cta-box {
+  background: linear-gradient(135deg, rgba(235, 243, 238, 0.95) 0%, rgba(243, 242, 238, 0.95) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 48px 32px;
+  text-align: center;
+  max-width: 820px;
+  margin: 0 auto;
+  box-shadow: var(--shadow-xs);
+}
+
+.cta-heading {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-main);
+  margin-bottom: 10px;
+}
+
+.cta-sub {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  margin-bottom: 26px;
+}
+
+.cta-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.btn-lg {
+  padding: 12px 26px;
+  font-size: 0.96rem;
+}
+
+/* ------------------------------------------------------------------------------
+   RESPONSIVE BREAKPOINTS
+   ------------------------------------------------------------------------------ */
+
+@media (max-width: 900px) {
+  .values-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .impact-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .impact-cycle-grid {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .cycle-node {
+    width: 100%;
+  }
+
+  .cycle-connector {
+    transform: rotate(90deg);
+    margin: 4px 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .why-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .why-flow-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .flow-arrow {
+    justify-content: center;
+    transform: rotate(90deg);
+  }
+
+  .values-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .impact-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cta-heading {
+    font-size: 1.6rem;
+  }
+}

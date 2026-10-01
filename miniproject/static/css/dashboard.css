@@ -1,0 +1,170 @@
+/* ==============================================================================
+   ReuseHub - Admin Dashboard Stylesheet (dashboard.css)
+   Target: admin/dashboard.html
+   Aesthetic: Operational command center with KPI cards & active queues
+   ============================================================================== */
+
+.admin-dashboard-container {
+  padding-top: 32px;
+  padding-bottom: 72px;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.admin-title {
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.admin-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+/* Admin Sub Navigation */
+.admin-nav {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 28px;
+  overflow-x: auto;
+  padding-bottom: 1px;
+}
+
+.admin-nav-item {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.admin-nav-item:hover {
+  color: var(--text-main);
+}
+
+.admin-nav-item.active {
+  color: var(--text-main);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+/* KPI Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
+}
+
+.stat-label {
+  font-size: 0.725rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 1.85rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.stat-val-success {
+  color: #34d399;
+}
+
+.stat-val-info {
+  color: #38bdf8;
+}
+
+.stat-val-danger {
+  color: #f87171;
+}
+
+.stat-card-alert {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.06);
+}
+
+/* Dashboard Two-Column Grid */
+.dashboard-columns-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 24px;
+}
+
+.recent-listing-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  transition: border-color 0.15s ease;
+}
+
+.recent-listing-row:hover {
+  border-color: var(--border-strong);
+}
+
+.report-queue-box {
+  padding: 14px 16px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: var(--radius-md);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.report-queue-box:hover {
+  box-shadow: var(--shadow-sm);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.report-queue-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fbbf24;
+}
+
+@media (max-width: 900px) {
+  .dashboard-columns-grid {
+    grid-template-columns: 1fr;
+  }
+}

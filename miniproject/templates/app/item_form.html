@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} — ReuseHub{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/item_form.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container item-form-container">
+  <div class="item-form-header">
+    <a href="{% url 'home' %}" class="btn btn-ghost btn-sm" style="padding-left: 0;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      Cancel & Return
+    </a>
+    <h1 class="item-form-title">{{ title }}</h1>
+    <p class="item-form-subtitle">
+      Pass on your pre-loved belongings to neighbours. Everything on ReuseHub is 100% free.
+    </p>
+  </div>
+
+  <div class="action-card item-form-card">
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="cover_choice" id="coverChoiceInput" value="{{ current_cover_choice|default:'new:0' }}">
+
+      <div class="form-group">
+        <label class="form-label" for="{{ form.title.id_for_label }}">Item Title *</label>
+        {{ form.title }}
+        {% if form.title.errors %}<div class="form-help" style="color: #b91c1c;">{{ form.title.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="form-group">
+          <label class="form-label" for="{{ form.category.id_for_label }}">Category</label>
+          {{ form.category }}
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="{{ form.condition.id_for_label }}">Condition</label>
+          {{ form.condition }}
+        </div>
+      </div>
+
+      <!-- Repairable Option Box -->
+      <div style="background-color: var(--bg-subtle); border: 1px dashed var(--border-strong); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
+        <label class="form-checkbox-label">
+          {{ form.is_repairable }}
+          <span>This item needs repair or can be upcycled/restored</span>
+        </label>
+        <p class="form-help" style="margin-left: 24px; margin-bottom: 12px;">
+          Flagging repairable goods helps encourage DIY restoration and keeps broken yet fixable goods out of landfill.
+        </p>
+
+        <div id="repair-details-group" class="form-group" style="margin-left: 24px; margin-bottom: 0;">
+          <label class="form-label" for="{{ form.repair_details.id_for_label }}">Repair Notes / What needs fixing?</label>
+          {{ form.repair_details }}
+          <div class="form-help">e.g. Needs new plug fuse, leg is loose, zipper stuck, screen functional but needs power adapter.</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
+          <label class="form-label" for="{{ form.pickup_location.id_for_label }}" style="margin-bottom: 0;">Pickup Location / Area *</label>
+          <button type="button" id="btnLocateMe" class="btn btn-secondary btn-sm location-locate-btn" title="Auto-detect current GPS location">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+            Use My Current Location
+          </button>
+        </div>
+
+        <!-- Nominatim Location Search & Live Autocomplete -->
+        <div class="location-search-wrapper">
+          <div class="location-input-box">
+            <span class="location-input-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </span>
+            {{ form.pickup_location }}
+            <button type="button" id="btnClearLocation" class="location-clear-btn" style="display: none;" title="Clear search">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <span id="locationSearchSpinner" class="location-spinner-icon" style="display: none;"></span>
+          </div>
+
+          <!-- Autocomplete Suggestions Dropdown -->
+          <div id="locationSuggestions" class="location-suggestions-dropdown" style="display: none;"></div>
+        </div>
+
+        {{ form.latitude }}
+        {{ form.longitude }}
+
+        <div class="form-help">Type a town, landmark, neighborhood, or city (e.g. Badiyadka) to pick a location with coordinates.</div>
+        {% if form.pickup_location.errors %}<div class="form-help" style="color: #b91c1c;">{{ form.pickup_location.errors.0 }}</div>{% endif %}
+
+        <!-- Confirmed Location & Coordinates Badge -->
+        <div id="selectedLocationBadge" class="selected-location-card" style="display: none;">
+          <div class="selected-location-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          </div>
+          <div class="selected-location-info">
+            <div id="selectedPlaceText" class="selected-place-name">Location Selected</div>
+            <div id="selectedCoordsText" class="selected-coords-text">Coordinates saved</div>
+          </div>
+          <button type="button" id="btnRemoveLocation" class="selected-location-remove" title="Remove selected coordinates">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="{{ form.description.id_for_label }}">Description *</label>
+        {{ form.description }}
+        {% if form.description.errors %}<div class="form-help" style="color: #b91c1c;">{{ form.description.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+          <label class="form-label" for="id_images" style="margin-bottom: 0;">Item Photos (Up to 5 images)</label>
+          <span class="photo-limit-badge" id="photoLimitBadge">{% if existing_images %}{{ existing_images.count }}/5 photos{% else %}Max 5 photos{% endif %}</span>
+        </div>
+
+        <div class="photo-upload-zone" id="photoUploadDropzone">
+          <input type="file" name="images" id="id_images" class="form-file-input" multiple accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif">
+          <div class="upload-hint">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 4px; color: var(--text-muted);"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            <div>Choose or drag up to 5 photos</div>
+            <div style="font-size: 0.775rem; color: var(--text-muted); margin-top: 2px;">
+              Accepted: <strong>JPEG (.jpg, .jpeg), PNG (.png), WebP (.webp), GIF (.gif)</strong> &bull; Max 10MB per photo
+            </div>
+          </div>
+        </div>
+
+        <div class="photo-cover-instruction" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 8px; display: flex; align-items: center; gap: 7px; background: #f0fdf4; border: 1px dashed #86efac; border-radius: var(--radius-sm); padding: 7px 12px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="#10b981" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          <span>Choose your primary <strong>Cover Photo</strong> by clicking <em>"Make Cover"</em> on any photo below. The cover photo is displayed on homepage cards and search results.</span>
+        </div>
+
+        {% if form.images.errors %}
+          <div class="form-help form-error-msg" style="color: #b91c1c; margin-top: 6px;">{{ form.images.errors.0 }}</div>
+        {% endif %}
+
+        <!-- Live Preview Strip for Newly Selected Photos -->
+        <div id="newImagesPreviewContainer" class="photo-preview-grid" style="display: none; margin-top: 12px;"></div>
+
+        <!-- Existing Photos (when editing) -->
+        {% if item and existing_images %}
+          <div class="existing-photos-section" style="margin-top: 14px;">
+            <p style="font-size: 0.825rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">
+              Current photos ({{ existing_images.count }} of 5):
+            </p>
+            <div class="existing-photos-grid">
+              {% for photo in existing_images %}
+                <div class="existing-photo-card {% if photo.is_cover or not current_cover_choice and forloop.first %}is-cover{% endif %}" id="existing-photo-{{ photo.id }}" data-choice="existing:{{ photo.id }}">
+                  <img src="{{ photo.image.url }}" alt="{{ item.title }} photo {{ forloop.counter }}">
+                  <button type="button" class="set-cover-btn {% if photo.is_cover or not current_cover_choice and forloop.first %}active{% endif %}" data-choice="existing:{{ photo.id }}" title="Click to choose as primary cover photo">
+                    {% if photo.is_cover or not current_cover_choice and forloop.first %}★ Cover{% else %}Make Cover{% endif %}
+                  </button>
+                  <label class="delete-photo-toggle" title="Mark this photo for deletion">
+                    <input type="checkbox" name="delete_images" value="{{ photo.id }}" class="delete-photo-checkbox" data-target="existing-photo-{{ photo.id }}">
+                    <span>Delete</span>
+                  </label>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% elif item and item.image %}
+          <div class="existing-photos-section" style="margin-top: 14px;">
+            <p style="font-size: 0.825rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">Current photo:</p>
+            <div class="existing-photos-grid">
+              <div class="existing-photo-card is-cover" data-choice="existing:default">
+                <img src="{{ item.image.url }}" alt="{{ item.title }}">
+                <span class="set-cover-btn active">★ Cover</span>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+        <a href="{% url 'home' %}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+          {% if item %}Save Changes{% else %}Publish Free Listing{% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'js/location_autocomplete.js' %}"></script>
+{% endblock %}

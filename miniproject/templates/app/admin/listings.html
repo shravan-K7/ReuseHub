@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Moderate Listings — ReuseHub Admin{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/listings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container admin-listings-container">
+  
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">Moderate Listings</h1>
+      <p class="admin-subtitle">
+        Review community listings, flag non-compliant posts, and remove inappropriate items.
+      </p>
+    </div>
+  </div>
+
+  <!-- Admin Sub-Navigation -->
+  <nav class="admin-nav">
+    <a href="{% url 'admin_dashboard' %}" class="admin-nav-item">Dashboard Overview</a>
+    <a href="{% url 'admin_listings' %}" class="admin-nav-item active">Moderate Listings</a>
+    <a href="{% url 'admin_categories' %}" class="admin-nav-item">Categories</a>
+    <a href="{% url 'admin_reports' %}" class="admin-nav-item">Reports</a>
+    <a href="{% url 'admin_users' %}" class="admin-nav-item">Users & Members</a>
+  </nav>
+
+  <!-- Filter & Search Bar -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+    <div class="filter-pills">
+      <a href="{% url 'admin_listings' %}?mod_status=ALL" class="filter-pill {% if status_filter == 'ALL' %}active{% endif %}">All</a>
+      <a href="{% url 'admin_listings' %}?mod_status=PENDING" class="filter-pill {% if status_filter == 'PENDING' %}active{% endif %}">Pending Review</a>
+      <a href="{% url 'admin_listings' %}?mod_status=FLAGGED" class="filter-pill {% if status_filter == 'FLAGGED' %}active{% endif %}">Flagged</a>
+      <a href="{% url 'admin_listings' %}?mod_status=APPROVED" class="filter-pill {% if status_filter == 'APPROVED' %}active{% endif %}">Approved</a>
+      <a href="{% url 'admin_listings' %}?mod_status=REJECTED" class="filter-pill {% if status_filter == 'REJECTED' %}active{% endif %}">Rejected</a>
+    </div>
+
+    <form method="GET" style="display: flex; gap: 6px;">
+      <input type="text" name="q" value="{{ query }}" placeholder="Search title or donor..." class="form-input" style="padding: 6px 10px; font-size: 0.85rem; width: 220px;">
+      <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+    </form>
+  </div>
+
+  <!-- Listings Table -->
+  {% if items %}
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Donor</th>
+            <th>Condition</th>
+            <th>Moderation</th>
+            <th>Status</th>
+            <th>Reports</th>
+            <th>Listed</th>
+            <th style="text-align: right;">Moderation Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+            <tr>
+              <td>
+                <a href="{% url 'item_detail' pk=item.pk %}" style="font-weight: 600; color: var(--text-main);">
+                  {{ item.title }}
+                </a>
+                {% if item.is_repairable %}
+                  <span class="badge badge-repairable" style="font-size: 0.65rem; margin-left: 4px;">Repairable</span>
+                {% endif %}
+              </td>
+              <td>{{ item.donor.username }}</td>
+              <td>{{ item.get_condition_display }}</td>
+              <td>
+                <span class="badge {% if item.moderation_status == 'APPROVED' %}badge-available{% elif item.moderation_status == 'FLAGGED' or item.moderation_status == 'REJECTED' %}badge-flagged{% else %}badge-requested{% endif %}">
+                  {{ item.get_moderation_status_display }}
+                </span>
+              </td>
+              <td>{{ item.get_status_display }}</td>
+              <td>
+                {% if item.reports.count > 0 %}
+                  <span class="badge badge-flagged">{{ item.reports.count }}</span>
+                {% else %}
+                  <span style="color: var(--text-muted); font-size: 0.8rem;">0</span>
+                {% endif %}
+              </td>
+              <td style="color: var(--text-muted); font-size: 0.8rem;">{{ item.created_at|date:"M d" }}</td>
+              <td style="text-align: right;">
+                <div style="display: inline-flex; gap: 4px;">
+                  {% if item.moderation_status != 'APPROVED' %}
+                    <a href="{% url 'admin_moderate_action' pk=item.pk action='approve' %}" class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 0.75rem;">Approve</a>
+                  {% endif %}
+                  {% if item.moderation_status != 'FLAGGED' %}
+                    <a href="{% url 'admin_moderate_action' pk=item.pk action='flag' %}" class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 0.75rem;">Flag</a>
+                  {% endif %}
+                  {% if item.moderation_status != 'REJECTED' %}
+                    <a href="{% url 'admin_moderate_action' pk=item.pk action='reject' %}" class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 0.75rem;">Reject</a>
+                  {% endif %}
+                  <a href="{% url 'admin_moderate_action' pk=item.pk action='remove' %}" onclick="return confirm('Permanently remove this listing?');" class="btn btn-danger btn-sm" style="padding: 3px 8px; font-size: 0.75rem;">Delete</a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📋</div>
+      <h3 class="empty-state-title">No listings match this filter</h3>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

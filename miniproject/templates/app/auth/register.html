@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Join ReuseHub — Non-Profit Community Platform{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/register.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container register-container">
+  <div class="action-card register-card">
+    <div class="register-header">
+      <div class="brand-icon register-brand-badge">R</div>
+      <h1 class="register-title">Join ReuseHub</h1>
+      <p class="register-subtitle">
+        A free, community-powered platform to share pre-loved items and promote repair over waste.
+      </p>
+    </div>
+
+    <form method="POST" class="register-form" id="registerForm" novalidate>
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label" for="{{ form.username.id_for_label }}">Username *</label>
+        {{ form.username }}
+        {% if form.username.errors %}<div class="form-help form-error-msg">{{ form.username.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="{{ form.email.id_for_label }}">Email Address *</label>
+        {{ form.email }}
+        {% if form.email.errors %}<div class="form-help form-error-msg">{{ form.email.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="name-row">
+        <div class="form-group">
+          <label class="form-label" for="{{ form.first_name.id_for_label }}">First Name</label>
+          {{ form.first_name }}
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="{{ form.last_name.id_for_label }}">Last Name</label>
+          {{ form.last_name }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="{{ form.password.id_for_label }}">Password *</label>
+        <div class="password-input-wrap">
+          {{ form.password }}
+          <button type="button" class="password-toggle-btn" aria-label="Show password" data-target="{{ form.password.id_for_label }}" title="Show password">
+            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+          </button>
+        </div>
+        {% if form.password.errors %}<div class="form-help form-error-msg">{{ form.password.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="{{ form.confirm_password.id_for_label }}">Confirm Password *</label>
+        <div class="password-input-wrap">
+          {{ form.confirm_password }}
+          <button type="button" class="password-toggle-btn" aria-label="Show password" data-target="{{ form.confirm_password.id_for_label }}" title="Show password">
+            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+          </button>
+        </div>
+        {% if form.confirm_password.errors %}<div class="form-help form-error-msg">{{ form.confirm_password.errors.0 }}</div>{% endif %}
+      </div>
+
+      <button type="submit" class="btn btn-primary register-submit-btn">
+        Create Community Account
+      </button>
+    </form>
+
+    <div class="register-footer">
+      Already have an account? <a href="{% url 'login' %}" class="register-link">Sign In</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

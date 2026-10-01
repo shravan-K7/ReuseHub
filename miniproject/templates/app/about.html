@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}About ReuseHub — Rethink Waste, Reclaim Value, Reconnect Neighbors{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/about.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- ========================================================================
+     1. HERO SECTION & HERO BANNER
+     ======================================================================== -->
+<section class="about-hero">
+  <div class="container">
+    
+    <div class="about-hero-header">
+      <h1 class="about-hero-title">
+        Rethink Waste. Reclaim Value.<br>
+        <span class="text-highlight">Reconnect Neighbors.</span>
+      </h1>
+
+      <p class="about-hero-desc">
+        ReuseHub is a community platform that helps people give unwanted items a second life by connecting them with others who can use them.
+      </p>
+    </div>
+
+    <!-- ReuseHub Hero Banner Image -->
+    <div class="about-hero-banner-wrap">
+      <div class="about-hero-banner-inner">
+        <img 
+          src="{% static 'images/about_hero_banner.png' %}" 
+          alt="ReuseHub Community Reuse Banner — Furniture, Clothing, Electronics, Books, and Living Goods" 
+          class="about-hero-banner-img"
+          width="1024"
+          height="436"
+        >
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ========================================================================
+     2. WHAT IS REUSEHUB?
+     ======================================================================== -->
+<section class="about-section about-what-section">
+  <div class="container">
+    <div class="about-card-spotlight">
+      <span class="about-pill-label">About the Platform</span>
+      <h2 class="about-heading">What is ReuseHub?</h2>
+      <p class="about-text-lead">
+        ReuseHub is a community-driven platform for giving away reusable items instead of throwing them away. Users can list things they no longer need, while others can discover, request, and collect items that are useful to them.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================================
+     3. WHY REUSEHUB?
+     ======================================================================== -->
+<section class="about-section about-why-section">
+  <div class="container">
+    <div class="about-section-header">
+      <span class="about-pill-label">Our Purpose</span>
+      <h2 class="about-heading">Why ReuseHub?</h2>
+    </div>
+
+    <div class="why-grid">
+      <!-- The Problem -->
+      <div class="why-card problem-card">
+        <div class="why-badge problem-badge">The Problem</div>
+        <h3>Discarded Before Their Time</h3>
+        <p>Many useful items are discarded simply because their owners no longer need them.</p>
+      </div>
+
+      <!-- Our Approach -->
+      <div class="why-card approach-card">
+        <div class="why-badge approach-badge">Our Approach</div>
+        <h3>A Second Opportunity</h3>
+        <p>ReuseHub gives those items another opportunity by connecting them with people who can use them.</p>
+      </div>
+    </div>
+
+    <!-- Visual Journey Diagram -->
+    <div class="why-flow-container">
+      <div class="flow-step">
+        <div class="flow-icon">📦</div>
+        <span class="flow-label">No longer needed</span>
+      </div>
+      <div class="flow-arrow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </div>
+      <div class="flow-step highlight-step">
+        <div class="flow-icon">🌿</div>
+        <span class="flow-label">ReuseHub</span>
+      </div>
+      <div class="flow-arrow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </div>
+      <div class="flow-step">
+        <div class="flow-icon">🤝</div>
+        <span class="flow-label">Someone who needs it</span>
+      </div>
+      <div class="flow-arrow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </div>
+      <div class="flow-step success-step">
+        <div class="flow-icon">♻️</div>
+        <span class="flow-label">Reused</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ========================================================================
+     4. OUR MISSION
+     ======================================================================== -->
+<section class="about-section about-mission-section">
+  <div class="container">
+    <div class="mission-card">
+      <span class="about-pill-label">Mission Statement</span>
+      <h2 class="mission-heading">Our Mission</h2>
+      <p class="mission-statement">
+        “To make reuse simple, accessible, and community-driven by helping useful items find new owners.”
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================================
+     5. OUR CORE VALUES
+     ======================================================================== -->
+<section class="about-section about-values-section">
+  <div class="container">
+    <div class="about-section-header">
+      <span class="about-pill-label">What Guides Us</span>
+      <h2 class="about-heading">Our Core Values</h2>
+    </div>
+
+    <div class="values-grid">
+      <!-- Value 1 -->
+      <div class="value-item-card">
+        <div class="value-icon-box">♻️</div>
+        <h3>Reuse First</h3>
+        <p>Encourage useful items to be reused.</p>
+      </div>
+
+      <!-- Value 2 -->
+      <div class="value-item-card">
+        <div class="value-icon-box">🤝</div>
+        <h3>Community</h3>
+        <p>Connect people through sharing.</p>
+      </div>
+
+      <!-- Value 3 -->
+      <div class="value-item-card">
+        <div class="value-icon-box">📍</div>
+        <h3>Local Connections</h3>
+        <p>Encourage convenient local exchange.</p>
+      </div>
+
+      <!-- Value 4 -->
+      <div class="value-item-card">
+        <div class="value-icon-box">🛡️</div>
+        <h3>Safe & Responsible</h3>
+        <p>Promote respectful and responsible interactions.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================================
+     6. THE REUSE IMPACT (LIVE DATABASE STATISTICS)
+     ======================================================================== -->
+<section class="about-section about-impact-section">
+  <div class="container">
+    <div class="about-section-header">
+      <span class="about-pill-label">Live Platform Numbers</span>
+      <h2 class="about-heading">The Reuse Impact</h2>
+      <p style="font-size: 0.95rem; color: var(--text-muted); margin-top: 6px;">
+        Real-time community metrics powered directly by our active database.
+      </p>
+    </div>
+
+    <div class="impact-stats-grid">
+      
+      <!-- Stat 1: Items Rehomed -->
+      <div class="impact-stat-card">
+        <div class="impact-stat-number">{{ total_given|default:"0" }}</div>
+        <div class="impact-stat-label">Items Rehomed</div>
+        <div class="impact-stat-desc">Diverted from waste and given new homes</div>
+      </div>
+
+      <!-- Stat 2: Available Items -->
+      <div class="impact-stat-card">
+        <div class="impact-stat-number">{{ active_items|default:"0" }}</div>
+        <div class="impact-stat-label">Available Items</div>
+        <div class="impact-stat-desc">Ready for free neighborhood collection today</div>
+      </div>
+
+      <!-- Stat 3: Reusable / Repairable Goods Saved -->
+      <div class="impact-stat-card">
+        <div class="impact-stat-number">{{ repairable_count|default:"0" }}</div>
+        <div class="impact-stat-label">Reusable Goods Saved</div>
+        <div class="impact-stat-desc">Repairable and restored items given a second life</div>
+      </div>
+
+      <!-- Stat 4: Community Members -->
+      <div class="impact-stat-card">
+        <div class="impact-stat-number">{{ total_users|default:"0" }}</div>
+        <div class="impact-stat-label">Community Members</div>
+        <div class="impact-stat-desc">Neighbors actively participating in local reuse</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================================
+     7. HOW REUSEHUB CREATES IMPACT
+     ======================================================================== -->
+<section class="about-section about-how-impact-section">
+  <div class="container">
+    <div class="about-section-header">
+      <span class="about-pill-label">The Cycle</span>
+      <h2 class="about-heading">How ReuseHub Creates Impact</h2>
+    </div>
+
+    <div class="impact-cycle-grid">
+      
+      <div class="cycle-node">
+        <div class="cycle-num">1</div>
+        <div class="cycle-node-icon">🎁</div>
+        <h4>Give</h4>
+        <p>List unwanted items freely instead of throwing them out.</p>
+      </div>
+
+      <div class="cycle-connector">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </div>
+
+      <div class="cycle-node">
+        <div class="cycle-num">2</div>
+        <div class="cycle-node-icon">🔍</div>
+        <h4>Discover</h4>
+        <p>Browse nearby items and find goods you can put to good use.</p>
+      </div>
+
+      <div class="cycle-connector">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </div>
+
+      <div class="cycle-node">
+        <div class="cycle-num">3</div>
+        <div class="cycle-node-icon">💬</div>
+        <h4>Connect</h4>
+        <p>Coordinate a direct, friendly local pickup with a neighbor.</p>
+      </div>
+
+      <div class="cycle-connector">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </div>
+
+      <div class="cycle-node">
+        <div class="cycle-num">4</div>
+        <div class="cycle-node-icon">🌱</div>
+        <h4>Reuse</h4>
+        <p>Keep items in circulation and reduce unnecessary waste.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================================
+     8. CALL TO ACTION
+     ======================================================================== -->
+<section class="about-section about-cta-section">
+  <div class="container">
+    <div class="about-cta-box">
+      <h2 class="cta-heading">Give something useful a second life.</h2>
+      <p class="cta-sub">Join your local community on ReuseHub and start sharing today.</p>
+      <div class="cta-buttons">
+        <a href="{% url 'home' %}" class="btn btn-primary btn-lg">Browse Available Items</a>
+        <a href="{% url 'item_create' %}" class="btn btn-secondary btn-lg">Give an Item</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

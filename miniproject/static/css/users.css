@@ -1,0 +1,48 @@
+/* ==============================================================================
+   ReuseHub - Manage Users Stylesheet (users.css)
+   Target: admin/users.html
+   Aesthetic: Clean administrative directory for community members
+   ============================================================================== */
+
+.admin-users-container {
+  padding-top: 32px;
+  padding-bottom: 72px;
+}
+
+.users-search-bar {
+  margin-bottom: 24px;
+}
+
+.users-search-form {
+  display: flex;
+  gap: 8px;
+  max-width: 440px;
+}
+
+.user-name-bold {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.user-realname-sub {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-left: 4px;
+}
+
+.user-email-text {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.user-role-badge-admin {
+  background: rgba(79, 70, 229, 0.16);
+  color: #818cf8;
+  border: 1px solid rgba(79, 70, 229, 0.3);
+}
+
+.user-role-badge-mod {
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}

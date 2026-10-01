@@ -1,0 +1,78 @@
+/* ==============================================================================
+   ReuseHub - Community Reports Stylesheet (reports.css)
+   Target: admin/reports.html
+   Aesthetic: Trust & safety report adjudication with high-contrast priority tags
+   ============================================================================== */
+
+.admin-reports-container {
+  padding-top: 32px;
+  padding-bottom: 72px;
+}
+
+.reports-list-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.report-review-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 22px 24px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.report-review-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
+}
+
+.report-pending-border {
+  border-left: 3px solid #ef4444;
+}
+
+.report-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.report-reason-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-top: 4px;
+}
+
+.report-meta-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.report-details-content {
+  background: var(--bg-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.report-target-footer {
+  font-size: 0.85rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}

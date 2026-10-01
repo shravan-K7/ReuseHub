@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile — ReuseHub{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container profile-container">
+  
+  <div class="profile-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h1 class="profile-title">Community Profile</h1>
+      <p class="profile-desc">
+        Your profile details and environmental impact in the ReuseHub network.
+      </p>
+    </div>
+    <a href="{% url 'public_profile' username=user.username %}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+      View Public Profile &rarr;
+    </a>
+  </div>
+
+  <!-- Impact Stats Grid -->
+  <div class="profile-stats-grid">
+    <div class="impact-card impact-card-eco">
+      <div class="impact-label">Items Given Away</div>
+      <div class="impact-value impact-value-green">{{ items_given }}</div>
+    </div>
+    <div class="impact-card">
+      <div class="impact-label">Active Listings</div>
+      <div class="impact-value">{{ active_listings }}</div>
+    </div>
+    <div class="impact-card">
+      <div class="impact-label">Items Claimed</div>
+      <div class="impact-value">{{ items_claimed }}</div>
+    </div>
+  </div>
+
+  <!-- Profile Edit Form -->
+  <div class="action-card">
+    <h3 style="font-size: 1.05rem; font-weight: 600; margin-bottom: 16px;">Profile Information</h3>
+
+    <div style="margin-bottom: 20px; font-size: 0.9rem;">
+      <p><strong>Username:</strong> {{ user.username }}</p>
+      <p style="color: var(--text-secondary); margin-top: 4px;"><strong>Email:</strong> {{ user.email|default:"Not specified" }} <span style="font-size: 0.75rem; color: #166534; background: #f0fdf4; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">Private</span></p>
+      <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">Member since: {{ user.date_joined|date:"F Y" }}</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label" for="{{ form.avatar.id_for_label }}">Profile Photo / Avatar</label>
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 8px;">
+          {% if profile.avatar %}
+            <img src="{{ profile.avatar.url }}" alt="{{ user.username }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color);">
+          {% else %}
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: #1e3a2b; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.25rem;">
+              {{ user.username|make_list|first|upper }}
+            </div>
+          {% endif %}
+          <div style="flex: 1;">
+            {{ form.avatar }}
+          </div>
+        </div>
+        <div class="form-help">Shown on your public community profile and listings.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="{{ form.location.id_for_label }}">General Location / City</label>
+        {{ form.location }}
+        <div class="form-help">Helps nearby community members know your general vicinity.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="{{ form.phone.id_for_label }}">Phone / Contact Handle</label>
+        {{ form.phone }}
+        <div class="form-help">Optional. Private by default; only shared with accepted requesters for pickup coordination.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="{{ form.bio.id_for_label }}">About You / Bio</label>
+        {{ form.bio }}
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+        <button type="submit" class="btn btn-primary">Save Profile</button>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

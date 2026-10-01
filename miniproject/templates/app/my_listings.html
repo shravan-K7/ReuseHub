@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Listings — ReuseHub{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/my_listings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container my-listings-container">
+  
+  <div class="my-listings-header">
+    <div>
+      <h1 class="my-listings-title">My Donated Belongings</h1>
+      <p class="my-listings-desc">
+        Manage your listed items, respond to requests, and update collection statuses.
+      </p>
+    </div>
+    <a href="{% url 'item_create' %}" class="btn btn-primary btn-sm">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      Give Another Item
+    </a>
+  </div>
+
+  <!-- Status Tabs -->
+  <div class="filter-pills" style="margin-bottom: 24px;">
+    <a href="{% url 'my_listings' %}?tab=ALL" class="filter-pill {% if status_tab == 'ALL' %}active{% endif %}">
+      All Items ({{ total_count }})
+    </a>
+    <a href="{% url 'my_listings' %}?tab=AVAILABLE" class="filter-pill {% if status_tab == 'AVAILABLE' %}active{% endif %}">
+      Available ({{ available_count }})
+    </a>
+    <a href="{% url 'my_listings' %}?tab=GIVEN_AWAY" class="filter-pill {% if status_tab == 'GIVEN_AWAY' %}active{% endif %}">
+      Given Away ({{ given_count }})
+    </a>
+  </div>
+
+  <!-- Listings Table -->
+  {% if items %}
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Category</th>
+            <th>Condition</th>
+            <th>Status</th>
+            <th>Requests</th>
+            <th>Listed Date</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  {% if item.image %}
+                    <img src="{{ item.image.url }}" alt="{{ item.title }}" style="width: 44px; height: 36px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                  {% else %}
+                    <div style="width: 44px; height: 36px; background: var(--bg-subtle); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--text-muted); border: 1px solid var(--border-color);">
+                      No img
+                    </div>
+                  {% endif %}
+                  <div>
+                    <a href="{% url 'item_detail' pk=item.pk %}" style="font-weight: 600; color: var(--text-main);">
+                      {{ item.title }}
+                    </a>
+                    {% if item.is_repairable %}
+                      <span class="badge badge-repairable" style="font-size: 0.65rem; margin-left: 4px;">Repairable</span>
+                    {% endif %}
+                  </div>
+                </div>
+              </td>
+              <td>{{ item.category.name|default:"General" }}</td>
+              <td>{{ item.get_condition_display }}</td>
+              <td>
+                {% if item.status == 'AVAILABLE' %}
+                  <span class="badge badge-available">Available</span>
+                {% elif item.status == 'REQUESTED' %}
+                  <span class="badge badge-requested">Request Pending</span>
+                {% elif item.status == 'GIVEN_AWAY' %}
+                  <span class="badge badge-given">Given Away</span>
+                {% endif %}
+              </td>
+              <td>
+                <strong>{{ item.requests.count }}</strong> request{{ item.requests.count|pluralize }}
+              </td>
+              <td style="color: var(--text-muted);">{{ item.created_at|date:"M d, Y" }}</td>
+              <td style="text-align: right;">
+                <div style="display: inline-flex; gap: 6px;">
+                  <a href="{% url 'item_detail' pk=item.pk %}" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.75rem;">View</a>
+                  <a href="{% url 'item_edit' pk=item.pk %}" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.75rem;">Edit</a>
+                  <a href="{% url 'item_delete' pk=item.pk %}" class="btn btn-danger btn-sm delete-listing-btn" data-item-title="{{ item.title }}" data-delete-url="{% url 'item_delete' pk=item.pk %}" style="padding: 4px 8px; font-size: 0.75rem;">Delete</a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">🎁</div>
+      <h3 class="empty-state-title">No listings here</h3>
+      <p class="empty-state-desc">You haven't listed any items in this category yet. Pass on an item today!</p>
+      <a href="{% url 'item_create' %}" class="btn btn-primary">Give an Item Now</a>
+    </div>
+  {% endif %}
+
+  <!-- Delete Item Confirmation Modal (Dynamic for User Listings) -->
+  <div class="modal-backdrop" id="deleteListingModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="deleteListingModalTitle">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <div class="modal-icon-badge modal-icon-badge-danger">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+            </div>
+            <h3 class="modal-title" id="deleteListingModalTitle">Delete Item Listing</h3>
+          </div>
+          <button type="button" class="modal-close-btn" data-modal-close aria-label="Close dialog">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="margin: 0 0 8px 0; color: var(--text-main); font-weight: 500;">
+            Are you sure you want to delete <strong id="deleteItemTitleDisplay">this item</strong>?
+          </p>
+          <p class="modal-subtext" style="margin: 0;">
+            This action cannot be undone. All photos, listing details, and active collection requests will be permanently removed.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-modal-close>Keep Listing</button>
+          <form method="POST" action="" style="display: inline; margin: 0;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-sm">Yes, Delete Item</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

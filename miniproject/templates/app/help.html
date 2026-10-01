@@ -1,0 +1,646 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Help & Support — How Can I Use ReuseHub?{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/help.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- ========================================================================
+     1. HELP CENTER SEARCH
+     ======================================================================== -->
+<section class="help-hero">
+  <div class="container">
+    <div class="help-hero-inner">
+      <span class="help-pill">ReuseHub Knowledge Base</span>
+      <h1 class="help-hero-title">How can we help?</h1>
+      <p class="help-hero-desc">Find step-by-step guides, pickup instructions, account help, and answers to common questions.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================================
+     2. QUICK HELP CARDS
+     ======================================================================== -->
+<section class="help-quick-section">
+  <div class="container">
+    <div class="quick-cards-grid">
+      
+      <!-- Card 1 -->
+      <a href="#giving-help" class="quick-card">
+        <div class="quick-card-icon">📦</div>
+        <h3>Give an Item</h3>
+        <p>Learn how to photograph, describe, and list items to pass on.</p>
+        <span class="quick-card-link">View guide &rarr;</span>
+      </a>
+
+      <!-- Card 2 -->
+      <a href="#finding-help" class="quick-card">
+        <div class="quick-card-icon">🔎</div>
+        <h3>Find Items</h3>
+        <p>Explore search filters, repairable goods, and submitting requests.</p>
+        <span class="quick-card-link">View guide &rarr;</span>
+      </a>
+
+      <!-- Card 3 -->
+      <a href="#managing-requests" class="quick-card">
+        <div class="quick-card-icon">🚀</div>
+        <h3>How It Works</h3>
+        <p>Manage requests, coordinate handoffs, and mark items given.</p>
+        <span class="quick-card-link">View workflows &rarr;</span>
+      </a>
+
+      <!-- Card 4 -->
+      <a href="#contact-support" class="quick-card">
+        <div class="quick-card-icon">💬</div>
+        <h3>Contact Us</h3>
+        <p>Need extra help or want to report an issue? Send us a message.</p>
+        <span class="quick-card-link">Get in touch &rarr;</span>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<div class="container help-main-body">
+
+  <!-- ======================================================================
+       3. HOW TO GIVE AWAY AN ITEM
+       ====================================================================== -->
+  <section id="giving-help" class="help-content-block searchable-item" data-keywords="give item list upload photos details category pickup location submit manage requests donor post">
+    <div class="help-block-header">
+      <span class="help-tag">Donor Guide</span>
+      <h2>How to Give Away an Item</h2>
+      <p>Have something useful that you no longer need? Pass it on to a neighbor in 8 simple steps.</p>
+    </div>
+
+    <!-- Step Sequence Pipeline -->
+    <div class="steps-pipeline">
+      <div class="pipe-node">
+        <div class="pipe-num">1</div>
+        <span class="pipe-title">Login</span>
+      </div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-node">
+        <div class="pipe-num">2</div>
+        <span class="pipe-title">Add Item</span>
+      </div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-node">
+        <div class="pipe-num">3</div>
+        <span class="pipe-title">Upload Photos</span>
+      </div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-node">
+        <div class="pipe-num">4</div>
+        <span class="pipe-title">Enter Details</span>
+      </div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-node">
+        <div class="pipe-num">5</div>
+        <span class="pipe-title">Choose Category</span>
+      </div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-node">
+        <div class="pipe-num">6</div>
+        <span class="pipe-title">Set Location</span>
+      </div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-node">
+        <div class="pipe-num">7</div>
+        <span class="pipe-title">Submit</span>
+      </div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-node pipe-node-success">
+        <div class="pipe-num">8</div>
+        <span class="pipe-title">Manage Requests</span>
+      </div>
+    </div>
+
+    <!-- Step Explanations -->
+    <div class="steps-detail-grid">
+      <div class="step-card">
+        <h4>1. Login</h4>
+        <p>Make sure you are signed into your verified ReuseHub account. If you are new, registration takes under a minute.</p>
+      </div>
+      <div class="step-card">
+        <h4>2. Click "Give an Item"</h4>
+        <p>Click the green <strong>"Give an Item"</strong> button located in the top navigation bar from any page.</p>
+      </div>
+      <div class="step-card">
+        <h4>3. Upload Photos</h4>
+        <p>Provide clear, authentic photos showing the item's current state, including any minor blemishes or wear.</p>
+      </div>
+      <div class="step-card">
+        <h4>4. Enter Details & Condition</h4>
+        <p>Give your listing a clear title and description. Select the condition (New, Like New, Good, Fair, or Needs Repair).</p>
+      </div>
+      <div class="step-card">
+        <h4>5. Choose Category</h4>
+        <p>Categorize your item (e.g. Furniture, Electronics, Books, Clothing) to help neighbors find it quickly.</p>
+      </div>
+      <div class="step-card">
+        <h4>6. Set Pickup Location</h4>
+        <p>Search using our OpenStreetMap Nominatim search for a neighborhood landmark or street to keep your exact home private.</p>
+      </div>
+      <div class="step-card">
+        <h4>7. Submit Listing</h4>
+        <p>Hit "Publish Listing". Your item is immediately visible to local community members looking for goods.</p>
+      </div>
+      <div class="step-card">
+        <h4>8. Manage Requests</h4>
+        <p>Review incoming requests from your dashboard or item page, accept the best match, and coordinate handoff.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       4. HOW TO FIND & REQUEST AN ITEM
+       ====================================================================== -->
+  <section id="finding-help" class="help-content-block searchable-item" data-keywords="find request browse search filter view item arrange collection discover repairable">
+    <div class="help-block-header">
+      <span class="help-tag">Recipient Guide</span>
+      <h2>How to Find & Request an Item</h2>
+      <p>Discover free goods offered by generous neighbors in your community.</p>
+    </div>
+
+    <!-- Step Sequence Pipeline -->
+    <div class="steps-pipeline">
+      <div class="pipe-node">
+        <div class="pipe-num">1</div>
+        <span class="pipe-title">Browse Items</span>
+      </div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-node">
+        <div class="pipe-num">2</div>
+        <span class="pipe-title">Search / Filter</span>
+      </div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-node">
+        <div class="pipe-num">3</div>
+        <span class="pipe-title">View Item</span>
+      </div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-node">
+        <div class="pipe-num">4</div>
+        <span class="pipe-title">Request Item</span>
+      </div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-node">
+        <div class="pipe-num">5</div>
+        <span class="pipe-title">Wait for Response</span>
+      </div>
+      <div class="pipe-arrow">&rarr;</div>
+      <div class="pipe-node pipe-node-success">
+        <div class="pipe-num">6</div>
+        <span class="pipe-title">Arrange Collection</span>
+      </div>
+    </div>
+
+    <!-- Step Explanations -->
+    <div class="steps-detail-grid">
+      <div class="step-card">
+        <h4>1. Browse Items</h4>
+        <p>Head to the <strong>Explore</strong> page to see recent items made available by nearby neighbors.</p>
+      </div>
+      <div class="step-card">
+        <h4>2. Search & Apply Filters</h4>
+        <p>Filter by category, search by keywords, or toggle the <strong>Repairable</strong> filter for DIY and restoration projects.</p>
+      </div>
+      <div class="step-card">
+        <h4>3. View Item Details</h4>
+        <p>Click on any card to view detailed photos, the donor's description, pickup landmark, and item condition.</p>
+      </div>
+      <div class="step-card">
+        <h4>4. Submit a Kind Request</h4>
+        <p>Click "Request This Item". Include a polite message explaining why you'd like it and your pickup availability.</p>
+      </div>
+      <div class="step-card">
+        <h4>5. Wait for Response</h4>
+        <p>The donor will review requests and choose a recipient. You will see status updates in <strong>My Requests</strong>.</p>
+      </div>
+      <div class="step-card">
+        <h4>6. Arrange Collection</h4>
+        <p>Once accepted, coordinate a safe pickup time with the donor, collect your item, and enjoy!</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       5. MANAGING REQUESTS
+       ====================================================================== -->
+  <section id="managing-requests" class="help-content-block searchable-item" data-keywords="managing requests accept reject contact requester mark given cancel request status my listings">
+    <div class="help-block-header">
+      <span class="help-tag">Requests Workflow</span>
+      <h2>Managing Requests</h2>
+      <p>Clear, transparent communication ensures smooth handoffs for both donors and requesters.</p>
+    </div>
+
+    <div class="requests-roles-grid">
+      <!-- For Item Owners -->
+      <div class="role-column-card">
+        <div class="role-badge donor">For Item Owners</div>
+        <ul class="role-actions-list">
+          <li>
+            <strong>View Requests:</strong> Check your item detail page or <em>My Listings</em> to see all neighbors who expressed interest.
+          </li>
+          <li>
+            <strong>Accept Request:</strong> When you find a suitable recipient, click "Accept Request" to share contact details and reserve the item.
+          </li>
+          <li>
+            <strong>Reject / Pass:</strong> If someone cannot pick up promptly, you can decline to allow other requesters a turn.
+          </li>
+          <li>
+            <strong>Contact Requester:</strong> Use the provided contact details or email to agree on a pickup time and place.
+          </li>
+          <li>
+            <strong>Mark Item as Given Away:</strong> Once collected, click "Mark Given Away" to celebrate another diverted item and close new requests.
+          </li>
+        </ul>
+      </div>
+
+      <!-- For Requesters -->
+      <div class="role-column-card">
+        <div class="role-badge requester">For Requesters</div>
+        <ul class="role-actions-list">
+          <li>
+            <strong>View Requests:</strong> Visit your <em>My Requests</em> dashboard to monitor the status of every item you've requested.
+          </li>
+          <li>
+            <strong>Check Status:</strong> See if your request is <em>Pending</em>, <em>Accepted</em>, or <em>Given to Another Member</em>.
+          </li>
+          <li>
+            <strong>Cancel Request:</strong> If your plans change and you no longer need the item, promptly cancel so others can receive it.
+          </li>
+          <li>
+            <strong>Confirm Collection:</strong> Show up on time for agreed pickup and thank your neighbor for their generosity!
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       6. PICKUP & LOCATION HELP (NOMINATIM INTEGRATION)
+       ====================================================================== -->
+  <section id="pickup-location-help" class="help-content-block searchable-item" data-keywords="pickup location nominatim map address coordinates suggestions privacy safe collection openstreetmap">
+    <div class="help-block-header">
+      <span class="help-tag">Location & Privacy</span>
+      <h2>Pickup & Location Help</h2>
+      <p>ReuseHub uses OpenStreetMap Nominatim to provide fast, privacy-preserving address suggestions.</p>
+    </div>
+
+    <div class="location-help-card">
+      <div class="location-help-text">
+        <h3>How to Set Your Pickup Location</h3>
+        <ol class="location-instructions-list">
+          <li>
+            <strong>Search for your neighborhood or landmark:</strong> Type a few letters of your town, neighborhood, or public landmark (e.g. <em>"Koramangala 4th Block"</em> or <em>"Central Park West"</em>).
+          </li>
+          <li>
+            <strong>Select from Nominatim suggestions:</strong> Choose the best matching location from the live dropdown list. The system automatically secures geographic coordinates.
+          </li>
+          <li>
+            <strong>Use "Current Location":</strong> You can also tap the <em>"Use My Current Location"</em> button to automatically reverse-geocode your approximate area.
+          </li>
+          <li>
+            <strong>Privacy Protection:</strong> ReuseHub intentionally does <em>not</em> require your exact apartment or door number on public listings. Only general neighborhood areas are shown publicly.
+          </li>
+          <li>
+            <strong>Coordinating Collection:</strong> Once you accept a request, you can privately share your exact door number or arrange a meetup at a nearby public spot.
+          </li>
+        </ol>
+      </div>
+
+      <div class="location-callout-box">
+        <div class="callout-icon">📍</div>
+        <h4>Pickup Safety Tip</h4>
+        <p>For bulky items (furniture, large appliances), arranging porch or lobby pickup in daylight is recommended. For portable items, busy public landmarks like a coffee shop or library plaza are ideal.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       7. ACCOUNT HELP (ACCORDION)
+       ====================================================================== -->
+  <section id="account-help" class="help-content-block searchable-item" data-keywords="account register login password profile delete account edit profile credentials">
+    <div class="help-block-header">
+      <span class="help-tag">Account & Settings</span>
+      <h2>Account Help</h2>
+      <p>Manage your account credentials, profile information, and preferences.</p>
+    </div>
+
+    <div class="help-accordion-list">
+      
+      <details class="help-acc-item">
+        <summary class="help-acc-summary">How do I register for an account?</summary>
+        <div class="help-acc-content">
+          Click <strong>"Join"</strong> in the top-right header navigation. Enter your chosen username, email address, and a secure password, then submit. You will be logged in immediately and ready to give or request items!
+        </div>
+      </details>
+
+      <details class="help-acc-item">
+        <summary class="help-acc-summary">How do I log in to my account?</summary>
+        <div class="help-acc-content">
+          Click <strong>"Sign in"</strong> in the top header. Enter your registered username and password. If you navigated to a restricted page (like listing an item), you will be redirected automatically once signed in.
+        </div>
+      </details>
+
+      <details class="help-acc-item">
+        <summary class="help-acc-summary">How do I change my password?</summary>
+        <div class="help-acc-content">
+          You can update your security credentials anytime from your <strong>Profile</strong> page or via the password reset option on the login page.
+        </div>
+      </details>
+
+      <details class="help-acc-item">
+        <summary class="help-acc-summary">How do I edit my profile?</summary>
+        <div class="help-acc-content">
+          Click on your username badge in the top navigation and select <strong>Profile</strong>. Here you can upload a profile avatar, update your display bio, and set your default neighborhood location.
+        </div>
+      </details>
+
+      <details class="help-acc-item">
+        <summary class="help-acc-summary">How do I delete or deactivate my account?</summary>
+        <div class="help-acc-content">
+          If you wish to remove your account or delete your listings, please submit a brief request using the <a href="#contact-support">Contact Support Form</a> below with the subject "Account Deactivation". Our moderation team will process your request within 24 hours.
+        </div>
+      </details>
+
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       8. FREQUENTLY ASKED QUESTIONS (FAQ ACCORDION)
+       ====================================================================== -->
+  <section id="faq-section" class="help-content-block searchable-item" data-keywords="faq what is reusehub items give away request item repairable badge contact owner cancel request mark given inappropriate listing report">
+    <div class="help-block-header">
+      <span class="help-tag">Frequently Asked Questions</span>
+      <h2>General Platform FAQ</h2>
+      <p>Quick answers to the most frequently asked questions across the platform.</p>
+    </div>
+
+    <div class="help-accordion-list">
+      
+      <!-- FAQ 1 -->
+      <details class="help-acc-item" open>
+        <summary class="help-acc-summary">What is ReuseHub?</summary>
+        <div class="help-acc-content">
+          ReuseHub is a non-profit, community-driven platform designed to connect people who have surplus, usable items with neighbors who can use or restore them. Our goal is to promote a circular economy, reduce waste, and build closer local communities.
+        </div>
+      </details>
+
+      <!-- FAQ 2 -->
+      <details class="help-acc-item">
+        <summary class="help-acc-summary">What items can I give away?</summary>
+        <div class="help-acc-content">
+          You can give away books, electronics, clothing, furniture, home decor, sports gear, kitchenware, baby supplies, musical instruments, tools, and repairable gadgets. All items must be legal, clean, and safe. Hazardous goods, weapons, and expired medications are prohibited.
+        </div>
+      </details>
+
+      <!-- FAQ 3 -->
+      <details class="help-acc-item">
+        <summary class="help-acc-summary">How do I request an item?</summary>
+        <div class="help-acc-content">
+          When browsing any item detail page, click the green <strong>"Request Item"</strong> button. Write a friendly note explaining why you need the item and your availability for pickup. The donor will review requests and notify you if selected.
+        </div>
+      </details>
+
+      <!-- FAQ 4 -->
+      <details class="help-acc-item">
+        <summary class="help-acc-summary">How does the "Repairable" badge work?</summary>
+        <div class="help-acc-content">
+          The <em>Repairable</em> badge indicates that an item has minor flaws (e.g. a broken plug, loose joint, or cosmetic scratch) but can easily be restored or repurposed. Tinkerers and makers can filter by "Repairable" to rescue items that would otherwise end up in scrap.
+        </div>
+      </details>
+
+      <!-- FAQ 5 -->
+      <details class="help-acc-item">
+        <summary class="help-acc-summary">How do I contact the item owner?</summary>
+        <div class="help-acc-content">
+          To protect member privacy from unsolicited spam, contact information is exchanged only after a donor formally accepts an item request. Once accepted, both parties receive communication instructions.
+        </div>
+      </details>
+
+      <!-- FAQ 6 -->
+      <details class="help-acc-item">
+        <summary class="help-acc-summary">How do I cancel a request?</summary>
+        <div class="help-acc-content">
+          Go to your <strong>My Requests</strong> dashboard. Find the pending request and click <strong>Cancel Request</strong>. This frees the donor to offer the item to other neighbors without delay.
+        </div>
+      </details>
+
+      <!-- FAQ 7 -->
+      <details class="help-acc-item">
+        <summary class="help-acc-summary">How do I mark an item as given away?</summary>
+        <div class="help-acc-content">
+          As the item donor, open your item page and click <strong>"Mark Given Away"</strong>. This updates your community impact statistics, archives the listing from public search, and marks the transaction as complete.
+        </div>
+      </details>
+
+      <!-- FAQ 8 -->
+      <details class="help-acc-item">
+        <summary class="help-acc-summary">Can I report an inappropriate listing?</summary>
+        <div class="help-acc-content">
+          Yes! Every item listing page features a <strong>"Report Item"</strong> button. Select the reason (prohibited item, commercial spam, misleading photos, or offensive language) and submit. Our moderation staff reviews flagged listings promptly.
+        </div>
+      </details>
+
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       9. SAFETY GUIDELINES
+       ====================================================================== -->
+  <section id="safety-guidelines" class="help-content-block searchable-item" data-keywords="safety guidelines password money free items verify collection personal information report suspicious responsible daylight">
+    <div class="help-block-header">
+      <span class="help-tag">Community Trust</span>
+      <h2>Safety Guidelines</h2>
+      <p>Keeping our community respectful, reliable, and secure for everyone.</p>
+    </div>
+
+    <div class="safety-rules-grid">
+      
+      <div class="safety-card">
+        <div class="safety-icon">🔒</div>
+        <h4>Don't share your password</h4>
+        <p>Never share your ReuseHub password or personal credentials with anyone. ReuseHub admins will never ask for your password.</p>
+      </div>
+
+      <div class="safety-card">
+        <div class="safety-icon">🚫</div>
+        <h4>Don't send money for free items</h4>
+        <p>Every item on ReuseHub is 100% free. Never wire money, pay deposits, or pay shipping fees to anyone claiming to be a donor.</p>
+      </div>
+
+      <div class="safety-card">
+        <div class="safety-icon">👀</div>
+        <h4>Verify the item before collection</h4>
+        <p>Inspect the item in person to ensure it matches the description, particularly if taking electrical or mechanical equipment.</p>
+      </div>
+
+      <div class="safety-card">
+        <div class="safety-icon">🛡️</div>
+        <h4>Be careful with personal information</h4>
+        <p>Do not post sensitive home details, banking data, or phone numbers publicly on open listings.</p>
+      </div>
+
+      <div class="safety-card">
+        <div class="safety-icon">🚩</div>
+        <h4>Report suspicious listings or users</h4>
+        <p>If you encounter commercial sales, scams, or rude behavior, use the built-in Report button to notify administrators immediately.</p>
+      </div>
+
+      <div class="safety-card">
+        <div class="safety-icon">☀️</div>
+        <h4>Arrange collections responsibly</h4>
+        <p>Whenever possible, schedule collections during daylight hours in well-lit, accessible areas or porch pickup spots.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       10. REPORT A PROBLEM
+       ====================================================================== -->
+  <section id="report-problem" class="help-content-block searchable-item" data-keywords="report problem something wrong item user technical issue flag moderation">
+    <div class="help-block-header">
+      <span class="help-tag">Problem Resolution</span>
+      <h2>Report a Problem</h2>
+      <p>Notice something wrong? Help us keep the platform safe, accurate, and enjoyable for everyone.</p>
+    </div>
+
+    <div class="report-options-grid">
+      
+      <div class="report-option-card">
+        <div class="report-option-icon">📦</div>
+        <h3>Report an Item</h3>
+        <p>Found a broken item listed as new, a prohibited good, or commercial spam? Open the item page and click <strong>"Report Listing"</strong>.</p>
+        <a href="{% url 'home' %}" class="btn btn-secondary btn-sm">Find Item to Report</a>
+      </div>
+
+      <div class="report-option-card">
+        <div class="report-option-icon">👤</div>
+        <h3>Report a User</h3>
+        <p>Encountered harassment, unresponsiveness, or fraudulent behavior? Send our moderation team their username and details.</p>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="prefillContact('Report a User', 'Reporting user: ')">Report User</button>
+      </div>
+
+      <div class="report-option-card">
+        <div class="report-option-icon">⚙️</div>
+        <h3>Report a Technical Problem</h3>
+        <p>Encountered a broken link, visual glitch, or unexpected error on the website? Let our development team know.</p>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="prefillContact('Technical Issue', 'Description of technical issue: ')">Report Technical Bug</button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       11. CONTACT SUPPORT
+       ====================================================================== -->
+  <section id="contact-support" class="help-content-block searchable-item" data-keywords="contact support still need help send message email name subject question feedback">
+    <div class="contact-support-card">
+      <div class="contact-card-header">
+        <span class="help-tag">Direct Support</span>
+        <h2>Still need help?</h2>
+        <p>Our volunteer support team is here to assist with any questions, feedback, or concerns.</p>
+      </div>
+
+      <form method="POST" action="{% url 'help' %}" class="contact-support-form" id="contactForm">
+        {% csrf_token %}
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="contactName">Your Name <span class="required">*</span></label>
+            <input 
+              type="text" 
+              name="name" 
+              id="contactName" 
+              class="form-control" 
+              required 
+              placeholder="e.g. Alex Johnson"
+              value="{% if user.is_authenticated %}{{ user.username }}{% endif %}"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="contactEmail">Your Email Address <span class="required">*</span></label>
+            <input 
+              type="email" 
+              name="email" 
+              id="contactEmail" 
+              class="form-control" 
+              required 
+              placeholder="alex@example.com"
+              value="{% if user.is_authenticated %}{{ user.email }}{% endif %}"
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="contactSubject">Subject <span class="required">*</span></label>
+          <select name="subject" id="contactSubject" class="form-control" required>
+            <option value="General Inquiry">General Inquiry</option>
+            <option value="How to Use ReuseHub">How to Use ReuseHub</option>
+            <option value="Report a User">Report a User</option>
+            <option value="Technical Issue">Technical Problem / Bug</option>
+            <option value="Account Deactivation">Account Deactivation</option>
+            <option value="Platform Suggestion">Platform Suggestion / Idea</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="contactMessage">Your Message <span class="required">*</span></label>
+          <textarea 
+            name="message" 
+            id="contactMessage" 
+            class="form-control" 
+            rows="5" 
+            required 
+            placeholder="Please describe how we can assist you..."
+          ></textarea>
+        </div>
+
+        <div class="contact-form-actions">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            Send Message
+          </button>
+          <span class="contact-response-time">Average response time: within 24 hours</span>
+        </div>
+      </form>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // Helper to prefill contact form from problem reporting cards
+  function prefillContact(subject, messagePrefix) {
+    var subjectSelect = document.getElementById('contactSubject');
+    var messageBox = document.getElementById('contactMessage');
+    var contactSection = document.getElementById('contact-support');
+
+    if (subjectSelect) {
+      for (var i = 0; i < subjectSelect.options.length; i++) {
+        if (subjectSelect.options[i].value === subject || subjectSelect.options[i].text.indexOf(subject) !== -1) {
+          subjectSelect.selectedIndex = i;
+          break;
+        }
+      }
+    }
+
+    if (messageBox) {
+      messageBox.value = messagePrefix;
+      messageBox.focus();
+    }
+
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+</script>
+{% endblock %}

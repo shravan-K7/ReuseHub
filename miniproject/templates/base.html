@@ -1,0 +1,282 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>{% block title %}ReuseHub — Community Item Sharing & Reuse{% endblock %}</title>
+  <meta name="description" content="Pass on items you no longer need. Free items, repairable goods, and local community reuse.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/modal.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% if '/platform-admin' in request.path %}theme-admin{% else %}theme-user{% endif %}{% endblock %}" {% if user.is_authenticated %}data-current-user="{{ user.username }}"{% endif %}>
+
+  <!-- Navigation Bar (User vs. Admin Theme Aware) -->
+  {% block navbar %}
+    {% if '/platform-admin' in request.path %}
+      <!-- Admin Console Navbar (Dark Modern Slate) -->
+      <header class="navbar navbar-admin">
+        <div class="container navbar-inner">
+          <div class="admin-brand-wrap">
+            <a href="{% url 'admin_dashboard' %}" class="brand brand-admin">
+              <span class="brand-icon brand-icon-admin">RH</span>
+              <span class="brand-name">ReuseHub</span>
+              <span class="admin-console-pill">Admin Console</span>
+            </a>
+          </div>
+
+          <nav class="admin-main-nav">
+            <ul class="nav-links">
+              <li><a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">Dashboard</a></li>
+              <li><a href="{% url 'admin_listings' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_listings' %}active{% endif %}">Listings</a></li>
+              <li><a href="{% url 'admin_categories' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_categories' %}active{% endif %}">Categories</a></li>
+              <li>
+                <a href="{% url 'admin_reports' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_reports' %}active{% endif %}">
+                  Reports
+                  {% if pending_reports_count > 0 %}
+                    <span class="badge badge-flagged" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px;">{{ pending_reports_count }}</span>
+                  {% endif %}
+                </a>
+              </li>
+              <li><a href="{% url 'admin_users' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}">Members</a></li>
+            </ul>
+          </nav>
+
+          <div class="nav-actions">
+            <a href="{% url 'home' %}" class="btn btn-secondary btn-sm admin-exit-btn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              Public Site
+            </a>
+            <span class="admin-user-pill">
+              <span class="admin-status-dot"></span>
+              {{ user.username }}
+            </span>
+            <!-- Notification Bell Icon (Logged-In Users Only) -->
+            <a href="{% url 'notifications' %}" class="nav-bell-btn {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}" id="adminNotificationBell" title="Notifications" aria-label="Notifications">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <span class="nav-bell-badge admin-bell-badge" style="display: none;">0</span>
+              <span class="nav-bell-dot" style="display: none;"></span>
+            </a>
+            <a href="{% url 'logout' %}" class="btn btn-ghost btn-sm logout-trigger-btn" id="adminLogoutBtn" data-modal-target="#logoutConfirmModal">Log out</a>
+          </div>
+        </div>
+      </header>
+    {% else %}
+      <!-- Minimal Modern User Navbar (Warm Modern Neutral) -->
+      <header class="navbar navbar-user">
+        <div class="container navbar-inner">
+          <a href="{% url 'home' %}" class="brand brand-user">
+            <div class="brand-icon brand-icon-user">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            </div>
+            <span class="brand-name">ReuseHub</span>
+          </a>
+
+          <nav>
+            <ul class="nav-links">
+              <li><a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Explore</a></li>
+              <li><a href="{% url 'about' %}" class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">About</a></li>
+              <li><a href="{% url 'help' %}" class="nav-link {% if request.resolver_match.url_name == 'help' %}active{% endif %}">Help & Support</a></li>
+              {% if user.is_authenticated %}
+                <li><a href="{% url 'my_listings' %}" class="nav-link {% if request.resolver_match.url_name == 'my_listings' %}active{% endif %}">My Listings</a></li>
+                <li><a href="{% url 'my_requests' %}" class="nav-link {% if request.resolver_match.url_name == 'my_requests' %}active{% endif %}">My Requests</a></li>
+              {% endif %}
+              {% if user.is_staff %}
+                <li>
+                  <a href="{% url 'admin_dashboard' %}" class="nav-link nav-link-admin-switch">
+                    Admin Portal
+                    {% if pending_reports_count > 0 %}
+                      <span class="badge badge-flagged" style="font-size: 0.65rem; padding: 1px 5px; margin-left: 4px;">{{ pending_reports_count }}</span>
+                    {% endif %}
+                  </a>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+
+          <div class="nav-actions">
+            {% if user.is_authenticated %}
+              <a href="{% url 'item_create' %}" class="btn btn-primary btn-sm">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Give an Item
+              </a>
+              <a href="{% url 'profile' %}" class="btn btn-secondary btn-sm user-profile-btn">{{ user.username }}</a>
+              <!-- Notification Bell Icon (Logged-In Users Only) -->
+              <a href="{% url 'notifications' %}" class="nav-bell-btn {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}" id="navNotificationBell" title="Notifications" aria-label="Notifications">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span class="nav-bell-badge" id="navNotificationBadge" style="display: none;">0</span>
+                <span class="nav-bell-dot" id="navNotificationDot" style="display: none;"></span>
+              </a>
+              <a href="{% url 'logout' %}" class="btn btn-ghost btn-sm logout-trigger-btn" id="navLogoutBtn" data-modal-target="#logoutConfirmModal">Log out</a>
+            {% else %}
+              <a href="{% url 'login' %}" class="btn btn-secondary btn-sm">Sign in</a>
+              <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Join</a>
+            {% endif %}
+          </div>
+        </div>
+      </header>
+    {% endif %}
+  {% endblock %}
+
+  <!-- Flash Notification Messages (Floating Toast Popups) -->
+  {% if messages %}
+    <div class="messages-container" id="toastContainer" aria-live="polite">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-toast" role="alert">
+          <div class="alert-content">
+            <span class="alert-icon">
+              {% if message.tags == 'success' %}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              {% elif message.tags == 'warning' %}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              {% elif message.tags == 'error' %}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+              {% else %}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              {% endif %}
+            </span>
+            <span class="alert-message">{{ message }}</span>
+          </div>
+          <button type="button" class="alert-close" onclick="dismissToast(this)" aria-label="Close">&times;</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Main View Content -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer (User vs. Admin Theme Aware) -->
+  {% if '/platform-admin' in request.path %}
+    <footer class="footer footer-admin">
+      <div class="container footer-admin-inner">
+        <div class="footer-admin-status">
+          <span class="status-indicator"></span>
+          <span>ReuseHub Administration Console &bull; All Systems Operational</span>
+        </div>
+        <div class="footer-admin-links">
+          <a href="{% url 'admin_dashboard' %}">Dashboard</a>
+          <a href="{% url 'admin_listings' %}">Listings</a>
+          <a href="{% url 'admin_categories' %}">Categories</a>
+          <a href="{% url 'admin_reports' %}">Reports</a>
+          <a href="{% url 'admin:index' %}" target="_blank">Django Admin</a>
+          <a href="{% url 'home' %}">Exit to Public Site &rarr;</a>
+        </div>
+      </div>
+    </footer>
+  {% else %}
+    <footer class="footer footer-user">
+      <div class="container footer-inner">
+        <div>
+          <div class="footer-brand">
+            <span class="footer-logo">ReuseHub</span>
+            <span class="footer-tagline">&bull; Community Item Exchange</span>
+          </div>
+          <p class="footer-desc">A non-profit community platform empowering neighbors to give unused belongings a second life, promote repair over waste, and keep landfills empty.</p>
+        </div>
+        <div class="footer-links">
+          <a href="{% url 'home' %}">Browse Items</a>
+          <a href="{% url 'about' %}">About Us</a>
+          <a href="{% url 'help' %}">Help & Support</a>
+          <a href="{% url 'item_create' %}">Share Item</a>
+          {% if user.is_staff %}
+            <a href="{% url 'admin_dashboard' %}">Admin Console</a>
+          {% endif %}
+        </div>
+      </div>
+    </footer>
+  {% endif %}
+
+  <!-- Real-Time Form Validation Engine -->
+  <script src="{% static 'js/form_validation.js' %}"></script>
+
+  <!-- Real-Time Notification Engine -->
+  {% if user.is_authenticated and server_notification_data %}
+    {{ server_notification_data|json_script:"serverNotificationData" }}
+  {% endif %}
+  <script src="{% static 'js/notifications.js' %}"></script>
+
+  <!-- Interactive Confirmation Modal Engine -->
+  <script src="{% static 'js/modal.js' %}"></script>
+
+  <!-- Logout Confirmation Modal (Global for Logged-In Users) -->
+  {% if user.is_authenticated %}
+    <div class="modal-backdrop" id="logoutConfirmModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <div class="modal-title-wrap">
+              <div class="modal-icon-badge modal-icon-badge-logout">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+              </div>
+              <h3 class="modal-title" id="logoutModalTitle">Log Out of ReuseHub</h3>
+            </div>
+            <button type="button" class="modal-close-btn" data-modal-close aria-label="Close dialog">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p style="margin: 0 0 8px 0; color: var(--text-main); font-weight: 500;">
+              Are you sure you want to end your session, <strong>{{ user.username }}</strong>?
+            </p>
+            <p class="modal-subtext" style="margin: 0;">
+              You will need to sign back in to pass on items, manage collection requests, or access your account.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-modal-close>Cancel</button>
+            <a href="{% url 'logout' %}" class="btn btn-primary btn-sm" id="confirmLogoutActionBtn">
+              Yes, Log Out
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% block extra_js %}{% endblock %}
+
+  <script>
+    // Smooth manual toast dismissal
+    function dismissToast(btn) {
+      var toast = btn.closest('.alert');
+      if (toast) {
+        toast.classList.add('alert-closing');
+        setTimeout(function() {
+          toast.remove();
+        }, 220);
+      }
+    }
+
+    // Auto-remove toast alerts after 4-second animation ends
+    document.addEventListener('DOMContentLoaded', function() {
+      var toasts = document.querySelectorAll('.alert-toast');
+      toasts.forEach(function(toast) {
+        toast.addEventListener('animationend', function() {
+          toast.remove();
+        });
+        setTimeout(function() {
+          if (toast && toast.parentNode) {
+            toast.remove();
+          }
+        }, 4100);
+      });
+    });
+  </script>
+</body>
+</html>

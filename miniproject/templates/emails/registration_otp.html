@@ -1,0 +1,28 @@
+{% extends "emails/base_email.html" %}
+
+{% block email_title %}Your ReuseHub Verification Code{% endblock %}
+
+{% block email_content %}
+  <h2 class="greeting">Welcome to the ReuseHub Community! 👋</h2>
+  
+  <p class="lead-text">
+    Hello <strong>{{ username }}</strong>, thank you for joining ReuseHub! We are on a mission to keep useful goods circulating among neighbors and out of landfills.
+  </p>
+
+  <p style="font-size: 14px; color: #475569; margin-bottom: 8px;">
+    To verify your email address and activate your community account, please enter the temporary verification code below into your registration screen:
+  </p>
+
+  <div class="otp-container">
+    <div class="otp-code">{{ otp_code }}</div>
+    <div class="otp-meta">Expires in {{ validity_minutes|default:15 }} minutes &bull; Single-use verification code</div>
+  </div>
+
+  <div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 14px; margin: 20px 0; font-size: 13px; color: #92400e;">
+    <strong>🔒 Security Notice:</strong> ReuseHub team members will never ask for your verification code. Never share this code with anyone. If you did not sign up for ReuseHub, please ignore this email.
+  </div>
+
+  <p style="font-size: 13px; color: #64748b; margin-top: 24px;">
+    Once verified, your account will be activated and you can immediately begin listing pre-loved belongings and requesting items from your neighborhood!
+  </p>
+{% endblock %}

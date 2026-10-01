@@ -1,0 +1,236 @@
+/* ==============================================================================
+   ReuseHub - Interactive Confirmation Modals
+   Compatible with Bootstrap-style conventions and ReuseHub Modern Design System
+   ============================================================================== */
+
+/* Modal Backdrop / Overlay */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-backdrop.show,
+.modal-backdrop.is-active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Modal Dialog Frame */
+.modal-dialog {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  margin: auto;
+  pointer-events: auto;
+  background: #ffffff;
+  border-radius: var(--radius-lg, 12px);
+  border: 1px solid var(--border-color, #e5e4de);
+  box-shadow: 0 24px 48px -8px rgba(0, 0, 0, 0.28), 0 12px 24px -4px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  transform: scale(0.94) translateY(8px);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-backdrop.show .modal-dialog,
+.modal-backdrop.is-active .modal-dialog {
+  transform: scale(1) translateY(0);
+}
+
+/* Modal Content Card */
+.modal-content {
+  background: #ffffff;
+  border-radius: inherit;
+  border: none;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Modal Header */
+.modal-header {
+  padding: 18px 22px 14px;
+  background: #ffffff;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-light, #f2f1ec);
+}
+
+.modal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-icon-badge {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modal-icon-badge-logout {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.modal-icon-badge-danger {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: var(--text-main, #18181b);
+  letter-spacing: -0.01em;
+}
+
+/* Close Button (X) */
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #71717a);
+  font-size: 1.3rem;
+  line-height: 1;
+  padding: 4px;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.modal-close-btn:hover {
+  background: var(--bg-subtle, #f3f2ee);
+  color: var(--text-main, #18181b);
+}
+
+/* Modal Body */
+.modal-body {
+  padding: 20px 22px;
+  background: #ffffff;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--text-secondary, #52525b);
+}
+
+.modal-body .form-group {
+  margin-bottom: 16px;
+}
+
+.modal-body .form-label {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-main, #18181b);
+  margin-bottom: 6px;
+}
+
+.modal-body .form-control,
+.modal-body select,
+.modal-body textarea,
+.modal-body input[type="text"] {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: var(--text-main, #18181b);
+  background-color: #ffffff;
+  border: 1px solid #d4d4d8;
+  border-radius: var(--radius-sm, 6px);
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.modal-body .form-control:focus,
+.modal-body select:focus,
+.modal-body textarea:focus,
+.modal-body input[type="text"]:focus {
+  outline: none;
+  border-color: #1e3a2b;
+  box-shadow: 0 0 0 3px rgba(30, 58, 43, 0.12);
+}
+
+.modal-body textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.modal-body .form-help {
+  font-size: 0.775rem;
+  color: var(--text-muted, #71717a);
+  margin-top: 5px;
+}
+
+.modal-body p {
+  margin: 0 0 10px;
+}
+
+.modal-body p:last-child {
+  margin-bottom: 0;
+}
+
+.modal-body strong {
+  color: var(--text-main, #18181b);
+  font-weight: 600;
+}
+
+.modal-subtext {
+  font-size: 0.85rem;
+  color: var(--text-muted, #71717a);
+}
+
+/* Modal Footer */
+.modal-footer {
+  padding: 14px 22px 18px;
+  background: var(--bg-subtle, #f8f8f6);
+  border-top: 1px solid var(--border-light, #f2f1ec);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Button overrides inside modal for precision */
+.modal-footer .btn {
+  padding: 8px 16px;
+  font-size: 0.86rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+}
+
+/* Prevent body scroll when modal active */
+body.modal-open {
+  overflow: hidden !important;
+  touch-action: none;
+}

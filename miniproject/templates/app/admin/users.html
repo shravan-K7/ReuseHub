@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Users — ReuseHub Admin{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/users.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container admin-users-container">
+  
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">Manage Community Members</h1>
+      <p class="admin-subtitle">
+        Monitor user activity, handle accounts, and maintain community safety.
+      </p>
+    </div>
+  </div>
+
+  <!-- Admin Sub-Navigation -->
+  <nav class="admin-nav">
+    <a href="{% url 'admin_dashboard' %}" class="admin-nav-item">Dashboard Overview</a>
+    <a href="{% url 'admin_listings' %}" class="admin-nav-item">Moderate Listings</a>
+    <a href="{% url 'admin_categories' %}" class="admin-nav-item">Categories</a>
+    <a href="{% url 'admin_reports' %}" class="admin-nav-item">Reports</a>
+    <a href="{% url 'admin_users' %}" class="admin-nav-item active">Users & Members</a>
+  </nav>
+
+  <!-- Search Filter -->
+  <div style="margin-bottom: 20px;">
+    <form method="GET" style="display: flex; gap: 8px; max-width: 400px;">
+      <input type="text" name="q" value="{{ query }}" placeholder="Search username or email..." class="form-input">
+      <button type="submit" class="btn btn-secondary">Search</button>
+    </form>
+  </div>
+
+  <!-- Users Table -->
+  <div class="data-table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Items Listed</th>
+          <th>Requests Made</th>
+          <th>Joined</th>
+          <th>Status</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <a href="{% url 'public_profile' username=u.username %}" style="font-weight: 700; color: var(--text-main); text-decoration: none;" title="View public profile">
+                  {{ u.username }}
+                </a>
+                {% if u.profile.is_verified or u.is_staff %}
+                  <span title="Verified Member" style="color: #0284c7; display: inline-flex;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  </span>
+                {% endif %}
+              </div>
+              {% if u.first_name %}<span style="color: var(--text-muted); font-size: 0.8rem;"> ({{ u.first_name }} {{ u.last_name }})</span>{% endif %}
+            </td>
+            <td style="color: var(--text-secondary); font-size: 0.85rem;">{{ u.email|default:"None" }}</td>
+            <td>
+              {% if u.is_superuser %}
+                <span class="badge" style="background: #e0e7ff; color: #3730a3;">Superuser</span>
+              {% elif u.is_staff %}
+                <span class="badge" style="background: #f1f5f9; color: #0f172a;">Moderator</span>
+              {% else %}
+                <span class="badge badge-given">Member</span>
+              {% endif %}
+            </td>
+            <td><strong>{{ u.items_listed }}</strong></td>
+            <td>{{ u.requests_count }}</td>
+            <td style="color: var(--text-muted); font-size: 0.8rem;">{{ u.date_joined|date:"M d, Y" }}</td>
+            <td>
+              {% if u.is_active %}
+                <span class="badge badge-available">Active</span>
+              {% else %}
+                <span class="badge badge-flagged">Deactivated</span>
+              {% endif %}
+            </td>
+            <td style="text-align: right;">
+              <div style="display: inline-flex; gap: 6px; align-items: center;">
+                <a href="{% url 'public_profile' username=u.username %}" class="btn btn-ghost btn-sm" style="padding: 3px 6px; font-size: 0.72rem;">
+                  Profile
+                </a>
+                <a href="{% url 'admin_user_toggle_verification' pk=u.pk %}" class="btn btn-secondary btn-sm" style="padding: 3px 6px; font-size: 0.72rem;" title="Toggle community verification indicator">
+                  {% if u.profile.is_verified %}Unverify{% else %}Verify{% endif %}
+                </a>
+                {% if u != request.user %}
+                  <a href="{% url 'admin_user_toggle_status' pk=u.pk %}" class="btn btn-secondary btn-sm" style="padding: 3px 6px; font-size: 0.72rem;">
+                    {% if u.is_active %}Deactivate{% else %}Activate{% endif %}
+                  </a>
+                {% else %}
+                  <span style="color: var(--text-muted); font-size: 0.75rem;">You</span>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">No users found.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}

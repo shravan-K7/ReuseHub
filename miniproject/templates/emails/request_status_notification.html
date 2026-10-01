@@ -1,0 +1,86 @@
+{% extends "emails/base_email.html" %}
+
+{% block email_title %}Update on your ReuseHub Request: {{ item.title }}{% endblock %}
+
+{% block email_content %}
+  {% if action == 'accept' %}
+    <div style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+      <span class="badge badge-success" style="margin-bottom: 6px;">Request Accepted</span>
+      <h2 style="color: #065f46; font-size: 20px; font-weight: 800; margin: 4px 0 0;">
+        Great news! Your request was accepted by {{ item.donor.username }}! 🎉
+      </h2>
+    </div>
+
+    <p class="lead-text">
+      Hello <strong>{{ requester.username }}</strong>, the donor has approved your request to receive <strong>{{ item.title }}</strong>!
+    </p>
+
+    <div class="info-card">
+      <div class="info-label">Pickup & Item Details</div>
+      <p class="info-value" style="margin-bottom: 6px;">{{ item.title }}</p>
+      <div style="font-size: 13px; color: #475569;">
+        📍 Pickup Location: <strong>{{ item.pickup_location }}</strong><br>
+        👤 Donor: <strong>{{ item.donor.username }}</strong>
+      </div>
+      {% if donor_notes %}
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e2e8f0; font-size: 13px; color: #334155;">
+          <strong>Donor Notes:</strong> "{{ donor_notes }}"
+        </div>
+      {% endif %}
+    </div>
+
+    <p style="font-size: 14px; color: #475569;">
+      Please proceed to arrange collection at a mutually agreed and safe community pickup spot.
+    </p>
+
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="{{ action_url }}" class="btn-primary">View Request Details</a>
+    </div>
+
+  {% elif action == 'complete' %}
+    <div style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+      <span class="badge badge-success" style="margin-bottom: 6px;">Exchange Completed</span>
+      <h2 style="color: #065f46; font-size: 20px; font-weight: 800; margin: 4px 0 0;">
+        Item Collection Completed! 🌟
+      </h2>
+    </div>
+
+    <p class="lead-text">
+      Hello <strong>{{ requester.username }}</strong>, the exchange for <strong>{{ item.title }}</strong> has been marked as collected and completed!
+    </p>
+
+    <p style="font-size: 14px; color: #475569;">
+      How was your experience with {{ item.donor.username }}? Community ratings help keep ReuseHub friendly, safe, and trustworthy.
+    </p>
+
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="{{ review_url|default:action_url }}" class="btn-primary">Leave a Community Review</a>
+    </div>
+
+  {% else %}
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+      <span class="badge badge-warning" style="margin-bottom: 6px;">Request Update</span>
+      <h2 style="color: #334155; font-size: 18px; font-weight: 700; margin: 4px 0 0;">
+        Update on your request for {{ item.title }}
+      </h2>
+    </div>
+
+    <p class="lead-text">
+      Hello <strong>{{ requester.username }}</strong>, thank you for your interest in <strong>{{ item.title }}</strong>.
+    </p>
+
+    <p style="font-size: 14px; color: #475569;">
+      The donor was unable to fulfill your request at this time. Often items have multiple interested neighbors or circumstances change.
+    </p>
+
+    <div style="background-color: #f8fafc; border-radius: 8px; padding: 16px; margin: 20px 0;">
+      <div style="font-size: 13px; font-weight: 600; color: #475569;">
+        Don't worry — there are plenty of other items waiting for a new home!
+      </div>
+    </div>
+
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="{{ site_url|default:'/' }}" class="btn-primary">Browse Available Items</a>
+    </div>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,16 @@
+# Core Web Framework
+Django==6.1.1
+
+# Image Handling for Listing Photos
+Pillow==12.3.0
+
+# Environment Configuration
+python-dotenv==1.2.3
+
+# PostgreSQL Database Adapter
+psycopg2-binary==2.9.13
+
+# Dependencies & Utilities
+asgiref==3.12.1
+sqlparse==0.6.0
+tzdata==2026.4

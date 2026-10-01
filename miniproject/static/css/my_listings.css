@@ -1,0 +1,97 @@
+/* ==============================================================================
+   ReuseHub - My Listings Stylesheet (my_listings.css)
+   Target: my_listings.html
+   Aesthetic: Intuitive donor inventory dashboard with live status indicators
+   ============================================================================== */
+
+.my-listings-container {
+  padding-top: 36px;
+  padding-bottom: 72px;
+}
+
+.my-listings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.my-listings-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.my-listings-desc {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.status-tabs-strip {
+  margin-bottom: 24px;
+}
+
+/* Listings Table Specifics */
+.listing-item-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.listing-thumb-img {
+  width: 48px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.listing-thumb-placeholder {
+  width: 48px;
+  height: 40px;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.725rem;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+}
+
+.listing-link-title {
+  font-weight: 600;
+  color: var(--text-main);
+  transition: color 0.15s ease;
+}
+
+.listing-link-title:hover {
+  color: #166534;
+}
+
+.requests-count-badge {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.table-actions-group {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.table-actions-group .btn {
+  padding: 4px 10px;
+  font-size: 0.775rem;
+}
+
+@media (max-width: 768px) {
+  .my-listings-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

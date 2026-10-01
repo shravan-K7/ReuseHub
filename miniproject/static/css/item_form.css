@@ -1,0 +1,397 @@
+/* ==============================================================================
+   ReuseHub - Item Form Stylesheet (item_form.css)
+   Target: item_form.html (Create / Edit Item)
+   Aesthetic: Intuitive listing builder with guided inputs and photo previews
+   ============================================================================== */
+
+.item-form-container {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 40px 20px 72px;
+}
+
+.item-form-header {
+  margin-bottom: 28px;
+}
+
+.item-form-title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin-top: 14px;
+  margin-bottom: 6px;
+  color: var(--text-main);
+}
+
+.item-form-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.item-form-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+.form-grid-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Repairable Section Card */
+.repairable-toggle-panel {
+  background-color: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  margin-bottom: 24px;
+  transition: all 0.2s ease;
+}
+
+.repairable-toggle-panel:hover {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.repairable-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.925rem;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.repairable-help-text {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-left: 26px;
+  margin-top: 4px;
+  margin-bottom: 14px;
+  line-height: 1.4;
+}
+
+.repair-details-group {
+  margin-left: 26px;
+  margin-bottom: 0;
+}
+
+/* Image Upload Container */
+.image-preview-box {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.image-preview-thumb {
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ==============================================================================
+   Nominatim Location Search & Autocomplete Styles
+   ============================================================================== */
+.location-locate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.775rem;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.location-locate-btn:hover {
+  transform: translateY(-1px);
+}
+
+.location-search-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.location-input-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.location-input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  z-index: 2;
+}
+
+.location-input-box .form-input {
+  padding-left: 36px;
+  padding-right: 64px;
+  width: 100%;
+}
+
+.location-clear-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+  z-index: 2;
+}
+
+.location-clear-btn:hover {
+  color: var(--text-main);
+  background-color: var(--bg-subtle);
+}
+
+.location-spinner-icon {
+  position: absolute;
+  right: 36px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: locationSpin 0.7s linear infinite;
+  z-index: 2;
+}
+
+.inline-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: locationSpin 0.7s linear infinite;
+}
+
+@keyframes locationSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Autocomplete Dropdown List */
+.location-suggestions-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 100;
+  animation: fadeInDrop 0.15s ease-out;
+}
+
+@keyframes fadeInDrop {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.suggestions-list {
+  padding: 4px 0;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-light);
+  transition: background-color 0.12s ease;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover,
+.suggestion-item.active {
+  background-color: var(--bg-subtle);
+}
+
+.suggestion-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background-color: #f0fdf4;
+  color: #166534;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.suggestion-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.suggestion-main {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+  line-height: 1.25;
+}
+
+.suggestion-sub {
+  font-size: 0.775rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.suggestion-coords {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.suggestion-empty {
+  padding: 18px 16px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.suggestions-footer {
+  padding: 6px 14px;
+  font-size: 0.725rem;
+  color: var(--text-muted);
+  background-color: var(--bg-subtle);
+  border-top: 1px solid var(--border-light);
+  text-align: right;
+}
+
+/* Confirmed Location Coordinates Card */
+.selected-location-card {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-md);
+  animation: fadeInDrop 0.2s ease-out;
+}
+
+.selected-location-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #dcfce7;
+  color: #15803d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.selected-location-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.selected-place-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #14532d;
+  line-height: 1.3;
+}
+
+.selected-coords-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  color: #166534;
+  margin-top: 2px;
+}
+
+.selected-location-remove {
+  background: none;
+  border: none;
+  color: #15803d;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.selected-location-remove:hover {
+  background-color: #dcfce7;
+  color: #b91c1c;
+}
+
+/* Form Actions Bottom Bar */
+.form-actions-bar {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 28px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 20px;
+}
+
+@media (max-width: 600px) {
+  .item-form-container {
+    padding: 24px 16px 48px;
+  }
+  .item-form-card {
+    padding: 20px 16px;
+  }
+  .form-grid-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .location-suggestions-dropdown {
+    max-height: 260px;
+  }
+  .suggestion-coords {
+    display: none;
+  }
+}

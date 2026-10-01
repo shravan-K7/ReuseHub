@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Report User @{{ target_user.username }} — ReuseHub{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/report_form.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container report-container">
+  
+  <div class="report-header">
+    <a href="{% url 'public_profile' username=target_user.username %}" class="btn btn-ghost btn-sm" style="padding-left: 0;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      Cancel & Return to Profile
+    </a>
+    <h1 class="report-title">Report User Profile</h1>
+    <p class="report-subtitle">
+      Help maintain a safe, welcoming, respectful, and strictly free community by reporting policy violations or rude behavior.
+    </p>
+  </div>
+
+  <div class="action-card report-card">
+    <div style="padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--border-color);">
+      <p style="font-size: 0.85rem; color: var(--text-muted);">Reporting community member:</p>
+      <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-main);">@{{ target_user.username }}</h3>
+      <p style="font-size: 0.8rem; color: var(--text-secondary);">Member since {{ target_user.date_joined|date:"F Y" }}</p>
+    </div>
+
+    <form method="POST">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label" for="{{ form.reason.id_for_label }}">Reason for Report *</label>
+        {{ form.reason }}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="{{ form.details.id_for_label }}">Incident Details *</label>
+        {{ form.details }}
+        <div class="form-help">Please describe what happened (e.g. asking for payment, aggressive messages, no-show).</div>
+      </div>
+
+      <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
+        <a href="{% url 'public_profile' username=target_user.username %}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-danger">Submit Report to Moderators</button>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

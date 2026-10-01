@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Verify Email Address — ReuseHub{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/register.css' %}">
+  <style>
+    .otp-card {
+      max-width: 480px;
+      margin: 40px auto;
+      text-align: center;
+    }
+    .otp-icon-wrap {
+      width: 64px;
+      height: 64px;
+      background: #ecfdf5;
+      color: #059669;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+    }
+    .otp-code-input {
+      font-size: 28px !important;
+      letter-spacing: 12px !important;
+      text-align: center !important;
+      font-weight: 800 !important;
+      font-family: 'Courier New', Courier, monospace !important;
+      padding: 14px 10px !important;
+      border: 2px solid #cbd5e1 !important;
+      border-radius: 10px !important;
+      transition: all 0.2s ease !important;
+      color: #0f172a !important;
+      background: #f8fafc !important;
+    }
+    .otp-code-input:focus {
+      border-color: #10b981 !important;
+      background: #ffffff !important;
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15) !important;
+    }
+    .email-highlight {
+      font-weight: 700;
+      color: #0f172a;
+      background: #f1f5f9;
+      padding: 2px 8px;
+      border-radius: 6px;
+      word-break: break-all;
+    }
+    .resend-box {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 14px;
+      color: #64748b;
+    }
+    .btn-resend {
+      background: none;
+      border: none;
+      color: #059669;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+      font-size: 14px;
+    }
+    .btn-resend:disabled {
+      color: #94a3b8;
+      cursor: not-allowed;
+      text-decoration: none;
+    }
+    .timer-text {
+      font-weight: 600;
+      color: #475569;
+    }
+    .security-callout {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 18px 0;
+      font-size: 12px;
+      color: #64748b;
+      text-align: left;
+      line-height: 1.5;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="container register-container">
+  <div class="action-card otp-card">
+    <div class="otp-icon-wrap">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+        <polyline points="22,6 12,13 2,6"></polyline>
+      </svg>
+    </div>
+
+    <h1 class="register-title" style="margin-bottom: 8px;">Verify Your Email</h1>
+    <p class="register-subtitle" style="margin-bottom: 20px;">
+      We sent a 6-digit verification code from <strong>{{ central_sender|default:"reusehub.support@gmail.com" }}</strong> to:
+      <br>
+      <span class="email-highlight">{{ email }}</span>
+    </p>
+
+    <div class="security-callout">
+      <strong style="color: #334155;">Why verification?</strong> Email validation checks that the address format is legitimate, while this One-Time Password confirms that you own the inbox. If the email was mistyped or doesn't exist, the code won't arrive and the account remains safely unverified.
+    </div>
+
+    <form method="POST" class="register-form" id="otpForm" novalidate>
+      {% csrf_token %}
+
+      <div class="form-group" style="text-align: left;">
+        <label class="form-label" for="{{ form.otp.id_for_label }}" style="text-align: center; display: block; font-weight: 700;">
+          Enter 6-Digit OTP Code
+        </label>
+        {{ form.otp }}
+        {% if form.otp.errors %}
+          <div class="form-help form-error-msg" style="text-align: center; font-weight: 600;">
+            {{ form.otp.errors.0 }}
+          </div>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="btn btn-primary register-submit-btn" style="margin-top: 16px;">
+        Verify & Activate Account
+      </button>
+    </form>
+
+    <div class="resend-box">
+      <form method="POST" action="{% url 'resend_otp' %}" id="resendForm" style="display: inline;">
+        {% csrf_token %}
+        <p style="margin: 0 0 6px;">Didn't receive the email? Check your spam/junk folder or</p>
+        <button type="submit" id="resendBtn" class="btn-resend" disabled>
+          Resend Verification Code
+        </button>
+        <span id="countdownWrap" class="timer-text" style="display: inline;"> (in <span id="timerCount">60</span>s)</span>
+      </form>
+    </div>
+
+    <div style="margin-top: 20px; font-size: 13px;">
+      Mistyped your email? <a href="{% url 'register' %}" class="register-link" style="color: #059669; font-weight: 600;">Start registration over</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Resend OTP countdown timer
+  (function() {
+    var seconds = 60;
+    var timerCount = document.getElementById('timerCount');
+    var countdownWrap = document.getElementById('countdownWrap');
+    var resendBtn = document.getElementById('resendBtn');
+
+    var interval = setInterval(function() {
+      seconds--;
+      if (timerCount) timerCount.textContent = seconds;
+      if (seconds <= 0) {
+        clearInterval(interval);
+        if (countdownWrap) countdownWrap.style.display = 'none';
+        if (resendBtn) {
+          resendBtn.disabled = false;
+          resendBtn.textContent = 'Resend Verification Code';
+        }
+      }
+    }, 1000);
+
+    // Auto-focus OTP input and clean non-digit chars
+    var otpInput = document.querySelector('.otp-code-input');
+    if (otpInput) {
+      otpInput.addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+        if (this.value.length === 6) {
+          // Auto submit after small delay for seamless UX
+          setTimeout(function() {
+            document.getElementById('otpForm').submit();
+          }, 300);
+        }
+      });
+    }
+  })();
+</script>
+{% endblock %}

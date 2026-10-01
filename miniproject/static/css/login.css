@@ -1,0 +1,126 @@
+/* ==============================================================================
+   ReuseHub - Sign In Stylesheet (login.css)
+   Target: login.html
+   Aesthetic: Clean minimalist auth portal with refined typography and subtle depth
+   ============================================================================== */
+
+.auth-container {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 64px 20px 88px;
+}
+
+.auth-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 36px 32px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+  transition: box-shadow 0.2s ease;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.auth-brand-badge {
+  width: 44px;
+  height: 44px;
+  background-color: var(--primary);
+  color: #ffffff;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0 auto 16px;
+  box-shadow: 0 4px 10px rgba(24, 24, 27, 0.15);
+}
+
+.auth-title {
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.auth-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.auth-form .form-group {
+  margin-bottom: 20px;
+}
+
+.auth-form .form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.auth-form .form-input {
+  width: 100%;
+  padding: 11px 14px;
+  font-size: 0.925rem;
+  color: var(--text-main);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-form .form-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+  outline: none;
+}
+
+.auth-form .password-input-wrap .form-input {
+  padding-right: 44px !important;
+}
+
+.auth-submit-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-top: 10px;
+  letter-spacing: -0.01em;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-light);
+  padding-top: 20px;
+}
+
+.auth-link {
+  font-weight: 600;
+  color: var(--text-main);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+
+.auth-link:hover {
+  color: #166534;
+}
+
+@media (max-width: 480px) {
+  .auth-container {
+    padding: 40px 16px 60px;
+  }
+  .auth-card {
+    padding: 24px 20px;
+  }
+}

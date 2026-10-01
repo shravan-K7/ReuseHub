@@ -1,0 +1,27 @@
+{% extends "emails/base_email.html" %}
+
+{% block email_title %}Item Status Update: {{ item.title }}{% endblock %}
+
+{% block email_content %}
+  <h2 class="greeting">Item Status Update 📦</h2>
+
+  <p class="lead-text">
+    Hello <strong>{{ user.username }}</strong>, here is an update regarding <strong>{{ item.title }}</strong> on ReuseHub.
+  </p>
+
+  <div class="info-card">
+    <div class="info-label">New Status</div>
+    <p class="info-value">
+      <span class="badge {% if item.status == 'AVAILABLE' %}badge-success{% elif item.status == 'GIVEN_AWAY' %}badge-success{% else %}badge-warning{% endif %}">
+        {{ item.get_status_display }}
+      </span>
+    </p>
+    <p style="margin: 10px 0 0; font-size: 14px; color: #475569;">
+      {{ status_message|default:"The listing status has been updated in our circular exchange catalog." }}
+    </p>
+  </div>
+
+  <div style="text-align: center; margin: 24px 0;">
+    <a href="{{ action_url }}" class="btn-primary">View Listing Details</a>
+  </div>
+{% endblock %}

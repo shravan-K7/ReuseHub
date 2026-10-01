@@ -1,0 +1,51 @@
+/* ==============================================================================
+   ReuseHub - My Requests Stylesheet (my_requests.css)
+   Target: my_requests.html
+   Aesthetic: Clean request tracker for community items
+   ============================================================================== */
+
+.my-requests-container {
+  padding-top: 36px;
+  padding-bottom: 72px;
+}
+
+.my-requests-header {
+  margin-bottom: 26px;
+}
+
+.my-requests-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.my-requests-desc {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.request-item-link {
+  font-weight: 600;
+  color: var(--text-main);
+  transition: color 0.15s ease;
+}
+
+.request-item-link:hover {
+  color: #166534;
+}
+
+.request-message-snippet {
+  max-width: 260px;
+  font-size: 0.825rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.request-date-cell {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}

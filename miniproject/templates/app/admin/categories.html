@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Organize Categories — ReuseHub Admin{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/categories.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container admin-categories-container">
+  
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">Organize Item Categories</h1>
+      <p class="admin-subtitle">
+        Group and organize community listings to make browsing simple and intuitive.
+      </p>
+    </div>
+  </div>
+
+  <!-- Admin Sub-Navigation -->
+  <nav class="admin-nav">
+    <a href="{% url 'admin_dashboard' %}" class="admin-nav-item">Dashboard Overview</a>
+    <a href="{% url 'admin_listings' %}" class="admin-nav-item">Moderate Listings</a>
+    <a href="{% url 'admin_categories' %}" class="admin-nav-item active">Categories</a>
+    <a href="{% url 'admin_reports' %}" class="admin-nav-item">Reports</a>
+    <a href="{% url 'admin_users' %}" class="admin-nav-item">Users & Members</a>
+  </nav>
+
+  <div style="display: grid; grid-template-columns: 1fr 340px; gap: 32px; align-items: start;">
+    
+    <!-- Category List Table -->
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Category Name</th>
+            <th>Slug</th>
+            <th>Items Count</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cat in categories %}
+            <tr>
+              <td>
+                <strong>{{ cat.name }}</strong>
+                {% if cat.description %}
+                  <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">{{ cat.description }}</p>
+                {% endif %}
+              </td>
+              <td style="color: var(--text-secondary); font-family: var(--font-mono); font-size: 0.8rem;">{{ cat.slug }}</td>
+              <td><strong>{{ cat.item_count }}</strong> items</td>
+              <td style="text-align: right;">
+                <a href="{% url 'admin_category_delete' pk=cat.pk %}" onclick="return confirm('Delete this category?');" class="btn btn-danger btn-sm" style="padding: 3px 8px; font-size: 0.75rem;">
+                  Delete
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px;">No categories created yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Create Category Form Card -->
+    <div class="action-card">
+      <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 12px;">Add New Category</h3>
+      <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label" for="{{ form.name.id_for_label }}">Category Name *</label>
+          {{ form.name }}
+          {% if form.name.errors %}<div class="form-help" style="color: #b91c1c;">{{ form.name.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
+          {{ form.description }}
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+          Create Category
+        </button>
+      </form>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

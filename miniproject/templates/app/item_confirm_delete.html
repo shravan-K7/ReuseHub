@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Listing — ReuseHub{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/item_confirm_delete.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container delete-confirm-container">
+  <div class="action-card delete-confirm-card">
+    <div class="delete-warning-icon">⚠️</div>
+    <h1 class="delete-confirm-title">Delete Listing?</h1>
+    <p class="delete-confirm-desc">
+      Are you sure you want to remove <strong>"{{ item.title }}"</strong>? This action cannot be undone.
+    </p>
+
+    <form method="POST">
+      {% csrf_token %}
+      <div class="delete-actions-group">
+        <a href="{% url 'item_detail' pk=item.pk %}" class="btn btn-secondary">Keep Listing</a>
+        <button type="submit" class="btn btn-danger">Confirm Delete</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

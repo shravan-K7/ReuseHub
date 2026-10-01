@@ -1,0 +1,8 @@
+{
+  "include": [
+    "miniproject"
+  ],
+  "extraPaths": [
+    "miniproject"
+  ]
+}

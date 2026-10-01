@@ -1,0 +1,59 @@
+/* ==============================================================================
+   ReuseHub - Organize Categories Stylesheet (categories.css)
+   Target: admin/categories.html
+   Aesthetic: Taxonomy management layout with streamlined creation panel
+   ============================================================================== */
+
+.admin-categories-container {
+  padding-top: 36px;
+  padding-bottom: 72px;
+}
+
+.categories-manager-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 32px;
+  align-items: start;
+}
+
+.category-slug-badge {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  background-color: var(--bg-subtle);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.category-items-count {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.add-category-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 84px;
+}
+
+.add-category-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--text-main);
+}
+
+@media (max-width: 860px) {
+  .categories-manager-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .add-category-card {
+    position: static;
+  }
+}

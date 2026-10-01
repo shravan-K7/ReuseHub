@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Requests — ReuseHub{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/my_requests.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container my-requests-container">
+  
+  <div class="my-requests-header">
+    <h1 class="my-requests-title">My Item Requests</h1>
+    <p class="my-requests-desc">
+      Track the status of items you have requested from fellow community members.
+    </p>
+  </div>
+
+  {% if requests %}
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Donor</th>
+            <th>Pickup Location</th>
+            <th>Your Message</th>
+            <th>Status</th>
+            <th>Requested Date</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for req in requests %}
+            <tr>
+              <td>
+                <a href="{% url 'item_detail' pk=req.item.pk %}" style="font-weight: 600; color: var(--text-main);">
+                  {{ req.item.title }}
+                </a>
+              </td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <a href="{% url 'public_profile' username=req.item.donor.username %}" style="font-weight: 600; color: var(--text-main); text-decoration: none;">
+                    {{ req.item.donor.username }}
+                  </a>
+                  {% if req.item.donor.profile.is_verified or req.item.donor.is_staff %}
+                    <span title="Verified Member" style="color: #0284c7; display: inline-flex;">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </span>
+                  {% endif %}
+                </div>
+              </td>
+              <td>{{ req.item.pickup_location }}</td>
+              <td style="max-width: 250px; font-size: 0.8rem; color: var(--text-secondary);">
+                "{{ req.message|truncatechars:60 }}"
+              </td>
+              <td>
+                <span class="badge {% if req.status == 'ACCEPTED' %}badge-available{% elif req.status == 'REJECTED' %}badge-flagged{% else %}badge-requested{% endif %}">
+                  {{ req.get_status_display }}
+                </span>
+              </td>
+              <td style="color: var(--text-muted); font-size: 0.8rem;">{{ req.created_at|date:"M d, Y" }}</td>
+              <td style="text-align: right;">
+                <div style="display: inline-flex; gap: 6px; align-items: center;">
+                  <a href="{% url 'item_detail' pk=req.item.pk %}" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.75rem;">
+                    View Item
+                  </a>
+                  {% if req.can_review %}
+                    <a href="{% url 'public_profile' username=req.item.donor.username %}" class="btn btn-primary btn-sm" style="padding: 4px 8px; font-size: 0.75rem; background: #7e22ce; border-color: #7e22ce;">
+                      ★ Rate Donor
+                    </a>
+                  {% elif req.has_reviewed %}
+                    <span class="badge badge-available" style="font-size: 0.7rem; padding: 3px 6px;">Reviewed ✓</span>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">🔍</div>
+      <h3 class="empty-state-title">No requests submitted yet</h3>
+      <p class="empty-state-desc">You haven't requested any items yet. Explore what neighbours are giving away!</p>
+      <a href="{% url 'home' %}" class="btn btn-primary">Browse Free Items</a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

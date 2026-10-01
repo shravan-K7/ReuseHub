@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Platform Control Dashboard — ReuseHub Admin{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container admin-dashboard-container">
+  
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">Admin Control & Activity Monitor</h1>
+      <p class="admin-subtitle">
+        Monitor platform statistics, moderate community content, and handle reports.
+      </p>
+    </div>
+    <div>
+      <a href="{% url 'admin:index' %}" target="_blank" class="btn btn-secondary btn-sm">
+        Open Django Admin
+      </a>
+    </div>
+  </div>
+
+  <!-- Admin Sub-Navigation -->
+  <nav class="admin-nav">
+    <a href="{% url 'admin_dashboard' %}" class="admin-nav-item active">Dashboard Overview</a>
+    <a href="{% url 'admin_listings' %}" class="admin-nav-item">Moderate Listings</a>
+    <a href="{% url 'admin_categories' %}" class="admin-nav-item">Categories</a>
+    <a href="{% url 'admin_reports' %}" class="admin-nav-item">
+      Reports 
+      {% if pending_reports > 0 %}
+        <span class="badge badge-flagged" style="font-size: 0.7rem; padding: 1px 6px;">{{ pending_reports }}</span>
+      {% endif %}
+    </a>
+    <a href="{% url 'admin_users' %}" class="admin-nav-item">Users & Members</a>
+  </nav>
+
+  <!-- Platform Activity KPI Metrics -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total Listings</div>
+      <div class="stat-value">{{ total_items }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active Available</div>
+      <div class="stat-value stat-val-success">{{ active_items }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Given Away</div>
+      <div class="stat-value">{{ given_away_items }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Repairable Diverted</div>
+      <div class="stat-value stat-val-info">{{ repairable_items }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Community Users</div>
+      <div class="stat-value">{{ total_users }}</div>
+    </div>
+    <div class="stat-card {% if pending_reports > 0 %}stat-card-alert{% endif %}">
+      <div class="stat-label">Pending Reports</div>
+      <div class="stat-value {% if pending_reports > 0 %}stat-val-danger{% endif %}">
+        {{ pending_reports }}
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-columns-grid">
+    
+    <!-- Recent Listings to Moderate -->
+    <div class="action-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-main);">Recent Listings</h3>
+        <a href="{% url 'admin_listings' %}" class="btn btn-ghost btn-sm" style="font-size: 0.8rem;">View all &rarr;</a>
+      </div>
+
+      {% if recent_items %}
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          {% for item in recent_items %}
+            <div class="recent-listing-row">
+              <div>
+                <a href="{% url 'item_detail' pk=item.pk %}" style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">
+                  {{ item.title }}
+                </a>
+                <div style="font-size: 0.775rem; color: var(--text-muted); margin-top: 2px;">
+                  by {{ item.donor.username }} &bull; {{ item.created_at|timesince }} ago
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="badge {% if item.moderation_status == 'APPROVED' %}badge-available{% elif item.moderation_status == 'FLAGGED' %}badge-flagged{% else %}badge-requested{% endif %}">
+                  {{ item.get_moderation_status_display }}
+                </span>
+                <a href="{% url 'admin_moderate_action' pk=item.pk action='approve' %}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 4px 10px;">Approve</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="font-size: 0.85rem; color: var(--text-muted);">No listings created yet.</p>
+      {% endif %}
+    </div>
+
+    <!-- User Reports Queue -->
+    <div class="action-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-main);">Pending Reports Queue</h3>
+        <a href="{% url 'admin_reports' %}" class="btn btn-ghost btn-sm" style="font-size: 0.8rem;">View all &rarr;</a>
+      </div>
+
+      {% if recent_reports %}
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          {% for rep in recent_reports %}
+            <div class="report-queue-box">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <strong class="report-queue-title">{{ rep.get_reason_display }}</strong>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">{{ rep.created_at|timesince }} ago</span>
+              </div>
+              <p style="font-size: 0.825rem; color: var(--text-secondary); margin-bottom: 8px;">
+                Item: <strong style="color: var(--text-main);">{{ rep.item.title }}</strong> (by {{ rep.item.donor.username }})
+              </p>
+              <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <a href="{% url 'admin_report_resolve' pk=rep.pk action='take_down_item' %}" class="btn btn-danger btn-sm" style="font-size: 0.75rem; padding: 4px 10px;">Take Down</a>
+                <a href="{% url 'admin_report_resolve' pk=rep.pk action='dismiss' %}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 4px 10px;">Dismiss</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 36px 0; color: var(--text-muted);">
+          <div style="font-size: 1.5rem; margin-bottom: 8px; color: #34d399;">✓</div>
+          <p style="font-size: 0.875rem;">All clean! No pending reports right now.</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

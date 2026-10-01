@@ -1,0 +1,572 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ profile_user.username }}'s Community Profile — ReuseHub{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/home.css' %}">
+  <link rel="stylesheet" href="{% static 'css/public_profile.css' %}">
+  <link rel="stylesheet" href="{% static 'css/modal.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container public-profile-container">
+
+  <!-- Breadcrumb Navigation -->
+  <div style="margin-bottom: 20px;">
+    <a href="{% url 'home' %}" class="btn btn-ghost btn-sm" style="font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      Back to Community Listings
+    </a>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 1. HERO PROFILE CARD                                                      -->
+  <!-- ========================================================================= -->
+  <section class="profile-hero">
+    <div class="profile-hero-content">
+
+      <!-- Avatar with Verified Tick -->
+      <div class="profile-avatar-wrap">
+        {% if profile.avatar %}
+          <img src="{{ profile.avatar.url }}" alt="{{ profile_user.username }}" class="profile-avatar-img">
+        {% else %}
+          <div class="profile-avatar-fallback">
+            {{ profile_user.username|make_list|first }}
+          </div>
+        {% endif %}
+
+        {% if profile.is_verified or profile_user.is_staff or profile_user.is_superuser %}
+          <span class="avatar-verified-tick" title="Verified ReuseHub Member">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </span>
+        {% endif %}
+      </div>
+
+      <!-- Identity & Details -->
+      <div class="profile-details">
+        <div class="profile-top-row">
+          <div class="profile-name-group">
+            <h1 class="profile-username">{{ profile_user.username }}</h1>
+            {% if profile.is_verified or profile_user.is_staff or profile_user.is_superuser %}
+              <span class="badge" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-size: 0.75rem; padding: 3px 8px; display: inline-flex; align-items: center; gap: 4px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                Verified Member
+              </span>
+            {% endif %}
+            {% if profile_user.is_superuser %}
+              <span class="badge" style="background: #ede9fe; color: #6d28d9; font-size: 0.72rem;">Administrator</span>
+            {% elif profile_user.is_staff %}
+              <span class="badge" style="background: #f1f5f9; color: #0f172a; font-size: 0.72rem;">Moderator</span>
+            {% endif %}
+          </div>
+
+          <!-- Action Buttons -->
+          <div style="display: flex; gap: 8px; align-items: center;">
+            {% if is_own_profile %}
+              <a href="{% url 'profile' %}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                Edit My Profile
+              </a>
+            {% elif user.is_authenticated %}
+              <button type="button" class="btn btn-ghost btn-sm" data-modal-target="#reportUserModal" style="color: var(--text-muted); font-size: 0.8rem; display: inline-flex; align-items: center; gap: 5px;" title="Report inappropriate behavior">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                Report Profile
+              </button>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Bio -->
+        {% if profile.bio %}
+          <p class="profile-bio">{{ profile.bio }}</p>
+        {% else %}
+          <p class="profile-bio-empty">
+            {% if is_own_profile %}
+              You haven't added a bio yet. <a href="{% url 'profile' %}" style="text-decoration: underline; color: var(--primary);">Add a short bio</a> to tell neighbours about yourself.
+            {% else %}
+              Community member actively helping recirculate goods.
+            {% endif %}
+          </p>
+        {% endif %}
+
+        <!-- Meta Pills (Location, Date Joined, Rating) -->
+        <div class="profile-meta-pills">
+          {% if profile.location %}
+            <span class="profile-meta-item">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              {{ profile.location }}
+            </span>
+          {% endif %}
+
+          <span class="profile-meta-item">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            Member since {{ profile_user.date_joined|date:"F Y" }}
+          </span>
+
+          {% if stats.review_count > 0 %}
+            <span class="profile-meta-item" style="color: #b45309; background: #fffbeb; border-color: #fef3c7;">
+              <span style="color: #eab308; font-weight: 800;">★</span>
+              <strong>{{ stats.avg_rating }}</strong> ({{ stats.review_count }} review{{ stats.review_count|pluralize }})
+            </span>
+          {% else %}
+            <span class="profile-meta-item" style="color: var(--text-muted);">
+              New Member &bull; No ratings yet
+            </span>
+          {% endif %}
+        </div>
+
+        <!-- Privacy Shield Banner -->
+        <div class="profile-privacy-banner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <span><strong>Privacy Protected:</strong> Phone number and email address are never displayed publicly.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 2. COMMUNITY BADGES ROW                                                   -->
+  <!-- ========================================================================= -->
+  {% if badges %}
+    <section class="badges-section">
+      <div class="badges-section-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        Earned Community Badges
+      </div>
+      <div class="badges-grid">
+        {% for badge in badges %}
+          <div class="badge-card">
+            <div class="badge-icon-box {{ badge.css_class }}">
+              {% if badge.icon == 'verified' %}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              {% elif badge.icon == 'starter' %}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-9"></path><path d="M9 15c-3-1-4-4-4-7 4 0 7 2 8 5"></path><path d="M15 11c3-1 4-4 4-7-4 0-7 2-8 5"></path></svg>
+              {% elif badge.icon == 'eco' %}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path></svg>
+              {% elif badge.icon == 'helper' %}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
+              {% else %}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              {% endif %}
+            </div>
+            <div>
+              <div class="badge-card-name">{{ badge.name }}</div>
+              <div class="badge-card-desc">{{ badge.description }}</div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  <!-- ========================================================================= -->
+  <!-- 3. CONTRIBUTION STATS GRID                                                -->
+  <!-- ========================================================================= -->
+  <section class="public-stats-grid">
+    <div class="public-stat-card stat-eco-hero">
+      <div class="stat-label">Items Given Away</div>
+      <div class="stat-number stat-number-green">{{ stats.items_given }}</div>
+      <div class="stat-subtext">Diverted from waste</div>
+    </div>
+
+    <div class="public-stat-card">
+      <div class="stat-label">Successful Exchanges</div>
+      <div class="stat-number">{{ stats.successful_exchanges }}</div>
+      <div class="stat-subtext">Completed collections</div>
+    </div>
+
+    <div class="public-stat-card">
+      <div class="stat-label">Community Rating</div>
+      <div class="stat-number">
+        {% if stats.review_count > 0 %}
+          {{ stats.avg_rating }}
+          <span class="stat-rating-stars">★</span>
+        {% else %}
+          —
+        {% endif %}
+      </div>
+      <div class="stat-subtext">
+        {% if stats.review_count > 0 %}
+          Based on {{ stats.review_count }} review{{ stats.review_count|pluralize }}
+        {% else %}
+          Awaiting first exchange review
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="public-stat-card">
+      <div class="stat-label">Active Listings</div>
+      <div class="stat-number">{{ stats.active_listings }}</div>
+      <div class="stat-subtext">Available now for pickup</div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 4. ELIGIBLE EXCHANGE REVIEW BANNER                                        -->
+  <!-- ========================================================================= -->
+  {% if can_review and eligible_exchange %}
+    <section class="exchange-review-banner">
+      <div class="exchange-review-info">
+        <h3>Rate Your Exchange with {{ profile_user.username }}</h3>
+        <p>
+          You recently completed an exchange for <strong>"{{ eligible_exchange.item.title }}"</strong>.
+          Leaving a quick rating helps build trust and recognition across the ReuseHub community.
+        </p>
+      </div>
+      <button type="button" class="btn btn-primary" data-modal-target="#leaveReviewModal" style="display: inline-flex; align-items: center; gap: 6px;">
+        <span style="color: #fde047;">★</span> Leave 1–5 Star Review
+      </button>
+    </section>
+  {% endif %}
+
+  <!-- ========================================================================= -->
+  <!-- 5. TABS: GIVEN AWAY ITEMS | ACTIVE LISTINGS | REVIEWS                     -->
+  <!-- ========================================================================= -->
+  <nav class="profile-tabs-nav" role="tablist">
+    <button type="button" class="profile-tab-btn active" data-tab="tab-given" role="tab" aria-selected="true">
+      Previously Given Away
+      <span class="profile-tab-badge">{{ items_given.count }}</span>
+    </button>
+    <button type="button" class="profile-tab-btn" data-tab="tab-active" role="tab" aria-selected="false">
+      Active Listings
+      <span class="profile-tab-badge">{{ active_items.count }}</span>
+    </button>
+    <button type="button" class="profile-tab-btn" data-tab="tab-reviews" role="tab" aria-selected="false">
+      Community Reviews
+      <span class="profile-tab-badge">{{ stats.review_count }}</span>
+    </button>
+  </nav>
+
+  <!-- TAB 1: PREVIOUSLY GIVEN AWAY ITEMS -->
+  <div id="tab-given" class="profile-tab-panel active" role="tabpanel">
+    {% if items_given %}
+      <div class="items-grid">
+        {% for itm in items_given %}
+          <article class="card">
+            <a href="{% url 'item_detail' pk=itm.pk %}" class="card-image-wrap">
+              {% if itm.image %}
+                <img src="{{ itm.image.url }}" alt="{{ itm.title }}" class="card-img" loading="lazy">
+              {% else %}
+                <div class="card-no-img">
+                  <span>No photo</span>
+                </div>
+              {% endif %}
+              <div class="card-badges">
+                <span class="badge badge-given">Given Away</span>
+                {% if itm.is_repairable %}
+                  <span class="badge badge-repairable">Repairable</span>
+                {% endif %}
+              </div>
+            </a>
+            <div class="card-body">
+              <div class="card-meta">
+                <span>{{ itm.category.name|default:"General" }}</span>
+                <span>{{ itm.get_condition_display }}</span>
+              </div>
+              <h3 class="card-title">
+                <a href="{% url 'item_detail' pk=itm.pk %}">{{ itm.title }}</a>
+              </h3>
+              <p class="card-desc">{{ itm.description|truncatechars:90 }}</p>
+              <div class="card-footer">
+                <div class="card-location">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  <span>{{ itm.pickup_location }}</span>
+                </div>
+                <span class="card-date">{{ itm.updated_at|date:"M Y" }}</span>
+              </div>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="profile-empty-state">
+        <div class="profile-empty-icon">📦</div>
+        <h3 class="profile-empty-title">No completed give-aways yet</h3>
+        <p class="profile-empty-desc">
+          When {{ profile_user.username }} passes on pre-loved belongings to neighbours, their circular history will be archived here.
+        </p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- TAB 2: CURRENT ACTIVE LISTINGS -->
+  <div id="tab-active" class="profile-tab-panel" role="tabpanel">
+    {% if active_items %}
+      <div class="items-grid">
+        {% for itm in active_items %}
+          <article class="card">
+            <a href="{% url 'item_detail' pk=itm.pk %}" class="card-image-wrap">
+              {% if itm.image %}
+                <img src="{{ itm.image.url }}" alt="{{ itm.title }}" class="card-img" loading="lazy">
+              {% else %}
+                <div class="card-no-img">
+                  <span>No photo</span>
+                </div>
+              {% endif %}
+              <div class="card-badges">
+                <span class="badge badge-available">Available</span>
+                {% if itm.is_repairable %}
+                  <span class="badge badge-repairable">Repairable</span>
+                {% endif %}
+              </div>
+            </a>
+            <div class="card-body">
+              <div class="card-meta">
+                <span>{{ itm.category.name|default:"General" }}</span>
+                <span>{{ itm.get_condition_display }}</span>
+              </div>
+              <h3 class="card-title">
+                <a href="{% url 'item_detail' pk=itm.pk %}">{{ itm.title }}</a>
+              </h3>
+              <p class="card-desc">{{ itm.description|truncatechars:90 }}</p>
+              <div class="card-footer">
+                <div class="card-location">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  <span>{{ itm.pickup_location }}</span>
+                </div>
+                <a href="{% url 'item_detail' pk=itm.pk %}" class="btn btn-primary btn-sm" style="font-size: 0.75rem; padding: 4px 10px;">
+                  Request Free
+                </a>
+              </div>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="profile-empty-state">
+        <div class="profile-empty-icon">✨</div>
+        <h3 class="profile-empty-title">No active listings at the moment</h3>
+        <p class="profile-empty-desc">
+          {{ profile_user.username }} doesn't currently have any items available for pickup. Check back later or browse other neighborhood offerings.
+        </p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- TAB 3: COMMUNITY REVIEWS & RATINGS -->
+  <div id="tab-reviews" class="profile-tab-panel" role="tabpanel">
+    {% if stats.review_count > 0 %}
+      <!-- Rating Breakdown Summary -->
+      <div class="rating-breakdown-card">
+        <div class="rating-score-display">
+          <div class="rating-big-number">{{ stats.avg_rating }}</div>
+          <div class="rating-stars-row">
+            {% for star_type in stats.stars %}
+              {% if star_type == 'full' %}
+                <span>★</span>
+              {% elif star_type == 'half' %}
+                <span>★</span>
+              {% else %}
+                <span style="color: var(--border-strong);">★</span>
+              {% endif %}
+            {% endfor %}
+          </div>
+          <div class="rating-count-label">{{ stats.review_count }} community review{{ stats.review_count|pluralize }}</div>
+        </div>
+
+        <!-- Rating Distribution Bars -->
+        <div class="rating-bars-list">
+          {% for row in stats.breakdown_rows %}
+            <div class="rating-bar-row">
+              <span style="width: 44px; text-align: right; font-weight: 600;">{{ row.stars }} ★</span>
+              <div class="rating-bar-track">
+                <div class="rating-bar-fill" data-percent="{{ row.percent }}"></div>
+              </div>
+              <span style="width: 32px; font-size: 0.75rem; color: var(--text-muted);">{{ row.count }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Verified Reviews List -->
+      <div class="reviews-list">
+        {% for rev in reviews %}
+          <div class="review-card">
+            <div class="review-header">
+              <div class="reviewer-meta">
+                <a href="{% url 'public_profile' username=rev.reviewer.username %}" style="text-decoration: none;">
+                  {% if rev.reviewer.profile.avatar %}
+                    <img src="{{ rev.reviewer.profile.avatar.url }}" alt="{{ rev.reviewer.username }}" class="reviewer-avatar">
+                  {% else %}
+                    <div class="reviewer-avatar-fallback">
+                      {{ rev.reviewer.username|make_list|first }}
+                    </div>
+                  {% endif %}
+                </a>
+                <div>
+                  <a href="{% url 'public_profile' username=rev.reviewer.username %}" class="reviewer-name">
+                    {{ rev.reviewer.username }}
+                  </a>
+                  <div class="review-date">{{ rev.created_at|date:"F d, Y" }} &bull; Verified Exchange</div>
+                </div>
+              </div>
+
+              <!-- Star Rating -->
+              <div class="review-stars">
+                {% for i in "12345"|make_list %}
+                  {% if forloop.counter <= rev.rating %}
+                    <span style="color: #eab308;">★</span>
+                  {% else %}
+                    <span style="color: var(--border-strong);">★</span>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Exchanged Item Reference -->
+            {% if rev.item_request and rev.item_request.item %}
+              <div class="review-item-tag">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+                Exchange for: <strong>{{ rev.item_request.item.title }}</strong>
+              </div>
+            {% endif %}
+
+            <!-- Comment -->
+            {% if rev.comment %}
+              <p class="review-comment">"{{ rev.comment }}"</p>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+
+    {% else %}
+      <div class="profile-empty-state">
+        <div class="profile-empty-icon">⭐</div>
+        <h3 class="profile-empty-title">No community ratings yet</h3>
+        <p class="profile-empty-desc">
+          To maintain fairness and trust, ReuseHub community ratings can only be submitted by verified participants after a successful exchange is completed.
+        </p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: LEAVE 1–5 STAR COMMUNITY REVIEW                                     -->
+<!-- ========================================================================= -->
+{% if can_review and eligible_exchange %}
+  <div class="modal-backdrop" id="leaveReviewModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title" id="reviewModalTitle">Rate Exchange Experience</h2>
+            <p class="modal-subtitle">Leave feedback for {{ profile_user.username }}</p>
+          </div>
+          <button type="button" class="modal-close-btn" data-modal-close aria-label="Close dialog">&times;</button>
+        </div>
+
+        <form method="POST" action="{% url 'submit_review' request_id=eligible_exchange.id %}">
+          {% csrf_token %}
+          <div class="modal-body">
+            <div style="background: var(--bg-subtle, #f4f4f0); border: 1px solid var(--border-light, #e4e4e7); border-radius: var(--radius-sm, 6px); padding: 12px 14px; margin-bottom: 16px; font-size: 0.88rem;">
+              Exchanged Item: <strong>{{ eligible_exchange.item.title }}</strong>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label class="form-label" for="{{ review_form.rating.id_for_label }}" style="display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 6px;">Community Rating (1 to 5 Stars) *</label>
+              {{ review_form.rating }}
+              <div class="form-help" style="font-size: 0.775rem; color: var(--text-muted, #71717a); margin-top: 4px;">Rate punctuality, friendliness, communication, and overall experience.</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="{{ review_form.comment.id_for_label }}" style="display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 6px;">Short Review (Optional)</label>
+              {{ review_form.comment }}
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+            <button type="submit" class="btn btn-primary">Submit Community Review</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<!-- ========================================================================= -->
+<!-- MODAL: REPORT INAPPROPRIATE USER PROFILE                                   -->
+<!-- ========================================================================= -->
+{% if user.is_authenticated and not is_own_profile %}
+  <div class="modal-backdrop" id="reportUserModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title" id="reportModalTitle">Report User Profile</h2>
+            <p class="modal-subtitle">Report violation for @{{ profile_user.username }}</p>
+          </div>
+          <button type="button" class="modal-close-btn" data-modal-close aria-label="Close dialog">&times;</button>
+        </div>
+
+        <form method="POST" action="{% url 'report_user' username=profile_user.username %}">
+          {% csrf_token %}
+          <div class="modal-body">
+            <p style="font-size: 0.85rem; color: var(--text-secondary, #52525b); margin-bottom: 14px; line-height: 1.5;">
+              Help keep ReuseHub safe and strictly non-commercial. Our moderation staff reviews all reports promptly.
+            </p>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label class="form-label" for="{{ report_form.reason.id_for_label }}" style="display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 6px;">Reason for Report *</label>
+              {{ report_form.reason }}
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="{{ report_form.details.id_for_label }}" style="display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 6px;">Incident Details *</label>
+              {{ report_form.details }}
+              <div class="form-help" style="font-size: 0.775rem; color: var(--text-muted, #71717a); margin-top: 4px;">Provide details (e.g. asking for money, rude messages, no-show).</div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+            <button type="submit" class="btn btn-danger">Submit Report to Moderators</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/modal.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Set rating bar fill percentages
+  document.querySelectorAll('.rating-bar-fill[data-percent]').forEach(function (el) {
+    el.style.width = el.getAttribute('data-percent') + '%';
+  });
+
+  // Tab Switching Logic
+  const tabBtns = document.querySelectorAll('.profile-tab-btn');
+  const tabPanels = document.querySelectorAll('.profile-tab-panel');
+
+  tabBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const targetId = this.getAttribute('data-tab');
+
+      tabBtns.forEach(function (b) {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      tabPanels.forEach(function (p) {
+        p.classList.remove('active');
+      });
+
+      this.classList.add('active');
+      this.setAttribute('aria-selected', 'true');
+
+      const targetPanel = document.getElementById(targetId);
+      if (targetPanel) {
+        targetPanel.classList.add('active');
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

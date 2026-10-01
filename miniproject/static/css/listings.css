@@ -1,0 +1,62 @@
+/* ==============================================================================
+   ReuseHub - Moderate Listings Stylesheet (listings.css)
+   Target: admin/listings.html
+   Aesthetic: Fast-scan moderation table with instant review action triggers
+   ============================================================================== */
+
+.admin-listings-container {
+  padding-top: 32px;
+  padding-bottom: 72px;
+}
+
+.mod-filter-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.mod-search-box {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.mod-search-input {
+  padding: 7px 12px;
+  font-size: 0.85rem;
+  width: 230px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+  color: var(--text-main);
+  outline: none;
+}
+
+.mod-search-input:focus {
+  border-color: var(--primary);
+}
+
+.mod-item-title {
+  font-weight: 600;
+  color: var(--text-main);
+  transition: color 0.15s ease;
+}
+
+.mod-item-title:hover {
+  color: #38bdf8;
+}
+
+.mod-actions-strip {
+  display: inline-flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.mod-actions-strip .btn {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+}

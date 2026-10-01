@@ -1,0 +1,125 @@
+/* ==============================================================================
+   ReuseHub - Register Stylesheet (register.css)
+   Target: register.html
+   Aesthetic: Trustworthy registration flow with crisp inputs and clear guidance
+   ============================================================================== */
+
+.register-container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 52px 20px 88px;
+}
+
+.register-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 36px 32px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+.register-header {
+  text-align: center;
+  margin-bottom: 26px;
+}
+
+.register-brand-badge {
+  width: 44px;
+  height: 44px;
+  background-color: var(--primary);
+  color: #ffffff;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0 auto 16px;
+  box-shadow: 0 4px 10px rgba(24, 24, 27, 0.15);
+}
+
+.register-title {
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.register-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.register-form .form-group {
+  margin-bottom: 18px;
+}
+
+.register-form .form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.name-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-error-msg {
+  font-size: 0.775rem;
+  color: #b91c1c;
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.register-form .password-input-wrap .form-input {
+  padding-right: 44px !important;
+}
+
+.register-submit-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+.register-footer {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-light);
+  padding-top: 20px;
+}
+
+.register-link {
+  font-weight: 600;
+  color: var(--text-main);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+
+.register-link:hover {
+  color: #166534;
+}
+
+@media (max-width: 480px) {
+  .register-container {
+    padding: 36px 16px 60px;
+  }
+  .register-card {
+    padding: 24px 18px;
+  }
+  .name-row {
+    grid-template-columns: 1fr;
+  }
+}

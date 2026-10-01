@@ -1,0 +1,45 @@
+{% extends "emails/base_email.html" %}
+
+{% block email_title %}New Item Request on ReuseHub{% endblock %}
+
+{% block email_content %}
+  <h2 class="greeting">You Have a New Item Request! 🎉</h2>
+
+  <p class="lead-text">
+    Hello <strong>{{ donor.username }}</strong>, exciting news! A neighbor in the ReuseHub community would love to give your item a second life.
+  </p>
+
+  <div class="info-card">
+    <div class="info-label">Item Requested</div>
+    <p class="info-value" style="font-size: 17px; color: #0f172a; margin-bottom: 6px;">{{ item.title }}</p>
+    <div style="font-size: 13px; color: #64748b;">
+      Category: <strong>{{ item.category.name|default:"General" }}</strong> &bull; Condition: <strong>{{ item.get_condition_display }}</strong>
+    </div>
+  </div>
+
+  <div style="background-color: #f1f5f9; border-radius: 8px; padding: 18px; margin: 20px 0;">
+    <div style="font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 8px;">
+      Message from {{ requester.username }}:
+    </div>
+    <blockquote style="margin: 0; padding-left: 12px; border-left: 3px solid #10b981; font-style: italic; color: #1e293b; font-size: 14px;">
+      "{{ request_message }}"
+    </blockquote>
+    {% if contact_info %}
+      <div style="margin-top: 12px; font-size: 13px; color: #64748b;">
+        Contact Info Provided: <strong>{{ contact_info }}</strong>
+      </div>
+    {% endif %}
+  </div>
+
+  <p style="font-size: 14px; color: #475569;">
+    You can review the requester's profile, accept or decline this request directly in your ReuseHub dashboard:
+  </p>
+
+  <div style="text-align: center; margin: 24px 0;">
+    <a href="{{ action_url }}" class="btn-primary">View & Respond to Request</a>
+  </div>
+
+  <p class="fallback-url">
+    Direct link: <a href="{{ action_url }}" style="color: #059669;">{{ action_url }}</a>
+  </p>
+{% endblock %}

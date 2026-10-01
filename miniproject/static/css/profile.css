@@ -1,0 +1,123 @@
+/* ==============================================================================
+   ReuseHub - Profile Stylesheet (profile.css)
+   Target: profile.html
+   Aesthetic: Sustainable impact dashboard and member profile editor
+   ============================================================================== */
+
+.profile-container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 20px 72px;
+}
+
+.profile-header {
+  margin-bottom: 28px;
+}
+
+.profile-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.profile-desc {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Impact Metrics */
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.impact-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.impact-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.impact-card-eco {
+  border-left: 3px solid #166534;
+  background: linear-gradient(135deg, #ffffff 80%, #f0fdf4 100%);
+}
+
+.impact-label {
+  font-size: 0.775rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.impact-value {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-main);
+}
+
+.impact-value-green {
+  color: #166534;
+}
+
+/* Profile Form Card */
+.profile-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+.profile-meta-banner {
+  background-color: var(--bg-subtle);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.profile-meta-info p {
+  margin-bottom: 2px;
+  font-size: 0.9rem;
+}
+
+.profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 18px;
+}
+
+@media (max-width: 600px) {
+  .profile-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .profile-container {
+    padding: 24px 16px 48px;
+  }
+  .profile-card {
+    padding: 20px 16px;
+  }
+}
