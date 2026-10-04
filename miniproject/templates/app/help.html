@@ -518,21 +518,33 @@
         <div class="report-option-icon">📦</div>
         <h3>Report an Item</h3>
         <p>Found a broken item listed as new, a prohibited good, or commercial spam? Open the item page and click <strong>"Report Listing"</strong>.</p>
-        <a href="{% url 'home' %}" class="btn btn-secondary btn-sm">Find Item to Report</a>
+        {% if user.is_authenticated %}
+          <a href="{% url 'home' %}" class="btn btn-secondary btn-sm">Find Item to Report</a>
+        {% else %}
+          <a href="{% url 'login' %}?next={% url 'help' %}#report-problem" class="btn btn-secondary btn-sm">Sign in to Report</a>
+        {% endif %}
       </div>
 
       <div class="report-option-card">
         <div class="report-option-icon">👤</div>
         <h3>Report a User</h3>
         <p>Encountered harassment, unresponsiveness, or fraudulent behavior? Send our moderation team their username and details.</p>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="prefillContact('Report a User', 'Reporting user: ')">Report User</button>
+        {% if user.is_authenticated %}
+          <button type="button" class="btn btn-secondary btn-sm" onclick="prefillContact('Report a User', 'Reporting user: ')">Report User</button>
+        {% else %}
+          <a href="{% url 'login' %}?next={% url 'help' %}#report-problem" class="btn btn-secondary btn-sm">Sign in to Report</a>
+        {% endif %}
       </div>
 
       <div class="report-option-card">
         <div class="report-option-icon">⚙️</div>
         <h3>Report a Technical Problem</h3>
         <p>Encountered a broken link, visual glitch, or unexpected error on the website? Let our development team know.</p>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="prefillContact('Technical Issue', 'Description of technical issue: ')">Report Technical Bug</button>
+        {% if user.is_authenticated %}
+          <button type="button" class="btn btn-secondary btn-sm" onclick="prefillContact('Technical Issue', 'Description of technical issue: ')">Report Technical Bug</button>
+        {% else %}
+          <a href="{% url 'login' %}?next={% url 'help' %}#report-problem" class="btn btn-secondary btn-sm">Sign in to Report</a>
+        {% endif %}
       </div>
 
     </div>
@@ -549,69 +561,102 @@
         <p>Our volunteer support team is here to assist with any questions, feedback, or concerns.</p>
       </div>
 
-      <form method="POST" action="{% url 'help' %}" class="contact-support-form" id="contactForm">
-        {% csrf_token %}
+      {% if user.is_authenticated %}
+        <form method="POST" action="{% url 'help' %}" class="contact-support-form" id="contactForm">
+          {% csrf_token %}
 
-        <div class="form-row-2">
-          <div class="form-group">
-            <label for="contactName">Your Name <span class="required">*</span></label>
-            <input 
-              type="text" 
-              name="name" 
-              id="contactName" 
-              class="form-control" 
-              required 
-              placeholder="e.g. Alex Johnson"
-              value="{% if user.is_authenticated %}{{ user.username }}{% endif %}"
-            >
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="contactName">Your Name</label>
+              <input 
+                type="text" 
+                name="name" 
+                id="contactName" 
+                class="form-control" 
+                readonly
+                style="background: var(--bg-surface-secondary, #f8fafc); cursor: not-allowed;"
+                value="{{ user.get_full_name|default:user.username }}"
+              >
+              <small style="color: var(--text-muted); font-size: 0.75rem;">Verified sender: <strong>@{{ user.username }}</strong></small>
+            </div>
+
+            <div class="form-group">
+              <label for="contactEmail">Your Account Email <span class="required">*</span></label>
+              <input 
+                type="email" 
+                name="email" 
+                id="contactEmail" 
+                class="form-control" 
+                required 
+                placeholder="alex@example.com"
+                value="{{ user.email }}"
+                {% if user.email %}readonly style="background: var(--bg-surface-secondary, #f8fafc); cursor: not-allowed;"{% endif %}
+              >
+              <small style="color: var(--text-muted); font-size: 0.75rem;">Responses will be sent to your registered email</small>
+            </div>
           </div>
 
           <div class="form-group">
-            <label for="contactEmail">Your Email Address <span class="required">*</span></label>
-            <input 
-              type="email" 
-              name="email" 
-              id="contactEmail" 
+            <label for="contactSubject">Subject <span class="required">*</span></label>
+            <select name="subject" id="contactSubject" class="form-control" required>
+              <option value="General Inquiry">General Inquiry</option>
+              <option value="Report a User">Report a User</option>
+              <option value="Technical Issue">Technical Problem / Bug</option>
+              <option value="How to Use ReuseHub">How to Use ReuseHub</option>
+              <option value="Account Deactivation">Account Deactivation</option>
+              <option value="Platform Suggestion">Platform Suggestion / Idea</option>
+            </select>
+          </div>
+
+          <div style="font-size: 0.8rem; color: var(--text-secondary); background: rgba(34, 197, 94, 0.08); border-left: 3px solid #22c55e; padding: 10px 14px; border-radius: 6px; margin: 4px 0 6px;">
+            💡 <strong>Pro Tip:</strong> To report a specific listing, open its item page and click <strong>"Report inappropriate listing"</strong>. To report a user's behavior, you can also report directly from their <strong>Public Profile</strong>.
+          </div>
+
+          <div class="form-group">
+            <label for="contactMessage">Your Message <span class="required">*</span></label>
+            <textarea 
+              name="message" 
+              id="contactMessage" 
               class="form-control" 
+              rows="5" 
               required 
-              placeholder="alex@example.com"
-              value="{% if user.is_authenticated %}{{ user.email }}{% endif %}"
-            >
+              placeholder="Please describe how we can assist you or provide report details..."
+            ></textarea>
+          </div>
+
+          <div class="contact-form-actions">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              Send Message
+            </button>
+            <span class="contact-response-time">Average response time: within 24 hours</span>
+          </div>
+        </form>
+      {% else %}
+        <div class="contact-auth-gate" style="text-align: center; padding: 42px 24px; background: var(--bg-surface-secondary, #f8fafc); border: 1.5px dashed var(--border-color); border-radius: var(--radius-lg); margin-top: 10px;">
+          <div style="width: 54px; height: 54px; border-radius: 50%; background: #fee2e2; color: #dc2626; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">
+            Sign in to Send a Report or Contact Support
+          </h3>
+          <p style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.6; max-width: 480px; margin: 0 auto 22px;">
+            To prevent spam, maintain accountability, and allow our moderation team to follow up on your report, you must be signed in with a ReuseHub account.
+          </p>
+          <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+            <a href="{% url 'login' %}?next={% url 'help' %}#contact-support" class="btn btn-primary btn-md" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 22px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+              Sign In
+            </a>
+            <a href="{% url 'register' %}" class="btn btn-secondary btn-md" style="padding: 10px 22px;">
+              Create an Account
+            </a>
           </div>
         </div>
-
-        <div class="form-group">
-          <label for="contactSubject">Subject <span class="required">*</span></label>
-          <select name="subject" id="contactSubject" class="form-control" required>
-            <option value="General Inquiry">General Inquiry</option>
-            <option value="How to Use ReuseHub">How to Use ReuseHub</option>
-            <option value="Report a User">Report a User</option>
-            <option value="Technical Issue">Technical Problem / Bug</option>
-            <option value="Account Deactivation">Account Deactivation</option>
-            <option value="Platform Suggestion">Platform Suggestion / Idea</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="contactMessage">Your Message <span class="required">*</span></label>
-          <textarea 
-            name="message" 
-            id="contactMessage" 
-            class="form-control" 
-            rows="5" 
-            required 
-            placeholder="Please describe how we can assist you..."
-          ></textarea>
-        </div>
-
-        <div class="contact-form-actions">
-          <button type="submit" class="btn btn-primary btn-lg">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-            Send Message
-          </button>
-          <span class="contact-response-time">Average response time: within 24 hours</span>
-        </div>
-      </form>
+      {% endif %}
     </div>
   </section>
 

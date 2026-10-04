@@ -176,3 +176,5 @@ EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "10"))
 if DEBUG and not EMAIL_HOST_PASSWORD and EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
+# Stay logged in for 30 days
+# SESSION_COOKIE_AGE = 2592000  # 60 * 60 * 24 * 30

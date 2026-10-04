@@ -85,7 +85,18 @@
                 {% endif %}
               </td>
               <td>
-                <strong>{{ item.requests.count }}</strong> request{{ item.requests.count|pluralize }}
+                {% with req_count=item.requests.count %}
+                  {% if req_count > 0 %}
+                    <a href="{% url 'item_detail' pk=item.pk %}" class="requests-count-badge has-requests" title="{{ req_count }} community request{{ req_count|pluralize }} received. Click to review.">
+                      <span class="requests-count-number">{{ req_count }}</span>
+                      <span>request{{ req_count|pluralize }}</span>
+                    </a>
+                  {% else %}
+                    <span class="requests-count-badge no-requests">
+                      0 requests
+                    </span>
+                  {% endif %}
+                {% endwith %}
               </td>
               <td style="color: var(--text-muted);">{{ item.created_at|date:"M d, Y" }}</td>
               <td style="text-align: right;">

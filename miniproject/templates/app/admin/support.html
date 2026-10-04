@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Support Inquiries & Tickets — ReuseHub Admin{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'css/reports.css' %}">
+  <style>
+    .inq-border-pending { border-left: 3px solid #f59e0b !important; }
+    .inq-border-in_progress { border-left: 3px solid #3b82f6 !important; }
+    .inq-border-resolved { border-left: 3px solid #10b981 !important; }
+    .inq-border-closed { border-left: 3px solid #94a3b8 !important; }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="container admin-reports-container">
+  
+  <div class="admin-header">
+    <h1 class="admin-title">Direct Support & User Messages</h1>
+  </div>
+
+  <!-- Filter Pills & Search -->
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+    <div class="filter-pills">
+      <a href="{% url 'admin_support' %}?status=PENDING" class="filter-pill {% if status_filter == 'PENDING' %}active{% endif %}">Pending Review</a>
+      <a href="{% url 'admin_support' %}?status=IN_PROGRESS" class="filter-pill {% if status_filter == 'IN_PROGRESS' %}active{% endif %}">In Progress</a>
+      <a href="{% url 'admin_support' %}?status=RESOLVED" class="filter-pill {% if status_filter == 'RESOLVED' %}active{% endif %}">Resolved</a>
+      <a href="{% url 'admin_support' %}?status=CLOSED" class="filter-pill {% if status_filter == 'CLOSED' %}active{% endif %}">Closed</a>
+      <a href="{% url 'admin_support' %}?status=ALL" class="filter-pill {% if status_filter == 'ALL' %}active{% endif %}">All Inquiries</a>
+    </div>
+
+    <form method="GET" action="{% url 'admin_support' %}" style="display: flex; gap: 6px; align-items: center;">
+      <input type="hidden" name="status" value="{{ status_filter }}">
+      <input 
+        type="text" 
+        name="q" 
+        value="{{ query }}" 
+        placeholder="Search tickets, user, email..." 
+        class="form-control"
+        style="padding: 6px 12px; font-size: 0.85rem; width: 220px;"
+      >
+      <button type="submit" class="btn btn-secondary btn-sm">Search</button>
+      {% if query %}
+        <a href="{% url 'admin_support' %}?status={{ status_filter }}" class="btn btn-ghost btn-sm">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  {% if inquiries %}
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      {% for inq in inquiries %}
+        <div class="action-card inq-border-{{ inq.status|lower }}">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                <span class="badge {% if inq.status == 'PENDING' %}badge-flagged{% elif inq.status == 'RESOLVED' %}badge-available{% elif inq.status == 'IN_PROGRESS' %}badge-requested{% else %}badge-given{% endif %}">
+                  {{ inq.get_status_display }}
+                </span>
+                <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Ticket #{{ inq.id }}</span>
+              </div>
+              <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main);">{{ inq.subject }}</h3>
+              <p style="font-size: 0.825rem; color: var(--text-muted); margin-top: 3px;">
+                From: <strong>{{ inq.name }}</strong> (<a href="{% url 'public_profile' username=inq.user.username %}" target="_blank" style="color: var(--primary-color); font-weight: 600;">@{{ inq.user.username }}</a>)
+                &bull; <a href="mailto:{{ inq.email }}" style="color: var(--text-secondary);">{{ inq.email }}</a>
+                &bull; {{ inq.created_at|date:"M d, Y H:i" }} ({{ inq.created_at|timesince }} ago)
+              </p>
+            </div>
+            
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+              {% if inq.status != 'RESOLVED' %}
+                <a href="{% url 'admin_support_action' pk=inq.pk action='resolve' %}" class="btn btn-secondary btn-sm" style="font-size: 0.78rem;">
+                  ✓ Mark Resolved
+                </a>
+              {% endif %}
+              {% if inq.status == 'PENDING' %}
+                <a href="{% url 'admin_support_action' pk=inq.pk action='in_progress' %}" class="btn btn-ghost btn-sm" style="font-size: 0.78rem;">
+                  ⏳ In Progress
+                </a>
+              {% endif %}
+              {% if inq.status != 'CLOSED' %}
+                <a href="{% url 'admin_support_action' pk=inq.pk action='close' %}" class="btn btn-ghost btn-sm" style="font-size: 0.78rem;">
+                  Close
+                </a>
+              {% else %}
+                <a href="{% url 'admin_support_action' pk=inq.pk action='reopen' %}" class="btn btn-ghost btn-sm" style="font-size: 0.78rem;">
+                  Reopen
+                </a>
+              {% endif %}
+              <button type="button" class="btn btn-primary btn-sm" onclick="toggleReplyBox('replyBox{{ inq.id }}')" style="font-size: 0.78rem;">
+                Reply via Email
+              </button>
+            </div>
+          </div>
+
+          <!-- User's Message Content -->
+          <div style="background: var(--bg-subtle, #f8fafc); border: 1px solid var(--border-light, #e2e8f0); border-radius: var(--radius-sm, 8px); padding: 14px 16px; margin-bottom: 12px; font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap;">{{ inq.message }}</div>
+
+          <!-- Existing Staff Response if present -->
+          {% if inq.admin_response %}
+            <div style="background: #f0fdf4; border-left: 3px solid #22c55e; border-radius: 4px; padding: 10px 14px; margin-bottom: 12px; font-size: 0.85rem;">
+              <strong style="color: #166534;">Staff Reply:</strong>
+              <p style="color: #15803d; margin: 4px 0 0 0; white-space: pre-wrap;">{{ inq.admin_response }}</p>
+            </div>
+          {% endif %}
+
+          <!-- Collapsible Quick Reply Box -->
+          <div id="replyBox{{ inq.id }}" style="display: none; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; margin-top: 10px;">
+            <form method="POST" action="{% url 'admin_support_action' pk=inq.pk action='reply' %}">
+              {% csrf_token %}
+              <label style="font-size: 0.825rem; font-weight: 600; color: var(--text-main); margin-bottom: 6px; display: block;">
+                Reply to {{ inq.name }} (Sends email to {{ inq.email }})
+              </label>
+              <textarea 
+                name="admin_response" 
+                class="form-control" 
+                rows="3" 
+                required 
+                placeholder="Type your reply to the user here. They will receive this via email notification..."
+                style="margin-bottom: 10px; font-size: 0.875rem;"
+              ></textarea>
+              <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="toggleReplyBox('replyBox{{ inq.id }}')">Cancel</button>
+                <button type="submit" class="btn btn-primary btn-sm">Send Response & Resolve</button>
+              </div>
+            </form>
+          </div>
+
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if inquiries.has_other_pages %}
+      <div style="display: flex; justify-content: center; gap: 6px; margin-top: 24px;">
+        {% if inquiries.has_previous %}
+          <a href="?page={{ inquiries.previous_page_number }}&status={{ status_filter }}&q={{ query }}" class="btn btn-secondary btn-sm">&larr; Previous</a>
+        {% endif %}
+        <span style="display: inline-flex; align-items: center; padding: 0 12px; font-size: 0.85rem; color: var(--text-muted);">
+          Page {{ inquiries.number }} of {{ inquiries.paginator.num_pages }}
+        </span>
+        {% if inquiries.has_next %}
+          <a href="?page={{ inquiries.next_page_number }}&status={{ status_filter }}&q={{ query }}" class="btn btn-secondary btn-sm">Next &rarr;</a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">💬</div>
+      <h3 class="empty-state-title">No support inquiries found</h3>
+      <p class="empty-state-desc">
+        {% if query %}
+          No inquiries matched your search '{{ query }}'.
+        {% else %}
+          There are currently no support inquiries with status '{{ status_filter }}'.
+        {% endif %}
+      </p>
+    </div>
+  {% endif %}
+
+</div>
+
+<script>
+  function toggleReplyBox(id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.style.display = (el.style.display === 'none' || el.style.display === '') ? 'block' : 'none';
+      if (el.style.display === 'block') {
+        var textarea = el.querySelector('textarea');
+        if (textarea) textarea.focus();
+      }
+    }
+  }
+</script>
+{% endblock %}

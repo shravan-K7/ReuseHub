@@ -11,32 +11,13 @@
 <div class="container admin-dashboard-container">
   
   <div class="admin-header">
-    <div>
-      <h1 class="admin-title">Admin Control & Activity Monitor</h1>
-      <p class="admin-subtitle">
-        Monitor platform statistics, moderate community content, and handle reports.
-      </p>
-    </div>
+    <h1 class="admin-title">Admin Control & Activity Monitor</h1>
     <div>
       <a href="{% url 'admin:index' %}" target="_blank" class="btn btn-secondary btn-sm">
         Open Django Admin
       </a>
     </div>
   </div>
-
-  <!-- Admin Sub-Navigation -->
-  <nav class="admin-nav">
-    <a href="{% url 'admin_dashboard' %}" class="admin-nav-item active">Dashboard Overview</a>
-    <a href="{% url 'admin_listings' %}" class="admin-nav-item">Moderate Listings</a>
-    <a href="{% url 'admin_categories' %}" class="admin-nav-item">Categories</a>
-    <a href="{% url 'admin_reports' %}" class="admin-nav-item">
-      Reports 
-      {% if pending_reports > 0 %}
-        <span class="badge badge-flagged" style="font-size: 0.7rem; padding: 1px 6px;">{{ pending_reports }}</span>
-      {% endif %}
-    </a>
-    <a href="{% url 'admin_users' %}" class="admin-nav-item">Users & Members</a>
-  </nav>
 
   <!-- Platform Activity KPI Metrics -->
   <div class="stats-grid">
@@ -64,6 +45,12 @@
       <div class="stat-label">Pending Reports</div>
       <div class="stat-value {% if pending_reports > 0 %}stat-val-danger{% endif %}">
         {{ pending_reports }}
+      </div>
+    </div>
+    <div class="stat-card {% if pending_support > 0 %}stat-card-alert{% endif %}">
+      <div class="stat-label">Support Inquiries</div>
+      <div class="stat-value {% if pending_support > 0 %}stat-val-danger{% endif %}">
+        {{ pending_support }}
       </div>
     </div>
   </div>
@@ -118,13 +105,32 @@
                 <strong class="report-queue-title">{{ rep.get_reason_display }}</strong>
                 <span style="font-size: 0.75rem; color: var(--text-muted);">{{ rep.created_at|timesince }} ago</span>
               </div>
-              <p style="font-size: 0.825rem; color: var(--text-secondary); margin-bottom: 8px;">
-                Item: <strong style="color: var(--text-main);">{{ rep.item.title }}</strong> (by {{ rep.item.donor.username }})
-              </p>
-              <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                <a href="{% url 'admin_report_resolve' pk=rep.pk action='take_down_item' %}" class="btn btn-danger btn-sm" style="font-size: 0.75rem; padding: 4px 10px;">Take Down</a>
-                <a href="{% url 'admin_report_resolve' pk=rep.pk action='dismiss' %}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 4px 10px;">Dismiss</a>
-              </div>
+              {% if rep.item %}
+                <p style="font-size: 0.825rem; color: var(--text-secondary); margin-bottom: 8px;">
+                  Listing: <strong style="color: var(--text-main);">{{ rep.item.title }}</strong> (Donor: {{ rep.item.donor.username }})
+                </p>
+                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                  <a href="{% url 'admin_report_resolve' pk=rep.pk action='take_down_item' %}" class="btn btn-danger btn-sm" style="font-size: 0.75rem; padding: 4px 10px;">Take Down</a>
+                  <a href="{% url 'admin_report_resolve' pk=rep.pk action='dismiss' %}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 4px 10px;">Dismiss</a>
+                </div>
+              {% elif rep.reported_user %}
+                <p style="font-size: 0.825rem; color: var(--text-secondary); margin-bottom: 8px;">
+                  Target User: <strong style="color: var(--text-main);">@{{ rep.reported_user.username }}</strong> (by {{ rep.reported_by.username }})
+                </p>
+                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                  <a href="{% url 'admin_report_resolve' pk=rep.pk action='deactivate_user' %}" class="btn btn-danger btn-sm" style="font-size: 0.75rem; padding: 4px 10px;">Deactivate</a>
+                  <a href="{% url 'admin_report_resolve' pk=rep.pk action='resolve' %}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 4px 10px;">Resolve</a>
+                  <a href="{% url 'admin_report_resolve' pk=rep.pk action='dismiss' %}" class="btn btn-ghost btn-sm" style="font-size: 0.75rem; padding: 4px 10px;">Dismiss</a>
+                </div>
+              {% else %}
+                <p style="font-size: 0.825rem; color: var(--text-secondary); margin-bottom: 8px;">
+                  General Community Report (by {{ rep.reported_by.username }})
+                </p>
+                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                  <a href="{% url 'admin_report_resolve' pk=rep.pk action='resolve' %}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 4px 10px;">Resolve</a>
+                  <a href="{% url 'admin_report_resolve' pk=rep.pk action='dismiss' %}" class="btn btn-ghost btn-sm" style="font-size: 0.75rem; padding: 4px 10px;">Dismiss</a>
+                </div>
+              {% endif %}
             </div>
           {% endfor %}
         </div>
@@ -136,6 +142,48 @@
       {% endif %}
     </div>
 
+  </div>
+
+  <!-- Direct Support Inquiries Queue -->
+  <div class="action-card" style="margin-top: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <div>
+        <h3 style="font-size: 1rem; font-weight: 600; color: var(--text-main);">Recent Help & Support Inquiries</h3>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Direct messages and problem reports submitted via the Help Center</p>
+      </div>
+      <a href="{% url 'admin_support' %}" class="btn btn-ghost btn-sm" style="font-size: 0.8rem;">View all inquiries &rarr;</a>
+    </div>
+
+    {% if recent_support %}
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        {% for inq in recent_support %}
+          <div class="recent-listing-row" style="align-items: flex-start; justify-content: space-between; gap: 12px;">
+            <div style="flex-grow: 1;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <strong style="font-size: 0.92rem; color: var(--text-main);">{{ inq.subject }}</strong>
+                <span class="badge badge-flagged" style="font-size: 0.68rem; padding: 1px 6px;">{{ inq.get_status_display }}</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Ticket #{{ inq.id }}</span>
+              </div>
+              <div style="font-size: 0.775rem; color: var(--text-muted);">
+                From: <strong>{{ inq.name }}</strong> (<a href="{% url 'public_profile' username=inq.user.username %}" target="_blank" style="color: var(--primary-color);">@{{ inq.user.username }}</a>)
+                &bull; {{ inq.email }}
+                &bull; {{ inq.created_at|timesince }} ago
+              </div>
+              <div style="font-size: 0.825rem; color: var(--text-secondary); margin-top: 6px; max-width: 700px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                {{ inq.message }}
+              </div>
+            </div>
+            <div>
+              <a href="{% url 'admin_support' %}?q={{ inq.user.username }}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 4px 10px; white-space: nowrap;">Review & Reply</a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 24px 0; color: var(--text-muted);">
+        <p style="font-size: 0.875rem;">No pending support inquiries right now.</p>
+      </div>
+    {% endif %}
   </div>
 
 </div>

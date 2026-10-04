@@ -8,7 +8,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 
-from .models import Category, Item, ItemRequest, Report, EmailOTP
+from .models import Category, Item, ItemRequest, Report, EmailOTP, SupportInquiry
 from .emails import send_reusehub_email
 from .forms import ReuseHubPasswordResetForm
 
@@ -130,6 +130,56 @@ class ReuseHubTests(TestCase):
         })
         self.assertEqual(report_resp.status_code, 302)
         self.assertTrue(Report.objects.filter(reported_user=self.user, reported_by=self.requester).exists())
+
+    def test_unauthenticated_user_cannot_submit_help_report_or_message(self):
+        """Unauthenticated visitor cannot submit a report or support ticket."""
+        initial_reports_count = Report.objects.count()
+        response = self.client.post(reverse('help'), {
+            'subject': 'Report a User',
+            'message': 'Reporting user: testdonor',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse('login'), response.url)
+        self.assertEqual(Report.objects.count(), initial_reports_count)
+
+    def test_authenticated_user_can_report_via_help_desk(self):
+        """Authenticated user filing a report via help desk creates a formal Report and SupportInquiry."""
+        self.client.login(username='testrequester', password='password123')
+        response = self.client.post(reverse('help'), {
+            'subject': 'Report a User',
+            'message': 'Reporting user: testdonor\nUser did not show up.',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(
+            Report.objects.filter(reported_by=self.requester, reported_user=self.user).exists()
+        )
+        self.assertTrue(
+            SupportInquiry.objects.filter(user=self.requester, subject='Report a User').exists()
+        )
+
+    def test_authenticated_user_general_support_inquiry_recorded(self):
+        """Authenticated user submitting general inquiry is logged to SupportInquiry and visible to admin."""
+        self.client.login(username='testrequester', password='password123')
+        response = self.client.post(reverse('help'), {
+            'subject': 'General Inquiry',
+            'message': 'How do I change my preferred pickup location?',
+        })
+        self.assertEqual(response.status_code, 302)
+        inquiry = SupportInquiry.objects.filter(user=self.requester, subject='General Inquiry').first()
+        self.assertIsNotNone(inquiry)
+        self.assertEqual(inquiry.status, 'PENDING')
+
+        # Admin can view inquiry on admin support dashboard
+        self.client.login(username='superadmin', password='password123')
+        admin_resp = self.client.get(reverse('admin_support'))
+        self.assertEqual(admin_resp.status_code, 200)
+        self.assertContains(admin_resp, 'How do I change my preferred pickup location?')
+
+        # Admin can resolve the inquiry
+        resolve_resp = self.client.get(reverse('admin_support_action', kwargs={'pk': inquiry.pk, 'action': 'resolve'}))
+        self.assertEqual(resolve_resp.status_code, 302)
+        inquiry.refresh_from_db()
+        self.assertEqual(inquiry.status, 'RESOLVED')
 
     # ==========================================================================
     # CENTRAL MAILING SYSTEM & OTP VERIFICATION TESTS

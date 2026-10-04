@@ -43,6 +43,7 @@ from .models import (
     ItemImage,
     ItemRequest,
     Report,
+    SupportInquiry,
     UserProfile,
     UserReview,
 )
@@ -57,6 +58,7 @@ def global_context(request):
         )
     ).all()
     pending_reports_count = 0
+    pending_support_count = 0
     server_notification_data = {
         "incoming_requests": [],
         "outgoing_requests": [],
@@ -66,6 +68,7 @@ def global_context(request):
     if request.user.is_authenticated:
         if request.user.is_staff:
             pending_reports_count = Report.objects.filter(status="PENDING").count()
+            pending_support_count = SupportInquiry.objects.filter(status="PENDING").count()
 
         try:
             # 1. Incoming requests on user's listings
@@ -123,6 +126,7 @@ def global_context(request):
     return {
         "nav_categories": categories,
         "pending_reports_count": pending_reports_count,
+        "pending_support_count": pending_support_count,
         "server_notification_data": server_notification_data,
     }
 
@@ -226,20 +230,65 @@ def about_view(request):
 def help_view(request):
     """Help & Support center answering how to use ReuseHub, FAQs, and support inquiries."""
     if request.method == "POST":
-        name = request.POST.get("name", "").strip()
-        email = request.POST.get("email", "").strip()
+        if not request.user.is_authenticated:
+            messages.error(
+                request,
+                "Authentication required: You must be signed in to submit a report or contact support.",
+            )
+            return redirect(f"{reverse('login')}?next={reverse('help')}#contact-support")
+
         subject = request.POST.get("subject", "General Inquiry").strip()
         message = request.POST.get("message", "").strip()
 
-        if name and email and message:
-            messages.success(
-                request,
-                f"Thank you, {name}! Your message regarding '{subject}' has been received. Our support team will respond to {email} shortly.",
+        # Bind to authenticated user credentials to prevent identity spoofing
+        user = request.user
+        name = user.get_full_name() or user.username
+        email = user.email or request.POST.get("email", "").strip()
+
+        if message:
+            # 1. Always record in SupportInquiry so admin portal tracks all tickets
+            inquiry = SupportInquiry.objects.create(
+                user=user,
+                name=name,
+                email=email,
+                subject=subject,
+                message=message,
+                status="PENDING",
             )
+
+            # 2. If the user is submitting a user report via help desk, also file formal Report in moderation queue
+            if subject == "Report a User":
+                reported_username = ""
+                if "Reporting user:" in message:
+                    for line in message.splitlines():
+                        if "Reporting user:" in line:
+                            reported_username = line.replace("Reporting user:", "").strip()
+                            break
+
+                target_user = None
+                if reported_username:
+                    target_user = User.objects.filter(username__iexact=reported_username).first()
+
+                Report.objects.create(
+                    reported_user=target_user,
+                    reported_by=user,
+                    reason="OTHER",
+                    details=f"[Help Center Ticket #{inquiry.id} - User Report]\nReported Target: {reported_username or 'Not specified'}\n\nSubmitted by: @{user.username} ({email or 'No email'})\n\nMessage:\n{message}",
+                    status="PENDING",
+                )
+                messages.success(
+                    request,
+                    f"Thank you, {name}! Your report regarding '{reported_username or 'the user'}' has been recorded (Ticket #{inquiry.id}) and submitted to our moderation team.",
+                )
+            else:
+                messages.success(
+                    request,
+                    f"Thank you, {name}! Your message regarding '{subject}' has been submitted (Ticket #{inquiry.id}). Our team will review it in the admin portal and follow up at {email or 'your account email'}.",
+                )
             return redirect("help")
         else:
             messages.error(
-                request, "Please fill in all required fields to send a message."
+                request, "Please enter your message or report details before submitting."
             )
 
     return render(request, "app/help.html")
@@ -1233,11 +1282,15 @@ def admin_dashboard(request):
     repairable_items = Item.objects.filter(is_repairable=True).count()
     total_users = User.objects.count()
     pending_reports = Report.objects.filter(status="PENDING").count()
+    pending_support = SupportInquiry.objects.filter(status="PENDING").count()
     pending_moderation = Item.objects.filter(moderation_status="PENDING").count()
     flagged_items = Item.objects.filter(moderation_status="FLAGGED").count()
 
     recent_items = Item.objects.select_related("donor", "category").all()[:6]
-    recent_reports = Report.objects.select_related("item", "reported_by").filter(
+    recent_reports = Report.objects.select_related("item", "reported_user", "reported_by").filter(
+        status="PENDING"
+    )[:5]
+    recent_support = SupportInquiry.objects.select_related("user").filter(
         status="PENDING"
     )[:5]
 
@@ -1248,10 +1301,12 @@ def admin_dashboard(request):
         "repairable_items": repairable_items,
         "total_users": total_users,
         "pending_reports": pending_reports,
+        "pending_support": pending_support,
         "pending_moderation": pending_moderation,
         "flagged_items": flagged_items,
         "recent_items": recent_items,
         "recent_reports": recent_reports,
+        "recent_support": recent_support,
     }
     return render(request, "app/admin/dashboard.html", context)
 
@@ -1418,6 +1473,84 @@ def admin_report_resolve(request, pk, action):
         )
 
     return redirect("admin_reports")
+
+
+@user_passes_test(is_admin)
+def admin_support(request):
+    """Admin view and management of user-submitted support inquiries and direct tickets."""
+    inquiries = SupportInquiry.objects.select_related("user").all()
+    status_filter = request.GET.get("status", "PENDING")
+
+    if status_filter != "ALL":
+        inquiries = inquiries.filter(status=status_filter)
+
+    query = request.GET.get("q", "").strip()
+    if query:
+        inquiries = inquiries.filter(
+            Q(subject__icontains=query)
+            | Q(message__icontains=query)
+            | Q(name__icontains=query)
+            | Q(email__icontains=query)
+            | Q(user__username__icontains=query)
+        )
+
+    paginator = Paginator(inquiries, 15)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        "inquiries": page_obj,
+        "status_filter": status_filter,
+        "query": query,
+    }
+    return render(request, "app/admin/support.html", context)
+
+
+@user_passes_test(is_admin)
+def admin_support_action(request, pk, action):
+    """Admin update status or respond to support inquiry."""
+    inquiry = get_object_or_404(SupportInquiry, pk=pk)
+
+    if request.method == "POST":
+        response_text = request.POST.get("admin_response", "").strip()
+        if response_text:
+            inquiry.admin_response = response_text
+            inquiry.status = "RESOLVED"
+            inquiry.save()
+
+            # Send email notification to user
+            send_admin_or_account_notification(
+                user=inquiry.user,
+                subject=f"Update regarding your inquiry: '{inquiry.subject}'",
+                headline="Support Inquiry Response 💬",
+                message_body=f"Hello {inquiry.name},\n\nOur support team has reviewed your message regarding '{inquiry.subject}':\n\n\"{response_text}\"",
+                action_url=request.build_absolute_uri(reverse("help")),
+                action_text="Visit Help & Support",
+            )
+            messages.success(
+                request,
+                f"Response sent to {inquiry.user.username} ({inquiry.email}) and ticket #{inquiry.id} marked as resolved.",
+            )
+            return redirect("admin_support")
+
+    if action == "resolve":
+        inquiry.status = "RESOLVED"
+        inquiry.save()
+        messages.success(request, f"Ticket #{inquiry.id} marked as resolved.")
+    elif action == "in_progress":
+        inquiry.status = "IN_PROGRESS"
+        inquiry.save()
+        messages.info(request, f"Ticket #{inquiry.id} marked as in progress.")
+    elif action == "close":
+        inquiry.status = "CLOSED"
+        inquiry.save()
+        messages.info(request, f"Ticket #{inquiry.id} closed.")
+    elif action == "reopen":
+        inquiry.status = "PENDING"
+        inquiry.save()
+        messages.info(request, f"Ticket #{inquiry.id} reopened.")
+
+    return redirect("admin_support")
 
 
 @user_passes_test(is_admin)

@@ -75,8 +75,46 @@
 }
 
 .requests-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
   font-weight: 600;
-  color: var(--text-main);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.requests-count-badge.has-requests {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1.5px solid #93c5fd;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(29, 78, 216, 0.12);
+}
+
+.requests-count-badge.has-requests:hover {
+  background: #dbeafe;
+  border-color: #60a5fa;
+  transform: translateY(-1px);
+}
+
+.requests-count-badge.has-requests .requests-count-number {
+  background: #1d4ed8;
+  color: #ffffff;
+  border-radius: var(--radius-full);
+  padding: 1px 7px;
+  font-size: 0.775rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.requests-count-badge.no-requests {
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  border: 1px solid var(--border-light);
+  font-weight: 500;
 }
 
 .table-actions-group {

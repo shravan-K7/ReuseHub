@@ -13,6 +13,8 @@
  *    a clear error message directly below the corresponding input field and prevents submission.
  * 2. As soon as the user starts typing or correcting the information, the error message
  *    automatically disappears immediately without page reload.
+ * 
+ * document.querySelector() is a built-in DOM method used to find and select the first HTML element that matches one or more specified CSS selectors
  */
 
 window.ReuseHubValidationLoaded = true;

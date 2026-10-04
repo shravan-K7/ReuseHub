@@ -230,6 +230,39 @@ class Report(models.Model):
         return f"Report #{self.id} on {target} by {self.reported_by.username}"
 
 
+class SupportInquiry(models.Model):
+    """Direct support inquiries, technical bug reports, and messages sent via the Help Center."""
+
+    STATUS_CHOICES = [  # noqa: RUF012
+        ("PENDING", "Pending Review"),
+        ("IN_PROGRESS", "In Progress"),
+        ("RESOLVED", "Resolved"),
+        ("CLOSED", "Closed"),
+    ]
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="support_inquiries"
+    )
+    name = models.CharField(max_length=150)
+    email = models.EmailField()
+    subject = models.CharField(max_length=150)
+    message = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="PENDING")
+    admin_response = models.TextField(
+        blank=True, help_text="Notes or response sent to the user by staff."
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Support Inquiry"
+        verbose_name_plural = "Support Inquiries"
+
+    def __str__(self):
+        return f"Support #{self.id} [{self.status}] '{self.subject}' from @{self.user.username}"
+
+
 class UserProfile(models.Model):
     """User profile for community members."""
 

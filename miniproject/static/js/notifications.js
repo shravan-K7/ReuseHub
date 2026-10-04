@@ -131,12 +131,23 @@
     } catch (e) {}
   }
 
+  function purgeMockNotifications() {
+    const list = getNotifs();
+    const cleaned = list.filter(function (n) {
+      if (n.id === 's2' || n.id === 's3') return false;
+      if (!n.sourceId && (n.title === 'New Request on your listing' || n.title === 'Request Accepted!')) return false;
+      return true;
+    });
+    if (cleaned.length !== list.length) {
+      saveNotifs(cleaned);
+    }
+  }
+
   function seedInitial() {
     const seedKey = 'reusehub_seeded_' + user;
     if (localStorage.getItem(seedKey)) return;
     localStorage.setItem(seedKey, '1');
     if (getNotifs().length === 0) {
-      const now = Date.now();
       saveNotifs([
         {
           id: 's1',
@@ -146,29 +157,7 @@
           message: 'Mail from Moderator Team: Thank you for joining. Help neighbors choose reuse and repair.',
           link: '/about/',
           linkText: 'Read Guidelines',
-          timestamp: now - 18000000,
-          read: false
-        },
-        {
-          id: 's2',
-          type: 'request_received',
-          badge: 'Item Request',
-          title: 'New Request on your listing',
-          message: 'A community member submitted a collection request for your item.',
-          link: '/my-listings/',
-          linkText: 'Respond to Request',
-          timestamp: now - 7200000,
-          read: false
-        },
-        {
-          id: 's3',
-          type: 'request_accepted',
-          badge: 'Accepted',
-          title: 'Request Accepted!',
-          message: 'Your item request was accepted. You can coordinate collection with the donor.',
-          link: '/my-requests/',
-          linkText: 'Pickup Details',
-          timestamp: now - 1800000,
+          timestamp: Date.now(),
           read: false
         }
       ]);
@@ -287,6 +276,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+    purgeMockNotifications();
     seedInitial();
     syncServer();
     updateBadge();

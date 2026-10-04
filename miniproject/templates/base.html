@@ -43,6 +43,14 @@
                   {% endif %}
                 </a>
               </li>
+              <li>
+                <a href="{% url 'admin_support' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_support' %}active{% endif %}">
+                  Support
+                  {% if pending_support_count > 0 %}
+                    <span class="badge badge-flagged" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px;">{{ pending_support_count }}</span>
+                  {% endif %}
+                </a>
+              </li>
               <li><a href="{% url 'admin_users' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}">Members</a></li>
             </ul>
           </nav>

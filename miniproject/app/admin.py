@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Item, ItemImage, ItemRequest, Report, UserProfile, EmailOTP
+from .models import Category, Item, ItemImage, ItemRequest, Report, UserProfile, EmailOTP, SupportInquiry
 
 
 class ItemImageInline(admin.TabularInline):
@@ -43,9 +43,17 @@ class ItemRequestAdmin(admin.ModelAdmin):
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ('id', 'item', 'reported_by', 'reason', 'status', 'created_at')
+    list_display = ('id', 'item', 'reported_user', 'reported_by', 'reason', 'status', 'created_at')
     list_filter = ('status', 'reason', 'created_at')
-    search_fields = ('item__title', 'reported_by__username', 'details')
+    search_fields = ('item__title', 'reported_user__username', 'reported_by__username', 'details')
+
+
+@admin.register(SupportInquiry)
+class SupportInquiryAdmin(admin.ModelAdmin):
+    list_display = ('id', 'subject', 'user', 'email', 'status', 'created_at')
+    list_filter = ('status', 'created_at')
+    search_fields = ('subject', 'message', 'user__username', 'email')
+    readonly_fields = ('created_at', 'updated_at')
 
 @admin.register(EmailOTP)
 class EmailOTPAdmin(admin.ModelAdmin):
