@@ -1,6 +1,6 @@
 /* ==============================================================================
    ReuseHub - Interactive Confirmation Modals
-   Compatible with Bootstrap-style conventions and ReuseHub Modern Design System
+   Dual-Theme Architecture: Supports Warm Minimalist (User) & Dark Studio (Admin)
    ============================================================================== */
 
 /* Modal Backdrop / Overlay */
@@ -9,9 +9,9 @@
   inset: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(15, 23, 42, 0.48);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   z-index: 2000;
   display: flex;
   align-items: center;
@@ -37,10 +37,10 @@
   max-width: 480px;
   margin: auto;
   pointer-events: auto;
-  background: #ffffff;
+  background: var(--bg-surface, #ffffff);
   border-radius: var(--radius-lg, 12px);
   border: 1px solid var(--border-color, #e5e4de);
-  box-shadow: 0 24px 48px -8px rgba(0, 0, 0, 0.28), 0 12px 24px -4px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 24px 48px -8px rgba(0, 0, 0, 0.3), 0 12px 24px -4px rgba(0, 0, 0, 0.15);
   overflow: hidden;
   transform: scale(0.94) translateY(8px);
   transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
@@ -53,7 +53,7 @@
 
 /* Modal Content Card */
 .modal-content {
-  background: #ffffff;
+  background: var(--bg-surface, #ffffff);
   border-radius: inherit;
   border: none;
   overflow: hidden;
@@ -65,12 +65,12 @@
 /* Modal Header */
 .modal-header {
   padding: 18px 22px 14px;
-  background: #ffffff;
+  background: var(--bg-surface, #ffffff);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  border-bottom: 1px solid var(--border-light, #f2f1ec);
+  border-bottom: 1px solid var(--border-color, #f2f1ec);
 }
 
 .modal-title-wrap {
@@ -136,7 +136,7 @@
 /* Modal Body */
 .modal-body {
   padding: 20px 22px;
-  background: #ffffff;
+  background: var(--bg-surface, #ffffff);
   font-size: 0.92rem;
   line-height: 1.55;
   color: var(--text-secondary, #52525b);
@@ -163,8 +163,8 @@
   font-size: 0.92rem;
   line-height: 1.4;
   color: var(--text-main, #18181b);
-  background-color: #ffffff;
-  border: 1px solid #d4d4d8;
+  background-color: var(--bg-page, #ffffff);
+  border: 1px solid var(--border-color, #d4d4d8);
   border-radius: var(--radius-sm, 6px);
   box-sizing: border-box;
   font-family: inherit;
@@ -176,8 +176,8 @@
 .modal-body textarea:focus,
 .modal-body input[type="text"]:focus {
   outline: none;
-  border-color: #1e3a2b;
-  box-shadow: 0 0 0 3px rgba(30, 58, 43, 0.12);
+  border-color: var(--primary, #1e3a2b);
+  box-shadow: 0 0 0 3px var(--focus-ring, rgba(30, 58, 43, 0.12));
 }
 
 .modal-body textarea {
@@ -204,6 +204,18 @@
   font-weight: 600;
 }
 
+.modal-prompt-text {
+  margin: 0 0 8px 0;
+  color: var(--text-main, #18181b);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.modal-prompt-text strong {
+  color: var(--text-main, #18181b);
+  font-weight: 700;
+}
+
 .modal-subtext {
   font-size: 0.85rem;
   color: var(--text-muted, #71717a);
@@ -213,7 +225,7 @@
 .modal-footer {
   padding: 14px 22px 18px;
   background: var(--bg-subtle, #f8f8f6);
-  border-top: 1px solid var(--border-light, #f2f1ec);
+  border-top: 1px solid var(--border-color, #f2f1ec);
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -233,4 +245,116 @@
 body.modal-open {
   overflow: hidden !important;
   touch-action: none;
+}
+
+/* ==============================================================================
+   DARK THEME MODAL STYLING (body.theme-admin)
+   ============================================================================== */
+
+body.theme-admin .modal-backdrop {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+body.theme-admin .modal-dialog {
+  background: #111827;
+  border: 1px solid #1e293b;
+  box-shadow: 0 24px 50px -8px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+body.theme-admin .modal-content {
+  background: #111827;
+}
+
+body.theme-admin .modal-header {
+  background: #111827;
+  border-bottom: 1px solid #1e293b;
+}
+
+body.theme-admin .modal-title {
+  color: #f8fafc;
+}
+
+body.theme-admin .modal-close-btn {
+  color: #94a3b8;
+}
+
+body.theme-admin .modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+}
+
+body.theme-admin .modal-body {
+  background: #111827;
+  color: #94a3b8;
+}
+
+body.theme-admin .modal-prompt-text {
+  color: #f8fafc;
+}
+
+body.theme-admin .modal-prompt-text strong {
+  color: #ffffff;
+}
+
+body.theme-admin .modal-body strong {
+  color: #f8fafc;
+}
+
+body.theme-admin .modal-subtext {
+  color: #94a3b8;
+}
+
+body.theme-admin .modal-footer {
+  background: #0d131f;
+  border-top: 1px solid #1e293b;
+}
+
+body.theme-admin .modal-icon-badge-logout {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+body.theme-admin .modal-icon-badge-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+body.theme-admin .modal-body .form-control,
+body.theme-admin .modal-body select,
+body.theme-admin .modal-body textarea,
+body.theme-admin .modal-body input[type="text"] {
+  background-color: #0b0f17;
+  color: #f8fafc;
+  border: 1px solid #1e293b;
+}
+
+body.theme-admin .modal-body .form-control:focus,
+body.theme-admin .modal-body select:focus,
+body.theme-admin .modal-body textarea:focus,
+body.theme-admin .modal-body input[type="text"]:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+}
+
+body.theme-admin .modal-footer .btn-secondary {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+body.theme-admin .modal-footer .btn-secondary:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+body.theme-admin .modal-footer .btn-primary {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: #ffffff;
+}
+
+body.theme-admin .modal-footer .btn-primary:hover {
+  background: #4338ca;
 }

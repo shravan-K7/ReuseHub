@@ -16,126 +16,233 @@
 </head>
 <body class="{% block body_class %}{% if '/platform-admin' in request.path %}theme-admin{% else %}theme-user{% endif %}{% endblock %}" {% if user.is_authenticated %}data-current-user="{{ user.username }}"{% endif %}>
 
-  <!-- Navigation Bar (User vs. Admin Theme Aware) -->
-  {% block navbar %}
-    {% if '/platform-admin' in request.path %}
-      <!-- Admin Console Navbar (Dark Modern Slate) -->
-      <header class="navbar navbar-admin">
-        <div class="container navbar-inner">
-          <div class="admin-brand-wrap">
-            <a href="{% url 'admin_dashboard' %}" class="brand brand-admin">
-              <span class="brand-icon brand-icon-admin">RH</span>
-              <span class="brand-name">ReuseHub</span>
-              <span class="admin-console-pill">Admin Console</span>
+  <!-- Navigation & Layout (User Navbar vs. Admin Left Sidebar) -->
+  {% if '/platform-admin' in request.path %}
+    <!-- Admin Console Layout (Modern Left Sidebar + Workspace) -->
+    <div class="admin-shell-layout">
+      <!-- Admin Sidebar (Left Side) -->
+      <aside class="admin-sidebar" id="adminSidebar">
+        <!-- Brand / Console Header -->
+        <div class="admin-sidebar-header">
+          <a href="{% url 'admin_dashboard' %}" class="admin-brand-link">
+            <span class="brand-icon-admin">RH</span>
+            <div class="admin-brand-info">
+              <span class="admin-brand-name">ReuseHub</span>
+              <span class="admin-console-sub">Admin Console</span>
+            </div>
+          </a>
+        </div>
+
+        <!-- Sidebar Navigation Menu -->
+        <nav class="admin-sidebar-nav">
+          <div class="admin-nav-category">COMMAND</div>
+          <ul class="admin-sidebar-links">
+            <li>
+              <a href="{% url 'admin_dashboard' %}" class="admin-side-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                <span class="admin-side-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                  </svg>
+                </span>
+                <span>Dashboard</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'admin_listings' %}" class="admin-side-link {% if request.resolver_match.url_name == 'admin_listings' %}active{% endif %}">
+                <span class="admin-side-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                  </svg>
+                </span>
+                <span>Listings</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'admin_categories' %}" class="admin-side-link {% if request.resolver_match.url_name == 'admin_categories' %}active{% endif %}">
+                <span class="admin-side-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                    <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                  </svg>
+                </span>
+                <span>Categories</span>
+              </a>
+            </li>
+          </ul>
+
+          <div class="admin-nav-category">SAFETY & SUPPORT</div>
+          <ul class="admin-sidebar-links">
+            <li>
+              <a href="{% url 'admin_reports' %}" class="admin-side-link {% if request.resolver_match.url_name == 'admin_reports' %}active{% endif %}">
+                <span class="admin-side-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  </svg>
+                </span>
+                <span>Reports</span>
+                {% if pending_reports_count > 0 %}
+                  <span class="admin-side-badge badge-flagged">{{ pending_reports_count }}</span>
+                {% endif %}
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'admin_support' %}" class="admin-side-link {% if request.resolver_match.url_name == 'admin_support' %}active{% endif %}">
+                <span class="admin-side-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                  </svg>
+                </span>
+                <span>Support</span>
+                {% if pending_support_count > 0 %}
+                  <span class="admin-side-badge badge-flagged">{{ pending_support_count }}</span>
+                {% endif %}
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'admin_users' %}" class="admin-side-link {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}">
+                <span class="admin-side-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                </span>
+                <span>Members</span>
+              </a>
+            </li>
+          </ul>
+
+          <div class="admin-nav-category">PLATFORM</div>
+          <ul class="admin-sidebar-links">
+            <li>
+              <a href="{% url 'home' %}" class="admin-side-link">
+                <span class="admin-side-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                </span>
+                <span>Public Site</span>
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'admin:index' %}" target="_blank" class="admin-side-link">
+                <span class="admin-side-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                    <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                    <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                    <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                  </svg>
+                </span>
+                <span>Django Admin</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <!-- Sidebar User Footer -->
+        <div class="admin-sidebar-user">
+          <div class="admin-user-info-wrap">
+            <span class="admin-avatar-initials">{{ user.username|slice:":2"|upper }}</span>
+            <div class="admin-user-meta">
+              <span class="admin-user-title">{{ user.username }}</span>
+              <span class="admin-user-role">Administrator</span>
+            </div>
+          </div>
+          <div class="admin-user-actions">
+            <a href="{% url 'notifications' %}" class="admin-side-icon-btn" title="Notifications">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+            </a>
+            <a href="{% url 'logout' %}" class="admin-side-icon-btn logout-trigger-btn" data-modal-target="#logoutConfirmModal" title="Log out">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
             </a>
           </div>
+        </div>
+      </aside>
 
-          <nav class="admin-main-nav">
-            <ul class="nav-links">
-              <li><a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">Dashboard</a></li>
-              <li><a href="{% url 'admin_listings' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_listings' %}active{% endif %}">Listings</a></li>
-              <li><a href="{% url 'admin_categories' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_categories' %}active{% endif %}">Categories</a></li>
+      <!-- Admin Main Content Area (Right Side) -->
+      <div class="admin-workspace-pane">
+        <!-- Mobile Topbar for responsive toggle -->
+        <div class="admin-topbar-mobile">
+          <button type="button" class="admin-sidebar-toggle" id="adminSidebarToggle" aria-label="Toggle Navigation">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+          <span class="admin-topbar-title">ReuseHub Admin</span>
+        </div>
+  {% else %}
+    <!-- Public User Navbar (Warm Modern Neutral) -->
+    <header class="navbar navbar-user">
+      <div class="container navbar-inner">
+        <a href="{% url 'home' %}" class="brand brand-user">
+          <div class="brand-icon brand-icon-user">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          </div>
+          <span class="brand-name">ReuseHub</span>
+        </a>
+
+        <nav>
+          <ul class="nav-links">
+            <li><a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Explore</a></li>
+            <li><a href="{% url 'about' %}" class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">About</a></li>
+            <li><a href="{% url 'help' %}" class="nav-link {% if request.resolver_match.url_name == 'help' %}active{% endif %}">Help & Support</a></li>
+            {% if user.is_authenticated %}
+              <li><a href="{% url 'my_listings' %}" class="nav-link {% if request.resolver_match.url_name == 'my_listings' %}active{% endif %}">My Listings</a></li>
+              <li><a href="{% url 'my_requests' %}" class="nav-link {% if request.resolver_match.url_name == 'my_requests' %}active{% endif %}">My Requests</a></li>
+            {% endif %}
+            {% if user.is_staff %}
               <li>
-                <a href="{% url 'admin_reports' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_reports' %}active{% endif %}">
-                  Reports
+                <a href="{% url 'admin_dashboard' %}" class="nav-link nav-link-admin-switch">
+                  Admin Portal
                   {% if pending_reports_count > 0 %}
-                    <span class="badge badge-flagged" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px;">{{ pending_reports_count }}</span>
+                    <span class="badge badge-flagged" style="font-size: 0.65rem; padding: 1px 5px; margin-left: 4px;">{{ pending_reports_count }}</span>
                   {% endif %}
                 </a>
               </li>
-              <li>
-                <a href="{% url 'admin_support' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_support' %}active{% endif %}">
-                  Support
-                  {% if pending_support_count > 0 %}
-                    <span class="badge badge-flagged" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px;">{{ pending_support_count }}</span>
-                  {% endif %}
-                </a>
-              </li>
-              <li><a href="{% url 'admin_users' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}">Members</a></li>
-            </ul>
-          </nav>
+            {% endif %}
+          </ul>
+        </nav>
 
-          <div class="nav-actions">
-            <a href="{% url 'home' %}" class="btn btn-secondary btn-sm admin-exit-btn">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-              Public Site
+        <div class="nav-actions">
+          {% if user.is_authenticated %}
+            <a href="{% url 'item_create' %}" class="btn btn-primary btn-sm">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Give an Item
             </a>
-            <span class="admin-user-pill">
-              <span class="admin-status-dot"></span>
-              {{ user.username }}
-            </span>
+            <a href="{% url 'profile' %}" class="btn btn-secondary btn-sm user-profile-btn">{{ user.username }}</a>
             <!-- Notification Bell Icon (Logged-In Users Only) -->
-            <a href="{% url 'notifications' %}" class="nav-bell-btn {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}" id="adminNotificationBell" title="Notifications" aria-label="Notifications">
+            <a href="{% url 'notifications' %}" class="nav-bell-btn {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}" id="navNotificationBell" title="Notifications" aria-label="Notifications">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
               </svg>
-              <span class="nav-bell-badge admin-bell-badge" style="display: none;">0</span>
-              <span class="nav-bell-dot" style="display: none;"></span>
+              <span class="nav-bell-badge" id="navNotificationBadge" style="display: none;">0</span>
+              <span class="nav-bell-dot" id="navNotificationDot" style="display: none;"></span>
             </a>
-            <a href="{% url 'logout' %}" class="btn btn-ghost btn-sm logout-trigger-btn" id="adminLogoutBtn" data-modal-target="#logoutConfirmModal">Log out</a>
-          </div>
+            <a href="{% url 'logout' %}" class="btn btn-ghost btn-sm logout-trigger-btn" id="navLogoutBtn" data-modal-target="#logoutConfirmModal">Log out</a>
+          {% else %}
+            <a href="{% url 'login' %}" class="btn btn-secondary btn-sm">Sign in</a>
+            <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Join</a>
+          {% endif %}
         </div>
-      </header>
-    {% else %}
-      <!-- Minimal Modern User Navbar (Warm Modern Neutral) -->
-      <header class="navbar navbar-user">
-        <div class="container navbar-inner">
-          <a href="{% url 'home' %}" class="brand brand-user">
-            <div class="brand-icon brand-icon-user">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-            </div>
-            <span class="brand-name">ReuseHub</span>
-          </a>
-
-          <nav>
-            <ul class="nav-links">
-              <li><a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Explore</a></li>
-              <li><a href="{% url 'about' %}" class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">About</a></li>
-              <li><a href="{% url 'help' %}" class="nav-link {% if request.resolver_match.url_name == 'help' %}active{% endif %}">Help & Support</a></li>
-              {% if user.is_authenticated %}
-                <li><a href="{% url 'my_listings' %}" class="nav-link {% if request.resolver_match.url_name == 'my_listings' %}active{% endif %}">My Listings</a></li>
-                <li><a href="{% url 'my_requests' %}" class="nav-link {% if request.resolver_match.url_name == 'my_requests' %}active{% endif %}">My Requests</a></li>
-              {% endif %}
-              {% if user.is_staff %}
-                <li>
-                  <a href="{% url 'admin_dashboard' %}" class="nav-link nav-link-admin-switch">
-                    Admin Portal
-                    {% if pending_reports_count > 0 %}
-                      <span class="badge badge-flagged" style="font-size: 0.65rem; padding: 1px 5px; margin-left: 4px;">{{ pending_reports_count }}</span>
-                    {% endif %}
-                  </a>
-                </li>
-              {% endif %}
-            </ul>
-          </nav>
-
-          <div class="nav-actions">
-            {% if user.is_authenticated %}
-              <a href="{% url 'item_create' %}" class="btn btn-primary btn-sm">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                Give an Item
-              </a>
-              <a href="{% url 'profile' %}" class="btn btn-secondary btn-sm user-profile-btn">{{ user.username }}</a>
-              <!-- Notification Bell Icon (Logged-In Users Only) -->
-              <a href="{% url 'notifications' %}" class="nav-bell-btn {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}" id="navNotificationBell" title="Notifications" aria-label="Notifications">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                </svg>
-                <span class="nav-bell-badge" id="navNotificationBadge" style="display: none;">0</span>
-                <span class="nav-bell-dot" id="navNotificationDot" style="display: none;"></span>
-              </a>
-              <a href="{% url 'logout' %}" class="btn btn-ghost btn-sm logout-trigger-btn" id="navLogoutBtn" data-modal-target="#logoutConfirmModal">Log out</a>
-            {% else %}
-              <a href="{% url 'login' %}" class="btn btn-secondary btn-sm">Sign in</a>
-              <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Join</a>
-            {% endif %}
-          </div>
-        </div>
-      </header>
-    {% endif %}
-  {% endblock %}
+      </div>
+    </header>
+  {% endif %}
 
   <!-- Flash Notification Messages (Floating Toast Popups) -->
   {% if messages %}
@@ -163,28 +270,30 @@
   {% endif %}
 
   <!-- Main View Content -->
-  <main class="main-content">
+  <main class="main-content {% if '/platform-admin' in request.path %}admin-main-content{% endif %}">
     {% block content %}{% endblock %}
   </main>
 
-  <!-- Footer (User vs. Admin Theme Aware) -->
+  <!-- Footers -->
   {% if '/platform-admin' in request.path %}
-    <footer class="footer footer-admin">
-      <div class="container footer-admin-inner">
-        <div class="footer-admin-status">
-          <span class="status-indicator"></span>
-          <span>ReuseHub Administration Console &bull; All Systems Operational</span>
-        </div>
-        <div class="footer-admin-links">
-          <a href="{% url 'admin_dashboard' %}">Dashboard</a>
-          <a href="{% url 'admin_listings' %}">Listings</a>
-          <a href="{% url 'admin_categories' %}">Categories</a>
-          <a href="{% url 'admin_reports' %}">Reports</a>
-          <a href="{% url 'admin:index' %}" target="_blank">Django Admin</a>
-          <a href="{% url 'home' %}">Exit to Public Site &rarr;</a>
-        </div>
-      </div>
-    </footer>
+        <footer class="footer footer-admin">
+          <div class="container footer-admin-inner">
+            <div class="footer-admin-status">
+              <span class="status-indicator"></span>
+              <span>ReuseHub Administration Console &bull; All Systems Operational</span>
+            </div>
+            <div class="footer-admin-links">
+              <a href="{% url 'admin_dashboard' %}">Dashboard</a>
+              <a href="{% url 'admin_listings' %}">Listings</a>
+              <a href="{% url 'admin_categories' %}">Categories</a>
+              <a href="{% url 'admin_reports' %}">Reports</a>
+              <a href="{% url 'admin:index' %}" target="_blank">Django Admin</a>
+              <a href="{% url 'home' %}">Exit to Public Site &rarr;</a>
+            </div>
+          </div>
+        </footer>
+      </div><!-- /.admin-workspace-pane -->
+    </div><!-- /.admin-shell-layout -->
   {% else %}
     <footer class="footer footer-user">
       <div class="container footer-inner">
@@ -239,10 +348,10 @@
             <button type="button" class="modal-close-btn" data-modal-close aria-label="Close dialog">&times;</button>
           </div>
           <div class="modal-body">
-            <p style="margin: 0 0 8px 0; color: var(--text-main); font-weight: 500;">
+            <p class="modal-prompt-text">
               Are you sure you want to end your session, <strong>{{ user.username }}</strong>?
             </p>
-            <p class="modal-subtext" style="margin: 0;">
+            <p class="modal-subtext">
               You will need to sign back in to pass on items, manage collection requests, or access your account.
             </p>
           </div>
@@ -271,8 +380,8 @@
       }
     }
 
-    // Auto-remove toast alerts after 4-second animation ends
     document.addEventListener('DOMContentLoaded', function() {
+      // Auto-remove toast alerts after 4-second animation ends
       var toasts = document.querySelectorAll('.alert-toast');
       toasts.forEach(function(toast) {
         toast.addEventListener('animationend', function() {
@@ -284,6 +393,21 @@
           }
         }, 4100);
       });
+
+      // Admin Sidebar Mobile Toggle
+      var sidebarToggle = document.getElementById('adminSidebarToggle');
+      var adminSidebar = document.getElementById('adminSidebar');
+      if (sidebarToggle && adminSidebar) {
+        sidebarToggle.addEventListener('click', function(e) {
+          e.stopPropagation();
+          adminSidebar.classList.toggle('open');
+        });
+        document.addEventListener('click', function(e) {
+          if (adminSidebar.classList.contains('open') && !adminSidebar.contains(e.target)) {
+            adminSidebar.classList.remove('open');
+          }
+        });
+      }
     });
   </script>
 </body>
