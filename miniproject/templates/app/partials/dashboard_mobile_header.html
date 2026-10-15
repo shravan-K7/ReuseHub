@@ -1,0 +1,28 @@
+{% load static %}
+<!-- Mobile Dashboard Topbar -->
+<div class="dashboard-mobile-header" id="dashboardMobileHeader">
+  <div class="mobile-header-left">
+    <button type="button" class="dashboard-sidebar-toggle-btn" id="dashboardSidebarToggleBtn" aria-label="Open sidebar menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </button>
+    <a href="{% url 'home' %}" class="brand-link" style="gap: 8px;">
+      <img src="{% static 'images/reusehub_logo.png' %}" alt="ReuseHub Logo" class="brand-logo-img" style="width: 28px; height: 28px;">
+      <span class="brand-wordmark" style="font-size: 1.15rem; color: #000000;">ReuseHub</span>
+    </a>
+  </div>
+  <div class="mobile-header-right">
+    <a href="{% url 'profile' %}" class="mobile-user-avatar-btn" title="{{ user.username }}">
+      {% if user.profile.avatar %}
+        <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}">
+      {% else %}
+        <span>{{ user.username|make_list|first|upper }}</span>
+      {% endif %}
+    </a>
+  </div>
+</div>
+<!-- Sidebar Backdrop for Mobile Drawer -->
+<div class="dashboard-sidebar-backdrop" id="dashboardSidebarBackdrop"></div>

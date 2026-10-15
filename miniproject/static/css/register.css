@@ -1,125 +1,305 @@
 /* ==============================================================================
-   ReuseHub - Register Stylesheet (register.css)
-   Target: register.html
-   Aesthetic: Trustworthy registration flow with crisp inputs and clear guidance
+   ReuseHub - Register Stylesheet (Split Card Layout with 3D Mascot Artwork)
    ============================================================================== */
 
-.register-container {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 52px 20px 88px;
-}
-
-.register-card {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 36px 32px;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
-}
-
-.register-header {
-  text-align: center;
-  margin-bottom: 26px;
-}
-
-.register-brand-badge {
-  width: 44px;
-  height: 44px;
-  background-color: var(--primary);
-  color: #ffffff;
-  border-radius: var(--radius-md);
+/* Page background - Pure White */
+body.register-card-page {
+  background-color: #FFFFFF;
+  min-height: 100vh;
   display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+}
+
+/* Top navbar */
+body.register-card-page .navbar-user-header {
+  flex-shrink: 0;
+}
+
+/* Center workspace for the card */
+body.register-card-page .main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  padding: 8px 24px 32px !important;
+  box-sizing: border-box;
+}
+
+/* Omit footer on the register page */
+body.register-card-page .footer-user,
+body.register-card-page .footer {
+  display: none !important;
+}
+
+/* Register Page Wrapper */
+.register-page-wrapper {
+  width: 100%;
+  max-width: 1040px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+}
+
+/* The Card: 2-column split with rounded corners */
+.register-card {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 50% 50%;
+  background-color: #FFFFFF;
+  border: 1px solid #E6E3F2;
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 14px 38px -10px rgba(109, 91, 208, 0.08), 0 4px 12px rgba(0, 0, 0, 0.03);
+  min-height: 560px;
+}
+
+/* Left Column: Registration Form Container */
+.register-card-form-pane {
+  background-color: #FFFFFF;
+  padding: 40px 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* Header Group */
+.register-form-header {
+  margin-bottom: 20px;
+}
+
+.register-card-title {
+  font-size: 1.72rem;
   font-weight: 800;
-  margin: 0 auto 16px;
-  box-shadow: 0 4px 10px rgba(24, 24, 27, 0.15);
+  letter-spacing: -0.015em;
+  color: #221F33;
+  margin: 0 0 4px 0;
+  line-height: 1.15;
+  text-transform: uppercase;
 }
 
-.register-title {
-  font-size: 1.45rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--text-main);
-  margin-bottom: 6px;
+.register-card-subtitle {
+  font-size: 0.90rem;
+  color: #625F78;
+  margin: 0;
+  line-height: 1.35;
 }
 
-.register-subtitle {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  line-height: 1.45;
+/* Form Layout */
+.register-card-form {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
 }
 
-.register-form .form-group {
-  margin-bottom: 18px;
+.register-card-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  margin-bottom: 0;
 }
 
-.register-form .form-label {
-  display: block;
-  font-size: 0.85rem;
+.register-card-form .form-label {
+  font-size: 0.81rem;
   font-weight: 600;
-  color: var(--text-main);
-  margin-bottom: 6px;
+  color: #221F33;
+  margin: 0;
+  letter-spacing: -0.01em;
 }
 
-.name-row {
+/* Clean Input Styling (No leading icons) */
+.register-card-form .form-input {
+  background-color: #FFFFFF;
+  border: 1.5px solid #E6E3F2;
+  border-radius: 10px;
+  padding: 9px 14px !important;
+  font-size: 0.88rem;
+  color: #221F33;
+  height: 41px;
+  box-sizing: border-box;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  outline: none;
+  width: 100%;
+}
+
+.register-card-form .form-input::placeholder {
+  color: #625F78;
+  font-size: 0.85rem;
+}
+
+.register-card-form .form-input:hover {
+  border-color: #6D5BD0;
+}
+
+.register-card-form .form-input:focus {
+  border-color: #6D5BD0;
+  box-shadow: 0 0 0 3px rgba(109, 91, 208, 0.25);
+}
+
+/* Two Columns for First & Last Name */
+.name-grid-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
-.form-error-msg {
-  font-size: 0.775rem;
-  color: #b91c1c;
-  margin-top: 5px;
+/* Password Eye Toggle */
+.password-input-wrap {
+  position: relative;
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 4px;
 }
 
-.register-form .password-input-wrap .form-input {
+.register-card-form .password-input-wrap .form-input,
+.password-input-wrap .form-input {
   padding-right: 44px !important;
 }
 
-.register-submit-btn {
+.password-toggle-btn {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #94A3B8;
+  padding: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.15s ease, transform 0.1s ease;
+  z-index: 5;
+  user-select: none;
+}
+
+.password-toggle-btn svg {
+  pointer-events: none;
+  display: block;
+}
+
+.password-toggle-btn:hover {
+  color: #1E293B;
+}
+
+.password-toggle-btn:active {
+  transform: translateY(-50%) scale(0.92);
+}
+
+.password-toggle-btn.is-active {
+  color: #6D5BD0;
+}
+
+.password-toggle-btn .eye-closed {
+  display: none;
+}
+
+.password-toggle-btn.is-active .eye-open {
+  display: none !important;
+}
+
+.password-toggle-btn.is-active .eye-closed {
+  display: block !important;
+}
+
+/* Error Messages */
+.form-error-msg {
+  font-size: 0.74rem;
+  color: #DC2626;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* Submit Button */
+.btn-register-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  padding: 12px;
-  font-size: 0.95rem;
-  font-weight: 600;
+  background-color: #6D5BD0;
+  color: #FFFFFF;
+  font-size: 0.94rem;
+  font-weight: 700;
+  padding: 10px 20px;
+  height: 42px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  margin-top: 6px;
+  box-shadow: 0 4px 12px rgba(109, 91, 208, 0.3);
+  transition: all 0.18s ease;
+  box-sizing: border-box;
+}
+
+.btn-register-submit:hover {
+  background-color: #4B3BA8;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(109, 91, 208, 0.4);
+}
+
+.btn-register-submit:active {
+  transform: translateY(0);
+}
+
+/* Footer Link Message */
+.register-footer-msg {
+  text-align: center;
+  font-size: 0.83rem;
+  color: #625F78;
   margin-top: 10px;
 }
 
-.register-footer {
-  text-align: center;
-  margin-top: 24px;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  border-top: 1px solid var(--border-light);
-  padding-top: 20px;
-}
-
-.register-link {
-  font-weight: 600;
-  color: var(--text-main);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+.register-login-link {
+  color: #6D5BD0;
+  font-weight: 700;
+  text-decoration: none;
+  margin-left: 3px;
   transition: color 0.15s ease;
 }
 
-.register-link:hover {
-  color: #166534;
+.register-login-link:hover {
+  color: #4B3BA8;
+  text-decoration: underline;
 }
 
-@media (max-width: 480px) {
-  .register-container {
-    padding: 36px 16px 60px;
-  }
+/* Right Column: 3D Mascot Artwork */
+.register-card-visual-pane {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  overflow: hidden;
+  background-color: #F6F5EC;
+}
+
+.register-card-visual-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* Responsive Styles */
+@media (max-width: 900px) {
   .register-card {
-    padding: 24px 18px;
-  }
-  .name-row {
     grid-template-columns: 1fr;
+    max-width: 520px;
+    border-radius: 22px;
+  }
+  .register-card-visual-pane {
+    height: 240px;
+    order: -1;
+  }
+  .register-card-form-pane {
+    padding: 28px 24px 32px;
   }
 }

@@ -30,11 +30,11 @@
 }
 
 .item-form-card {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-color);
+  background-color: #FFFFFF;
+  border: 1px solid #E6E3F2;
   border-radius: var(--radius-lg);
   padding: 32px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 16px rgba(109, 91, 208, 0.04);
 }
 
 .form-grid-row {
@@ -109,11 +109,17 @@
   font-size: 0.775rem;
   padding: 4px 10px;
   border-radius: var(--radius-sm);
+  background-color: #EFECFC;
+  color: #4B3BA8;
+  border: 1px solid rgba(109, 91, 208, 0.2);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .location-locate-btn:hover {
+  background-color: #E0DCF7;
+  border-color: #6D5BD0;
+  color: #4B3BA8;
   transform: translateY(-1px);
 }
 
@@ -245,8 +251,8 @@
   width: 28px;
   height: 28px;
   border-radius: var(--radius-sm);
-  background-color: #f0fdf4;
-  color: #166534;
+  background-color: #EFECFC;
+  color: #4B3BA8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -312,8 +318,8 @@
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  background-color: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  background-color: #E3F5EF;
+  border: 1px solid #C2EADC;
   border-radius: var(--radius-md);
   animation: fadeInDrop 0.2s ease-out;
 }
@@ -322,8 +328,8 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background-color: #dcfce7;
-  color: #15803d;
+  background-color: rgba(31, 122, 100, 0.15);
+  color: #1F7A64;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -338,21 +344,21 @@
 .selected-place-name {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #14532d;
+  color: #1F7A64;
   line-height: 1.3;
 }
 
 .selected-coords-text {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.75rem;
-  color: #166534;
+  color: #1F7A64;
   margin-top: 2px;
 }
 
 .selected-location-remove {
   background: none;
   border: none;
-  color: #15803d;
+  color: #1F7A64;
   cursor: pointer;
   padding: 4px;
   border-radius: var(--radius-sm);
@@ -363,7 +369,7 @@
 }
 
 .selected-location-remove:hover {
-  background-color: #dcfce7;
+  background-color: rgba(31, 122, 100, 0.2);
   color: #b91c1c;
 }
 

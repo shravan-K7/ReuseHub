@@ -201,7 +201,7 @@
               {% if item.donor.profile.avatar %}
                 <img src="{{ item.donor.profile.avatar.url }}" alt="{{ item.donor.username }}" style="width: 38px; height: 38px; border-radius: var(--radius-full); object-fit: cover; border: 1px solid var(--border-color);">
               {% else %}
-                <div style="width: 38px; height: 38px; border-radius: var(--radius-full); background: #1e3a2b; color: #fff; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; text-transform: uppercase;">
+                <div style="width: 38px; height: 38px; border-radius: var(--radius-full); background: #EFECFC; color: #4B3BA8; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; text-transform: uppercase;">
                   {{ item.donor.username|make_list|first }}
                 </div>
               {% endif %}
@@ -257,7 +257,7 @@
           </tr>
           <tr>
             <td>Price</td>
-            <td><strong style="color: #166534;">Free (Non-Profit Pass-On)</strong></td>
+            <td><strong style="color: #6D5BD0;">Free (Non-Profit Pass-On)</strong></td>
           </tr>
         </tbody>
       </table>
@@ -374,14 +374,14 @@
                         </a>
                       </div>
                     {% elif req.status == 'ACCEPTED' %}
-                      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-sm); padding: 8px 12px; margin-top: 8px; font-size: 0.825rem; color: #166534;">
+                      <div style="background: #E3F5EF; border: 1px solid #A7F3D0; border-radius: var(--radius-sm); padding: 8px 12px; margin-top: 8px; font-size: 0.825rem; color: #1F7A64;">
                         <div style="font-weight: 700; margin-bottom: 2px; display: flex; align-items: center; gap: 4px;">
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                           Agreed Pickup Area:
                         </div>
                         <div style="color: var(--text-main); font-weight: 600;">{{ item.pickup_location }}</div>
                         {% if req.contact_info %}
-                          <div style="margin-top: 4px; font-size: 0.775rem; color: #15803d;">
+                          <div style="margin-top: 4px; font-size: 0.775rem; color: #1F7A64;">
                             <strong>Requester Contact:</strong> {{ req.contact_info }}
                           </div>
                         {% endif %}
@@ -423,17 +423,17 @@
                   "{{ user_request.message }}"
                 </p>
                 {% if user_request.status == 'ACCEPTED' %}
-                  <div class="accepted-pickup-card" style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: var(--radius-md); padding: 14px 16px; margin-top: 12px;">
-                    <div style="display: flex; align-items: center; gap: 8px; color: #15803d; font-weight: 700; font-size: 0.95rem; margin-bottom: 6px;">
+                  <div class="accepted-pickup-card" style="background: #E3F5EF; border: 1.5px solid #A7F3D0; border-radius: var(--radius-md); padding: 14px 16px; margin-top: 12px;">
+                    <div style="display: flex; align-items: center; gap: 8px; color: #1F7A64; font-weight: 700; font-size: 0.95rem; margin-bottom: 6px;">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                       Request Accepted! Coordinate Collection
                     </div>
-                    <p style="font-size: 0.85rem; color: #166534; margin: 0 0 10px 0; line-height: 1.45;">
+                    <p style="font-size: 0.85rem; color: #1F7A64; margin: 0 0 10px 0; line-height: 1.45;">
                       The donor accepted your request. Please collect your item at the designated pickup area:
                     </p>
                     
-                    <div style="background: #ffffff; border: 1px solid #bbf7d0; border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px;">
-                      <div style="font-size: 0.725rem; text-transform: uppercase; font-weight: 700; color: #15803d; letter-spacing: 0.04em; margin-bottom: 3px; display: flex; align-items: center; gap: 4px;">
+                    <div style="background: #ffffff; border: 1px solid #A7F3D0; border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px;">
+                      <div style="font-size: 0.725rem; text-transform: uppercase; font-weight: 700; color: #1F7A64; letter-spacing: 0.04em; margin-bottom: 3px; display: flex; align-items: center; gap: 4px;">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                         Designated Pickup Area
                       </div>
@@ -442,7 +442,7 @@
                       </div>
                       {% if item.latitude and item.longitude %}
                         <div style="margin-top: 6px;">
-                          <a href="https://www.google.com/maps?q={{ item.latitude }},{{ item.longitude }}" target="_blank" rel="noopener noreferrer" style="font-size: 0.8rem; color: #059669; font-weight: 600; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
+                          <a href="https://www.google.com/maps?q={{ item.latitude }},{{ item.longitude }}" target="_blank" rel="noopener noreferrer" style="font-size: 0.8rem; color: #1F7A64; font-weight: 600; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
                             View on Google Maps &rarr;
                           </a>
                         </div>
@@ -450,8 +450,8 @@
                     </div>
 
                     {% if user_request.donor_notes %}
-                      <div style="background: #ffffff; border: 1px solid #bbf7d0; border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px;">
-                        <div style="font-size: 0.725rem; text-transform: uppercase; font-weight: 700; color: #15803d; letter-spacing: 0.04em; margin-bottom: 2px;">
+                      <div style="background: #ffffff; border: 1px solid #A7F3D0; border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px;">
+                        <div style="font-size: 0.725rem; text-transform: uppercase; font-weight: 700; color: #1F7A64; letter-spacing: 0.04em; margin-bottom: 2px;">
                           Donor Instructions
                         </div>
                         <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">
@@ -461,7 +461,7 @@
                     {% endif %}
 
                     {% if item.donor.profile.phone %}
-                      <div style="font-size: 0.825rem; color: #166534; margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+                      <div style="font-size: 0.825rem; color: #1F7A64; margin-top: 6px; display: flex; align-items: center; gap: 6px;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                         <span><strong>Donor Contact Phone:</strong> {{ item.donor.profile.phone }}</span>
                       </div>

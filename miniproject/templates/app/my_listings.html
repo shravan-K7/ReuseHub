@@ -4,158 +4,342 @@
 {% block title %}My Listings — ReuseHub{% endblock %}
 
 {% block extra_head %}
-  <link rel="stylesheet" href="{% static 'css/my_listings.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard_ui.css' %}">
+{% endblock %}
+
+{% block user_navbar %}
+  {% include 'app/partials/dashboard_mobile_header.html' %}
 {% endblock %}
 
 {% block content %}
-<div class="container my-listings-container">
-  
-  <div class="my-listings-header">
-    <div>
-      <h1 class="my-listings-title">My Donated Belongings</h1>
-      <p class="my-listings-desc">
-        Manage your listed items, respond to requests, and update collection statuses.
-      </p>
+<div class="dashboard-shell">
+  <!-- Sticky Persistent Left Sidebar -->
+  {% include 'app/partials/dashboard_sidebar.html' with active_page='listings' %}
+
+  <!-- Main Content Workspace Area -->
+  <main class="dashboard-main" id="dashboardMainArea">
+    
+    <!-- Page Header -->
+    <div class="dashboard-header-wrap">
+      <div>
+        <h1 class="dashboard-page-title">My Listings</h1>
+        <p class="dashboard-page-desc">
+          Manage your listed items, respond to requests, and update collection status.
+        </p>
+      </div>
+      <div>
+        <a href="{% url 'item_create' %}" class="btn-olive-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Give Another Item</span>
+        </a>
+      </div>
     </div>
-    <a href="{% url 'item_create' %}" class="btn btn-primary btn-sm">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-      Give Another Item
-    </a>
-  </div>
 
-  <!-- Status Tabs -->
-  <div class="filter-pills" style="margin-bottom: 24px;">
-    <a href="{% url 'my_listings' %}?tab=ALL" class="filter-pill {% if status_tab == 'ALL' %}active{% endif %}">
-      All Items ({{ total_count }})
-    </a>
-    <a href="{% url 'my_listings' %}?tab=AVAILABLE" class="filter-pill {% if status_tab == 'AVAILABLE' %}active{% endif %}">
-      Available ({{ available_count }})
-    </a>
-    <a href="{% url 'my_listings' %}?tab=GIVEN_AWAY" class="filter-pill {% if status_tab == 'GIVEN_AWAY' %}active{% endif %}">
-      Given Away ({{ given_count }})
-    </a>
-  </div>
+    <!-- Filters and Search Toolbar -->
+    <div class="filter-search-toolbar">
+      <!-- Status Pills -->
+      <div class="tab-pills-row">
+        <a href="{% url 'my_listings' %}?tab=ALL{% if q %}&q={{ q }}{% endif %}" class="tab-pill {% if status_tab == 'ALL' %}active{% endif %}">
+          All Items ({{ total_count }})
+        </a>
+        <a href="{% url 'my_listings' %}?tab=AVAILABLE{% if q %}&q={{ q }}{% endif %}" class="tab-pill {% if status_tab == 'AVAILABLE' %}active{% endif %}">
+          Available ({{ available_count }})
+        </a>
+        <a href="{% url 'my_listings' %}?tab=GIVEN_AWAY{% if q %}&q={{ q }}{% endif %}" class="tab-pill {% if status_tab == 'GIVEN_AWAY' %}active{% endif %}">
+          Given Away ({{ given_count }})
+        </a>
+        <a href="{% url 'my_listings' %}?tab=UNAVAILABLE{% if q %}&q={{ q }}{% endif %}" class="tab-pill {% if status_tab == 'UNAVAILABLE' %}active{% endif %}">
+          Unavailable ({{ unavailable_count }})
+        </a>
+      </div>
 
-  <!-- Listings Table -->
-  {% if items %}
-    <div class="data-table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Category</th>
-            <th>Condition</th>
-            <th>Status</th>
-            <th>Requests</th>
-            <th>Listed Date</th>
-            <th style="text-align: right;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in items %}
-            <tr>
-              <td>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  {% if item.image %}
-                    <img src="{{ item.image.url }}" alt="{{ item.title }}" style="width: 44px; height: 36px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
-                  {% else %}
-                    <div style="width: 44px; height: 36px; background: var(--bg-subtle); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--text-muted); border: 1px solid var(--border-color);">
-                      No img
-                    </div>
-                  {% endif %}
-                  <div>
-                    <a href="{% url 'item_detail' pk=item.pk %}" style="font-weight: 600; color: var(--text-main);">
-                      {{ item.title }}
-                    </a>
-                    {% if item.is_repairable %}
-                      <span class="badge badge-repairable" style="font-size: 0.65rem; margin-left: 4px;">Repairable</span>
-                    {% endif %}
+      <!-- Search Input -->
+      <form method="GET" action="{% url 'my_listings' %}" class="dash-search-form">
+        {% if status_tab != 'ALL' %}
+          <input type="hidden" name="tab" value="{{ status_tab }}">
+        {% endif %}
+        <div class="dash-search-wrap">
+          <span class="dash-search-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </span>
+          <input type="text" name="q" value="{{ q }}" placeholder="Search your items..." class="dash-search-input" id="listingsSearchInput">
+        </div>
+      </form>
+    </div>
+
+    <!-- Listings Cards List -->
+    {% if items %}
+      <div class="dash-cards-stream" id="listingsCardsStream">
+        {% for item in items %}
+          <article class="dash-horizontal-card">
+            <!-- Left: Thumbnail with Photo Count -->
+            <div class="card-thumbnail-wrap">
+              {% if item.image %}
+                <img src="{{ item.image.url }}" alt="{{ item.title }}" class="card-thumbnail-img" loading="lazy">
+              {% else %}
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #e5e7eb; color: #9ca3af; font-size: 0.8rem; font-weight: 600;">
+                  No Photo
+                </div>
+              {% endif %}
+              
+              {% with photos_count=item.all_images|length %}
+                {% if photos_count > 0 %}
+                  <div class="card-photo-counter-badge">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                      <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    <span>{{ photos_count }} photo{{ photos_count|pluralize }}</span>
                   </div>
-                </div>
-              </td>
-              <td>{{ item.category.name|default:"General" }}</td>
-              <td>{{ item.get_condition_display }}</td>
-              <td>
-                {% if item.status == 'AVAILABLE' %}
-                  <span class="badge badge-available">Available</span>
-                {% elif item.status == 'REQUESTED' %}
-                  <span class="badge badge-requested">Request Pending</span>
-                {% elif item.status == 'GIVEN_AWAY' %}
-                  <span class="badge badge-given">Given Away</span>
                 {% endif %}
-              </td>
-              <td>
-                {% with req_count=item.requests.count %}
-                  {% if req_count > 0 %}
-                    <a href="{% url 'item_detail' pk=item.pk %}" class="requests-count-badge has-requests" title="{{ req_count }} community request{{ req_count|pluralize }} received. Click to review.">
-                      <span class="requests-count-number">{{ req_count }}</span>
-                      <span>request{{ req_count|pluralize }}</span>
-                    </a>
-                  {% else %}
-                    <span class="requests-count-badge no-requests">
-                      0 requests
-                    </span>
-                  {% endif %}
-                {% endwith %}
-              </td>
-              <td style="color: var(--text-muted);">{{ item.created_at|date:"M d, Y" }}</td>
-              <td style="text-align: right;">
-                <div style="display: inline-flex; gap: 6px;">
-                  <a href="{% url 'item_detail' pk=item.pk %}" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.75rem;">View</a>
-                  <a href="{% url 'item_edit' pk=item.pk %}" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.75rem;">Edit</a>
-                  <a href="{% url 'item_delete' pk=item.pk %}" class="btn btn-danger btn-sm delete-listing-btn" data-item-title="{{ item.title }}" data-delete-url="{% url 'item_delete' pk=item.pk %}" style="padding: 4px 8px; font-size: 0.75rem;">Delete</a>
-                </div>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  {% else %}
-    <div class="empty-state">
-      <div class="empty-state-icon">🎁</div>
-      <h3 class="empty-state-title">No listings here</h3>
-      <p class="empty-state-desc">You haven't listed any items in this category yet. Pass on an item today!</p>
-      <a href="{% url 'item_create' %}" class="btn btn-primary">Give an Item Now</a>
-    </div>
-  {% endif %}
-
-  <!-- Delete Item Confirmation Modal (Dynamic for User Listings) -->
-  <div class="modal-backdrop" id="deleteListingModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="deleteListingModalTitle">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <div class="modal-title-wrap">
-            <div class="modal-icon-badge modal-icon-badge-danger">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                <line x1="10" y1="11" x2="10" y2="17"></line>
-                <line x1="14" y1="11" x2="14" y2="17"></line>
-              </svg>
+              {% endwith %}
             </div>
-            <h3 class="modal-title" id="deleteListingModalTitle">Delete Item Listing</h3>
+
+            <!-- Center: Details -->
+            <div class="card-details-col">
+              <h3 class="card-item-title">
+                <a href="{% url 'item_detail' pk=item.pk %}">{{ item.title }}</a>
+              </h3>
+
+              <div class="card-badges-row">
+                <span class="card-badge badge-category">{{ item.category.name|default:"General" }}</span>
+                {% if item.status == 'AVAILABLE' %}
+                  <span class="card-badge badge-status-available">Available</span>
+                {% elif item.status == 'GIVEN_AWAY' %}
+                  <span class="card-badge badge-status-given">Given Away</span>
+                {% elif item.status == 'REQUESTED' %}
+                  <span class="card-badge badge-status-pending">Request Pending</span>
+                {% else %}
+                  <span class="card-badge badge-status-unavailable">{{ item.get_status_display }}</span>
+                {% endif %}
+
+                {% if item.is_repairable %}
+                  <span class="card-badge" style="background: #faf0eb; color: #b4684c;">Repairable</span>
+                {% endif %}
+              </div>
+
+              <p class="card-item-desc">
+                {{ item.description|truncatechars:120 }}
+              </p>
+
+              <div class="card-meta-row">
+                <span class="meta-item" title="Condition">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                  </svg>
+                  <span>{{ item.get_condition_display }}</span>
+                </span>
+
+                <span class="meta-item" title="Date listed">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  <span>{{ item.created_at|date:"M d, Y" }}</span>
+                </span>
+
+                <span class="meta-item" title="Views count">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                  <span>{{ item.views_count }} view{{ item.views_count|pluralize }}</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Right: Requests Badge & Actions -->
+            <div class="card-actions-col">
+              {% with req_count=item.requests.count %}
+                {% if req_count > 0 %}
+                  <a href="{% url 'item_detail' pk=item.pk %}#requests" class="btn-request-pill" title="{{ req_count }} request{{ req_count|pluralize }} received">
+                    <span>{{ req_count }} Request{{ req_count|pluralize }}</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </a>
+                {% else %}
+                  <div class="btn-request-pill no-requests" title="No requests received yet">
+                    <span>0 Requests</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </div>
+                {% endif %}
+              {% endwith %}
+
+              <a href="{% url 'item_detail' pk=item.pk %}" class="btn-dash-action">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <span>View</span>
+              </a>
+
+              <a href="{% url 'item_edit' pk=item.pk %}" class="btn-dash-action">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                <span>Edit</span>
+              </a>
+
+              <button type="button" class="btn-dash-action btn-dash-action-danger delete-listing-btn" data-item-title="{{ item.title }}" data-delete-url="{% url 'item_delete' pk=item.pk %}">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                <span>Delete</span>
+              </button>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination matching Image 2 -->
+      <div class="dash-pagination-wrap">
+        <div class="pagination-controls">
+          {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}&tab={{ status_tab }}{% if q %}&q={{ q }}{% endif %}" class="pagination-arrow-btn" aria-label="Previous page">&lt;</a>
+          {% else %}
+            <span class="pagination-arrow-btn" style="opacity: 0.4; pointer-events: none;">&lt;</span>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+              <span class="pagination-page-btn active">{{ num }}</span>
+            {% else %}
+              <a href="?page={{ num }}&tab={{ status_tab }}{% if q %}&q={{ q }}{% endif %}" class="pagination-page-btn">{{ num }}</a>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&tab={{ status_tab }}{% if q %}&q={{ q }}{% endif %}" class="pagination-arrow-btn" aria-label="Next page">&gt;</a>
+          {% else %}
+            <span class="pagination-arrow-btn" style="opacity: 0.4; pointer-events: none;">&gt;</span>
+          {% endif %}
+        </div>
+
+        <div class="pagination-summary-text">
+          Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} items
+        </div>
+      </div>
+
+    {% else %}
+      <!-- Empty state matching Image 2 / prompt -->
+      <div class="dash-empty-state" style="background: #ffffff; border: 1px solid var(--dash-border); border-radius: var(--dash-radius-card); padding: 56px 24px; margin-top: 10px;">
+        <div class="dash-empty-icon" style="width: 54px; height: 54px;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+          </svg>
+        </div>
+        <h3 class="dash-empty-title" style="font-size: 1.15rem;">No listings yet</h3>
+        <p class="dash-empty-desc" style="max-width: 360px; margin-bottom: 20px;">
+          {% if q %}
+            No items matched your search "{{ q }}". Try a different keyword or reset filters.
+          {% else %}
+            You haven't listed any items in this category yet. Start by creating a listing to give away items in your community.
+          {% endif %}
+        </p>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          {% if q %}
+            <a href="{% url 'my_listings' %}" class="btn-dash-empty-outline">Clear Search</a>
+          {% endif %}
+          <a href="{% url 'item_create' %}" class="btn-olive-primary">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>Give an Item</span>
+          </a>
+        </div>
+      </div>
+    {% endif %}
+
+  </main>
+</div>
+
+<!-- Delete Item Confirmation Modal -->
+<div class="modal-backdrop" id="deleteListingModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="deleteListingModalTitle">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-badge modal-icon-badge-danger">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
           </div>
-          <button type="button" class="modal-close-btn" data-modal-close aria-label="Close dialog">&times;</button>
+          <h3 class="modal-title" id="deleteListingModalTitle">Delete Item Listing</h3>
         </div>
-        <div class="modal-body">
-          <p style="margin: 0 0 8px 0; color: var(--text-main); font-weight: 500;">
-            Are you sure you want to delete <strong id="deleteItemTitleDisplay">this item</strong>?
-          </p>
-          <p class="modal-subtext" style="margin: 0;">
-            This action cannot be undone. All photos, listing details, and active collection requests will be permanently removed.
-          </p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-sm" data-modal-close>Keep Listing</button>
-          <form method="POST" action="" style="display: inline; margin: 0;">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger btn-sm">Yes, Delete Item</button>
-          </form>
-        </div>
+        <button type="button" class="modal-close-btn" data-modal-close aria-label="Close dialog">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin: 0 0 8px 0; color: var(--dash-text-main); font-weight: 500;">
+          Are you sure you want to delete <strong id="deleteItemTitleDisplay">this item</strong>?
+        </p>
+        <p class="modal-subtext" style="margin: 0; font-size: 0.85rem; color: var(--dash-text-muted);">
+          This action cannot be undone. All photos, listing details, and active collection requests will be permanently removed.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-modal-close>Keep Listing</button>
+        <form method="POST" action="" id="deleteListingForm" style="display: inline; margin: 0;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger btn-sm">Yes, Delete Item</button>
+        </form>
       </div>
     </div>
   </div>
-
 </div>
+{% endblock content %}
+
+{% block user_footer %}
+  <!-- Dashboard uses app layout without marketing footer -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Mobile drawer sidebar toggle
+  const toggleBtn = document.getElementById('dashboardSidebarToggleBtn');
+  const closeBtn = document.getElementById('sidebarCloseBtn');
+  const sidebar = document.getElementById('dashboardSidebar');
+  const backdrop = document.getElementById('dashboardSidebarBackdrop');
+
+  function openSidebar() {
+    if (sidebar) sidebar.classList.add('is-open');
+    if (backdrop) backdrop.classList.add('is-open');
+  }
+  function closeSidebar() {
+    if (sidebar) sidebar.classList.remove('is-open');
+    if (backdrop) backdrop.classList.remove('is-open');
+  }
+
+  if (toggleBtn) toggleBtn.addEventListener('click', openSidebar);
+  if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+  if (backdrop) backdrop.addEventListener('click', closeSidebar);
+
+  // Delete Listing Modal Dynamic Wiring
+  const deleteModal = document.getElementById('deleteListingModal');
+  const deleteForm = document.getElementById('deleteListingForm');
+  const titleDisplay = document.getElementById('deleteItemTitleDisplay');
+  const deleteBtns = document.querySelectorAll('.delete-listing-btn');
+
+  deleteBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const itemTitle = this.getAttribute('data-item-title') || 'this item';
+      const deleteUrl = this.getAttribute('data-delete-url');
+
+      if (titleDisplay) titleDisplay.textContent = '"' + itemTitle + '"';
+      if (deleteForm && deleteUrl) deleteForm.setAttribute('action', deleteUrl);
+      if (deleteModal) deleteModal.style.display = 'flex';
+    });
+  });
+
+  // Close modal on data-modal-close
+  document.querySelectorAll('#deleteListingModal [data-modal-close]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      if (deleteModal) deleteModal.style.display = 'none';
+    });
+  });
+});
+</script>
 {% endblock %}

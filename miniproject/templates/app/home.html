@@ -4,19 +4,74 @@
 {% block title %}ReuseHub — Give Away & Find Free Pre-Loved Items{% endblock %}
 
 {% block extra_head %}
-  <link rel="stylesheet" href="{% static 'css/home.css' %}">
+  <link rel="stylesheet" href="{% static 'css/home.css' %}?v=5.0">
 {% endblock %}
 
 {% block content %}
-<!-- Minimal Modern Hero -->
-<section class="hero">
-  <div class="container">
-    <span class="hero-pill">Non-Profit Community Platform</span>
-    <h1 class="hero-title">Pass on what you don't need.<br>Find what you can use.</h1>
-    <p class="hero-desc">
-      Give items a second chance. Everything here is offered freely to neighbours—including repairable and vintage items to champion a circular, low-waste community.
-    </p>
+<!-- Explore Hero Section -->
+<section class="explore-hero">
+  <div class="container explore-hero-container">
+    
+    <!-- Left Column: Content -->
+    <div class="explore-hero-content">
+      
+      <!-- Community Badge -->
+      <div class="explore-hero-badge">
+        <svg class="hero-badge-leaf" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+          <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+        </svg>
+        <span>A CLEANER COMMUNITY TOGETHER</span>
+      </div>
 
+      <!-- Headline -->
+      <h1 class="explore-hero-heading">
+        Give Unused Items.<br>
+        Find Useful Things.<br>
+        <span class="heading-greener">Build a Greener Tomorrow.</span>
+      </h1>
+
+      <!-- Subtext / Description -->
+      <p class="explore-hero-subtext">
+        ReuseHub is a community platform to give away and find reusable items in your neighbourhood. Reduce waste, support your neighbours, and give everyday items a second life.
+      </p>
+
+      <!-- Action Buttons -->
+      <div class="explore-hero-actions">
+        <a href="{% url 'item_create' %}" class="btn-hero-primary" id="heroGiveItemBtn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Give an Item</span>
+        </a>
+
+        <a href="#exploreFilterSection" class="btn-hero-secondary" id="heroBrowseItemsBtn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span>Browse Items</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Right Side Visual: Fills the entire right side of the hero section -->
+  <div class="explore-hero-visual">
+    <img 
+      src="{% static 'images/hero_box_lavender.png' %}?v=5.0" 
+      alt="ReuseHub Community Box filled with items to reuse" 
+      class="explore-hero-visual-img"
+      loading="eager"
+    >
+  </div>
+</section>
+
+<!-- Search & Category Discovery Section -->
+<section class="explore-filter-section" id="exploreFilterSection">
+  <div class="container">
     <!-- Search Form -->
     <form method="GET" action="{% url 'home' %}" class="search-filter-bar" id="searchFilterForm">
       <div class="search-box" style="position: relative;">
@@ -87,7 +142,7 @@
 </section>
 
 <!-- Main Items Listing -->
-<section class="main-content">
+<section class="main-content" id="availableListings">
   <div class="container">
     
     <!-- Filter status strip -->

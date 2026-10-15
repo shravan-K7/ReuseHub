@@ -524,6 +524,23 @@ def request_item(request, pk):
 
 
 @login_required
+def cancel_request(request, request_id):
+    """Requester cancels their pending request."""
+    item_req = get_object_or_404(ItemRequest, id=request_id)
+    if item_req.requester != request.user and not request.user.is_staff:
+        messages.error(request, "You are not authorized to cancel this request.")
+        return redirect("my_requests")
+
+    if item_req.status == "PENDING":
+        item_req.status = "CANCELLED"
+        item_req.save()
+        messages.success(request, f"Your request for '{item_req.item.title}' has been cancelled.")
+    else:
+        messages.info(request, "Only pending requests can be cancelled.")
+    return redirect("my_requests")
+
+
+@login_required
 def respond_request(request, request_id, action):
     """Donor accepts or rejects an item request."""
     item_req = get_object_or_404(ItemRequest, id=request_id)
@@ -632,52 +649,110 @@ def mark_available(request, pk):
 
 @login_required
 def my_listings(request):
-    """User dashboard to manage their own donated belongings."""
-    items = Item.objects.filter(donor=request.user)
-    status_tab = request.GET.get("tab", "ALL")
+    """Modern User dashboard to manage their own donated belongings."""
+    user_items = Item.objects.filter(donor=request.user).select_related("category").prefetch_related("images", "requests")
+    status_tab = request.GET.get("tab", "ALL").upper()
+    q = request.GET.get("q", "").strip()
 
+    filtered_items = user_items
     if status_tab == "AVAILABLE":
-        items = items.filter(status="AVAILABLE")
-    elif status_tab == "REQUESTED":
-        items = items.filter(status="REQUESTED")
+        filtered_items = filtered_items.filter(status="AVAILABLE")
     elif status_tab == "GIVEN_AWAY":
-        items = items.filter(status="GIVEN_AWAY")
+        filtered_items = filtered_items.filter(status="GIVEN_AWAY")
+    elif status_tab == "UNAVAILABLE":
+        filtered_items = filtered_items.filter(status__in=["CANCELLED", "REQUESTED"])
+    elif status_tab == "REQUESTED":
+        filtered_items = filtered_items.filter(status="REQUESTED")
 
-    total_count = Item.objects.filter(donor=request.user).count()
-    available_count = Item.objects.filter(
-        donor=request.user, status="AVAILABLE"
-    ).count()
-    given_count = Item.objects.filter(donor=request.user, status="GIVEN_AWAY").count()
+    if q:
+        filtered_items = filtered_items.filter(
+            Q(title__icontains=q) | Q(description__icontains=q) | Q(category__name__icontains=q)
+        )
+
+    total_count = user_items.count()
+    available_count = user_items.filter(status="AVAILABLE").count()
+    given_count = user_items.filter(status="GIVEN_AWAY").count()
+    unavailable_count = user_items.filter(status__in=["CANCELLED", "REQUESTED"]).count()
+
+    paginator = Paginator(filtered_items.order_by("-created_at"), 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
 
     context = {
-        "items": items,
+        "items": page_obj,
+        "page_obj": page_obj,
         "status_tab": status_tab,
+        "q": q,
         "total_count": total_count,
         "available_count": available_count,
         "given_count": given_count,
+        "unavailable_count": unavailable_count,
     }
     return render(request, "app/my_listings.html", context)
 
 
 @login_required
 def my_requests(request):
-    """User dashboard to track items they have requested."""
-    requests = (
+    """Modern User dashboard to track items requested from community members."""
+    user_requests = (
         ItemRequest.objects.filter(requester=request.user)
-        .select_related("item", "item__donor", "item__donor__profile")
+        .select_related("item", "item__donor", "item__donor__profile", "item__category")
+        .prefetch_related("item__images")
         .order_by("-created_at")
     )
+    status_tab = request.GET.get("tab", "ALL").upper()
+    q = request.GET.get("q", "").strip()
+
+    filtered_requests = user_requests
+    if status_tab == "PENDING":
+        filtered_requests = filtered_requests.filter(status="PENDING")
+    elif status_tab == "ACCEPTED":
+        filtered_requests = filtered_requests.filter(status="ACCEPTED")
+    elif status_tab == "DECLINED":
+        filtered_requests = filtered_requests.filter(status="REJECTED")
+    elif status_tab == "COMPLETED":
+        filtered_requests = filtered_requests.filter(status="COMPLETED")
+
+    if q:
+        filtered_requests = filtered_requests.filter(
+            Q(item__title__icontains=q)
+            | Q(message__icontains=q)
+            | Q(item__donor__username__icontains=q)
+            | Q(item__category__name__icontains=q)
+        )
+
+    total_count = user_requests.count()
+    pending_count = user_requests.filter(status="PENDING").count()
+    accepted_count = user_requests.filter(status="ACCEPTED").count()
+    declined_count = user_requests.filter(status="REJECTED").count()
+
     reviewed_req_ids = set(
         UserReview.objects.filter(reviewer=request.user).values_list(
             "item_request_id", flat=True
         )
     )
-    for req in requests:
+
+    paginator = Paginator(filtered_requests, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    for req in page_obj:
         req.has_reviewed = req.id in reviewed_req_ids
         req.can_review = (
             req.status == "COMPLETED" or req.item.status == "GIVEN_AWAY"
         ) and not req.has_reviewed
-    return render(request, "app/my_requests.html", {"requests": requests})
+
+    context = {
+        "requests": page_obj,
+        "page_obj": page_obj,
+        "status_tab": status_tab,
+        "q": q,
+        "total_count": total_count,
+        "pending_count": pending_count,
+        "accepted_count": accepted_count,
+        "declined_count": declined_count,
+    }
+    return render(request, "app/my_requests.html", context)
 
 
 @login_required
@@ -716,7 +791,7 @@ def report_item(request, pk):
 
 @login_required
 def profile_view(request):
-    """User profile management."""
+    """Private Community Profile dashboard management."""
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
 
     if request.method == "POST":
@@ -736,12 +811,38 @@ def profile_view(request):
         requester=request.user, status="COMPLETED"
     ).count()
 
+    # Integrated preview sections data
+    user_items = Item.objects.filter(donor=request.user).select_related("category").prefetch_related("images").order_by("-created_at")
+    total_listings_count = user_items.count()
+    closed_listings_count = user_items.filter(status__in=["CANCELLED", "REQUESTED"]).count()
+    recent_listings = user_items[:5]
+
+    user_requests = (
+        ItemRequest.objects.filter(requester=request.user)
+        .select_related("item", "item__donor", "item__category")
+        .prefetch_related("item__images")
+        .order_by("-created_at")
+    )
+    total_requests_count = user_requests.count()
+    pending_requests_count = user_requests.filter(status="PENDING").count()
+    accepted_requests_count = user_requests.filter(status="ACCEPTED").count()
+    declined_requests_count = user_requests.filter(status="REJECTED").count()
+    recent_requests = user_requests[:5]
+
     context = {
         "form": form,
         "profile": profile,
         "items_given": items_given,
         "active_listings": active_listings,
         "items_claimed": items_claimed,
+        "total_listings_count": total_listings_count,
+        "closed_listings_count": closed_listings_count,
+        "recent_listings": recent_listings,
+        "total_requests_count": total_requests_count,
+        "pending_requests_count": pending_requests_count,
+        "accepted_requests_count": accepted_requests_count,
+        "declined_requests_count": declined_requests_count,
+        "recent_requests": recent_requests,
     }
     return render(request, "app/profile.html", context)
 
@@ -759,11 +860,15 @@ def public_profile_view(request, username):
     stats = get_user_stats(target_user)
     badges = get_user_badges(target_user, stats)
 
+    sort_order = request.GET.get("sort", "newest")
+    order_by_col = "created_at" if sort_order == "oldest" else "-created_at"
+
     # Previously given away items (items they have successfully passed on)
     items_given = (
         Item.objects.filter(donor=target_user, status="GIVEN_AWAY")
         .select_related("category")
-        .order_by("-updated_at")
+        .prefetch_related("images")
+        .order_by(order_by_col)
     )
 
     # Currently active / available listings
@@ -772,7 +877,8 @@ def public_profile_view(request, username):
             donor=target_user, status="AVAILABLE", moderation_status="APPROVED"
         )
         .select_related("category")
-        .order_by("-created_at")
+        .prefetch_related("images")
+        .order_by(order_by_col)
     )
 
     # Community reviews received from completed exchanges
@@ -828,6 +934,7 @@ def public_profile_view(request, username):
         "items_given": items_given,
         "active_items": active_items,
         "reviews": reviews,
+        "sort_order": sort_order,
         "is_own_profile": request.user.is_authenticated and request.user == target_user,
         "can_review": can_review,
         "eligible_exchange": eligible_exchange,
@@ -835,6 +942,7 @@ def public_profile_view(request, username):
         "report_form": report_form,
     }
     return render(request, "app/public_profile.html", context)
+
 
 
 @login_required
@@ -1084,6 +1192,8 @@ def verify_otp_view(request):
                     request,
                     f"Welcome to ReuseHub, {user.username}! Your email has been verified successfully. Let's reduce waste together!",
                 )
+                if user.is_staff or user.is_superuser:
+                    return redirect("admin_dashboard")
                 return redirect("home")
     else:
         form = VerifyOTPForm()
@@ -1140,6 +1250,8 @@ def resend_otp_view(request):
 def login_view(request):
     """User authentication with unverified account detection."""
     if request.user.is_authenticated:
+        if request.user.is_staff or request.user.is_superuser:
+            return redirect("admin_dashboard")
         return redirect("home")
 
     if request.method == "POST":
@@ -1151,7 +1263,11 @@ def login_view(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, f"Welcome back, {user.username}!")
-                next_url = request.GET.get("next")
+                next_url = request.GET.get("next") or request.POST.get("next")
+                if user.is_staff or user.is_superuser:
+                    if next_url and next_url not in ["/", "/home", ""]:
+                        return redirect(next_url)
+                    return redirect("admin_dashboard")
                 return redirect(next_url if next_url else "home")
         else:
             # Check if this is an unverified user whose password matches

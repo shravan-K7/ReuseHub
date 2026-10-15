@@ -79,3 +79,6 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+
+# Local Notes
+note.txt

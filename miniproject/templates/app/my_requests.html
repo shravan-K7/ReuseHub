@@ -4,90 +4,415 @@
 {% block title %}My Requests — ReuseHub{% endblock %}
 
 {% block extra_head %}
-  <link rel="stylesheet" href="{% static 'css/my_requests.css' %}">
+  <link rel="stylesheet" href="{% static 'css/dashboard_ui.css' %}">
+{% endblock %}
+
+{% block user_navbar %}
+  {% include 'app/partials/dashboard_mobile_header.html' %}
 {% endblock %}
 
 {% block content %}
-<div class="container my-requests-container">
-  
-  <div class="my-requests-header">
-    <h1 class="my-requests-title">My Item Requests</h1>
-    <p class="my-requests-desc">
-      Track the status of items you have requested from fellow community members.
-    </p>
-  </div>
+<div class="dashboard-shell">
+  <!-- Sticky Persistent Left Sidebar -->
+  {% include 'app/partials/dashboard_sidebar.html' with active_page='requests' %}
 
-  {% if requests %}
-    <div class="data-table-wrap">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Donor</th>
-            <th>Pickup Location</th>
-            <th>Your Message</th>
-            <th>Status</th>
-            <th>Requested Date</th>
-            <th style="text-align: right;">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for req in requests %}
-            <tr>
-              <td>
-                <a href="{% url 'item_detail' pk=req.item.pk %}" style="font-weight: 600; color: var(--text-main);">
-                  {{ req.item.title }}
+  <!-- Main Content Workspace Area -->
+  <main class="dashboard-main" id="dashboardMainArea">
+    
+    <!-- Page Header -->
+    <div class="dashboard-header-wrap">
+      <div>
+        <h1 class="dashboard-page-title">My Requests</h1>
+        <p class="dashboard-page-desc">
+          Track the status of items requested from fellow community members.
+        </p>
+      </div>
+    </div>
+
+    <!-- Filters and Search Toolbar -->
+    <div class="filter-search-toolbar">
+      <!-- Status Pills -->
+      <div class="tab-pills-row">
+        <a href="{% url 'my_requests' %}?tab=ALL{% if q %}&q={{ q }}{% endif %}" class="tab-pill {% if status_tab == 'ALL' %}active{% endif %}">
+          All Requests ({{ total_count }})
+        </a>
+        <a href="{% url 'my_requests' %}?tab=PENDING{% if q %}&q={{ q }}{% endif %}" class="tab-pill {% if status_tab == 'PENDING' %}active{% endif %}">
+          Pending ({{ pending_count }})
+        </a>
+        <a href="{% url 'my_requests' %}?tab=ACCEPTED{% if q %}&q={{ q }}{% endif %}" class="tab-pill {% if status_tab == 'ACCEPTED' %}active{% endif %}">
+          Accepted ({{ accepted_count }})
+        </a>
+        <a href="{% url 'my_requests' %}?tab=DECLINED{% if q %}&q={{ q }}{% endif %}" class="tab-pill {% if status_tab == 'DECLINED' %}active{% endif %}">
+          Declined ({{ declined_count }})
+        </a>
+      </div>
+
+      <!-- Search Input -->
+      <form method="GET" action="{% url 'my_requests' %}" class="dash-search-form">
+        {% if status_tab != 'ALL' %}
+          <input type="hidden" name="tab" value="{{ status_tab }}">
+        {% endif %}
+        <div class="dash-search-wrap">
+          <span class="dash-search-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </span>
+          <input type="text" name="q" value="{{ q }}" placeholder="Search your requests..." class="dash-search-input" id="requestsSearchInput">
+        </div>
+      </form>
+    </div>
+
+    <!-- Requests Cards List -->
+    {% if requests %}
+      <div class="dash-cards-stream" id="requestsCardsStream">
+        {% for req in requests %}
+          <article class="dash-horizontal-card">
+            <!-- Left: Thumbnail -->
+            <div class="card-thumbnail-wrap">
+              {% if req.item.image %}
+                <img src="{{ req.item.image.url }}" alt="{{ req.item.title }}" class="card-thumbnail-img" loading="lazy">
+              {% else %}
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #e5e7eb; color: #9ca3af; font-size: 0.8rem; font-weight: 600;">
+                  No Photo
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Center: Details -->
+            <div class="card-details-col">
+              <h3 class="card-item-title">
+                <a href="{% url 'item_detail' pk=req.item.pk %}">{{ req.item.title }}</a>
+              </h3>
+
+              <div class="card-item-donor-row">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <a href="{% url 'public_profile' username=req.item.donor.username %}" class="card-item-donor-link">
+                  {{ req.item.donor.username }}
                 </a>
-              </td>
-              <td>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <a href="{% url 'public_profile' username=req.item.donor.username %}" style="font-weight: 600; color: var(--text-main); text-decoration: none;">
-                    {{ req.item.donor.username }}
-                  </a>
-                  {% if req.item.donor.profile.is_verified or req.item.donor.is_staff %}
-                    <span title="Verified Member" style="color: #0284c7; display: inline-flex;">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                    </span>
-                  {% endif %}
-                </div>
-              </td>
-              <td>{{ req.item.pickup_location }}</td>
-              <td style="max-width: 250px; font-size: 0.8rem; color: var(--text-secondary);">
-                "{{ req.message|truncatechars:60 }}"
-              </td>
-              <td>
-                <span class="badge {% if req.status == 'ACCEPTED' %}badge-available{% elif req.status == 'REJECTED' %}badge-flagged{% else %}badge-requested{% endif %}">
-                  {{ req.get_status_display }}
-                </span>
-              </td>
-              <td style="color: var(--text-muted); font-size: 0.8rem;">{{ req.created_at|date:"M d, Y" }}</td>
-              <td style="text-align: right;">
-                <div style="display: inline-flex; gap: 6px; align-items: center;">
-                  <a href="{% url 'item_detail' pk=req.item.pk %}" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.75rem;">
-                    View Item
-                  </a>
-                  {% if req.can_review %}
-                    <a href="{% url 'public_profile' username=req.item.donor.username %}" class="btn btn-primary btn-sm" style="padding: 4px 8px; font-size: 0.75rem; background: #7e22ce; border-color: #7e22ce;">
-                      ★ Rate Donor
-                    </a>
-                  {% elif req.has_reviewed %}
-                    <span class="badge badge-available" style="font-size: 0.7rem; padding: 3px 6px;">Reviewed ✓</span>
-                  {% endif %}
-                </div>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  {% else %}
-    <div class="empty-state">
-      <div class="empty-state-icon">🔍</div>
-      <h3 class="empty-state-title">No requests submitted yet</h3>
-      <p class="empty-state-desc">You haven't requested any items yet. Explore what neighbours are giving away!</p>
-      <a href="{% url 'home' %}" class="btn btn-primary">Browse Free Items</a>
-    </div>
-  {% endif %}
+                {% if req.item.donor.profile.is_verified or req.item.donor.is_staff %}
+                  <span title="Verified Member" style="color: #0284c7; display: inline-flex;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  </span>
+                {% endif %}
+              </div>
 
+              <div class="card-badges-row">
+                <span class="card-badge badge-category">{{ req.item.category.name|default:"General" }}</span>
+              </div>
+
+              <p class="card-item-desc">
+                {{ req.item.description|truncatechars:120 }}
+              </p>
+
+              <div class="card-meta-row">
+                <span class="meta-item" title="Request submission date">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  <span>Requested on {{ req.created_at|date:"M d, Y" }}</span>
+                </span>
+
+                {% if req.item.pickup_location %}
+                  <span class="meta-item" title="Pickup area">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span>{{ req.item.pickup_location }}</span>
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Right: Status Badge & Actions -->
+            <div class="card-actions-col">
+              <!-- Distinct Status Indicators -->
+              {% if req.status == 'PENDING' %}
+                <div class="card-badge badge-status-pending" style="justify-content: center; padding: 6px 12px; font-size: 0.8rem;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span>Pending</span>
+                </div>
+              {% elif req.status == 'ACCEPTED' %}
+                <div class="card-badge badge-status-accepted" style="justify-content: center; padding: 6px 12px; font-size: 0.8rem;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span>Accepted</span>
+                </div>
+              {% elif req.status == 'REJECTED' %}
+                <div class="card-badge badge-status-declined" style="justify-content: center; padding: 6px 12px; font-size: 0.8rem;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                  </svg>
+                  <span>Declined</span>
+                </div>
+              {% elif req.status == 'CANCELLED' %}
+                <div class="card-badge badge-status-unavailable" style="justify-content: center; padding: 6px 12px; font-size: 0.8rem;">
+                  <span>Cancelled</span>
+                </div>
+              {% elif req.status == 'COMPLETED' %}
+                <div class="card-badge badge-status-accepted" style="justify-content: center; padding: 6px 12px; font-size: 0.8rem;">
+                  <span>Completed</span>
+                </div>
+              {% endif %}
+
+              <!-- Action Buttons -->
+              <a href="{% url 'item_detail' pk=req.item.pk %}" class="btn-dash-action">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <span>View Item</span>
+              </a>
+
+              {% if req.status == 'PENDING' %}
+                <button type="button" class="btn-dash-action btn-dash-action-danger cancel-request-trigger-btn"
+                        data-request-id="{{ req.id }}"
+                        data-item-title="{{ req.item.title }}"
+                        data-cancel-url="{% url 'cancel_request' request_id=req.id %}">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                  <span>Cancel Request</span>
+                </button>
+              {% elif req.status == 'ACCEPTED' %}
+                <button type="button" class="btn-dash-action contact-donor-trigger-btn"
+                        data-donor="{{ req.item.donor.username }}"
+                        data-location="{{ req.item.pickup_location }}"
+                        data-notes="{{ req.donor_notes|default:'Please coordinate directly with the donor to collect this item.' }}">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                  <span>Message Owner</span>
+                </button>
+              {% endif %}
+
+              {% if req.can_review %}
+                <a href="{% url 'public_profile' username=req.item.donor.username %}" class="btn-dash-action" style="background: #faf5ff; border-color: #d8b4fe; color: #7e22ce; font-weight: 600;">
+                  ★ Rate Donor
+                </a>
+              {% elif req.has_reviewed %}
+                <span class="card-badge badge-status-accepted" style="justify-content: center; font-size: 0.72rem; padding: 4px;">Reviewed ✓</span>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination matching Image 2 -->
+      <div class="dash-pagination-wrap">
+        <div class="pagination-controls">
+          {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}&tab={{ status_tab }}{% if q %}&q={{ q }}{% endif %}" class="pagination-arrow-btn" aria-label="Previous page">&lt;</a>
+          {% else %}
+            <span class="pagination-arrow-btn" style="opacity: 0.4; pointer-events: none;">&lt;</span>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+              <span class="pagination-page-btn active">{{ num }}</span>
+            {% else %}
+              <a href="?page={{ num }}&tab={{ status_tab }}{% if q %}&q={{ q }}{% endif %}" class="pagination-page-btn">{{ num }}</a>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&tab={{ status_tab }}{% if q %}&q={{ q }}{% endif %}" class="pagination-arrow-btn" aria-label="Next page">&gt;</a>
+          {% else %}
+            <span class="pagination-arrow-btn" style="opacity: 0.4; pointer-events: none;">&gt;</span>
+          {% endif %}
+        </div>
+
+        <div class="pagination-summary-text">
+          Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} requests
+        </div>
+      </div>
+
+    {% else %}
+      <!-- Empty state matching Image 2 / prompt -->
+      <div class="dash-empty-state" style="background: #ffffff; border: 1px solid var(--dash-border); border-radius: var(--dash-radius-card); padding: 56px 24px; margin-top: 10px;">
+        <div class="dash-empty-icon" style="width: 54px; height: 54px;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+        <h3 class="dash-empty-title" style="font-size: 1.15rem;">No requests submitted yet</h3>
+        <p class="dash-empty-desc" style="max-width: 360px; margin-bottom: 20px;">
+          {% if q %}
+            No requests matched your search "{{ q }}". Try a different keyword or reset filters.
+          {% else %}
+            You haven't requested any items yet. Explore what neighbours are giving away in the community!
+          {% endif %}
+        </p>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          {% if q %}
+            <a href="{% url 'my_requests' %}" class="btn-dash-empty-outline">Clear Search</a>
+          {% endif %}
+          <a href="{% url 'home' %}" class="btn-olive-primary">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <span>Browse Free Items</span>
+          </a>
+        </div>
+      </div>
+    {% endif %}
+
+  </main>
 </div>
+
+<!-- Cancel Request Confirmation Modal -->
+<div class="modal-backdrop" id="cancelRequestModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="cancelRequestModalTitle">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-badge modal-icon-badge-danger">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+          </div>
+          <h3 class="modal-title" id="cancelRequestModalTitle">Cancel Item Request</h3>
+        </div>
+        <button type="button" class="modal-close-btn" data-modal-close aria-label="Close dialog">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin: 0 0 8px 0; color: var(--dash-text-main); font-weight: 500;">
+          Are you sure you want to withdraw your request for <strong id="cancelItemTitleDisplay">this item</strong>?
+        </p>
+        <p class="modal-subtext" style="margin: 0; font-size: 0.85rem; color: var(--dash-text-muted);">
+          The donor will be notified that you are no longer requesting this item, allowing other neighbours to claim it.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-modal-close>Keep Request</button>
+        <form method="POST" action="" id="cancelRequestForm" style="display: inline; margin: 0;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger btn-sm">Yes, Cancel Request</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Message Owner / Pickup Coordination Modal -->
+<div class="modal-backdrop" id="messageOwnerModal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="messageOwnerModalTitle">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-badge" style="background: #EFECFC; color: #6D5BD0; border: 1px solid #E6E3F2;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </div>
+          <h3 class="modal-title" id="messageOwnerModalTitle">Pickup Coordination</h3>
+        </div>
+        <button type="button" class="modal-close-btn" data-modal-close aria-label="Close dialog">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin: 0 0 12px 0; font-size: 0.9rem; color: var(--dash-text-main);">
+          Your request was accepted by <strong id="modalDonorName">@donor</strong>!
+        </p>
+        <div style="background: #f9fafb; border: 1px solid var(--dash-border); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;">
+          <div style="font-size: 0.775rem; font-weight: 600; color: var(--dash-text-muted); margin-bottom: 4px;">PICKUP LOCATION</div>
+          <div id="modalPickupLocation" style="font-size: 0.88rem; font-weight: 600; color: var(--dash-text-main);">Location</div>
+        </div>
+        <div style="background: #f9fafb; border: 1px solid var(--dash-border); border-radius: 8px; padding: 12px 14px;">
+          <div style="font-size: 0.775rem; font-weight: 600; color: var(--dash-text-muted); margin-bottom: 4px;">DONOR NOTE / INSTRUCTIONS</div>
+          <div id="modalDonorNotes" style="font-size: 0.85rem; color: var(--dash-text-secondary); line-height: 1.45;">Notes</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-modal-close>Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block user_footer %}
+  <!-- Dashboard uses app layout without marketing footer -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Mobile drawer sidebar toggle
+  const toggleBtn = document.getElementById('dashboardSidebarToggleBtn');
+  const closeBtn = document.getElementById('sidebarCloseBtn');
+  const sidebar = document.getElementById('dashboardSidebar');
+  const backdrop = document.getElementById('dashboardSidebarBackdrop');
+
+  function openSidebar() {
+    if (sidebar) sidebar.classList.add('is-open');
+    if (backdrop) backdrop.classList.add('is-open');
+  }
+  function closeSidebar() {
+    if (sidebar) sidebar.classList.remove('is-open');
+    if (backdrop) backdrop.classList.remove('is-open');
+  }
+
+  if (toggleBtn) toggleBtn.addEventListener('click', openSidebar);
+  if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+  if (backdrop) backdrop.addEventListener('click', closeSidebar);
+
+  // Cancel Request Modal Wiring
+  const cancelModal = document.getElementById('cancelRequestModal');
+  const cancelForm = document.getElementById('cancelRequestForm');
+  const titleDisplay = document.getElementById('cancelItemTitleDisplay');
+  const cancelBtns = document.querySelectorAll('.cancel-request-trigger-btn');
+
+  cancelBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const itemTitle = this.getAttribute('data-item-title') || 'this item';
+      const cancelUrl = this.getAttribute('data-cancel-url');
+
+      if (titleDisplay) titleDisplay.textContent = '"' + itemTitle + '"';
+      if (cancelForm && cancelUrl) cancelForm.setAttribute('action', cancelUrl);
+      if (cancelModal) cancelModal.style.display = 'flex';
+    });
+  });
+
+  // Message Owner Modal Wiring
+  const messageModal = document.getElementById('messageOwnerModal');
+  const donorNameDisplay = document.getElementById('modalDonorName');
+  const pickupLocDisplay = document.getElementById('modalPickupLocation');
+  const notesDisplay = document.getElementById('modalDonorNotes');
+  const contactBtns = document.querySelectorAll('.contact-donor-trigger-btn');
+
+  contactBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const donor = this.getAttribute('data-donor') || 'Donor';
+      const loc = this.getAttribute('data-location') || 'General Neighborhood';
+      const notes = this.getAttribute('data-notes') || 'No additional notes provided.';
+
+      if (donorNameDisplay) donorNameDisplay.textContent = '@' + donor;
+      if (pickupLocDisplay) pickupLocDisplay.textContent = loc;
+      if (notesDisplay) notesDisplay.textContent = notes;
+      if (messageModal) messageModal.style.display = 'flex';
+    });
+  });
+
+  // Modal dismiss buttons
+  document.querySelectorAll('[data-modal-close]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      if (cancelModal) cancelModal.style.display = 'none';
+      if (messageModal) messageModal.style.display = 'none';
+    });
+  });
+});
+</script>
 {% endblock %}

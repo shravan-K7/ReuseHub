@@ -15,7 +15,8 @@ urlpatterns = [
     path('items/<int:pk>/mark-available/', views.mark_available, name='mark_available'), # Calls mark_available(). Used when a user wants to mark an item as available.
     path('items/<int:pk>/report/', views.report_item, name='report_item'), # Calls report_item(). Used when a user wants to report an item.
 
-    # Request responses (Donor actions)
+    # Request responses & Requester actions
+    path('requests/<int:request_id>/cancel/', views.cancel_request, name='cancel_request'),
     path('requests/<int:request_id>/<str:action>/', views.respond_request, name='respond_request'), # Calls respond_request(). Used when a user wants to respond to a request.
 
     # User Dashboards & Public Community Profiles

@@ -171,7 +171,7 @@ from django.core.validators import validate_email
 class UserRegisterForm(forms.ModelForm):
     email = forms.EmailField(
         required=True,
-        widget=forms.EmailInput(attrs={'class': 'form-input', 'placeholder': 'name@example.com'}),
+        widget=forms.EmailInput(attrs={'class': 'form-input', 'placeholder': 'Enter your email'}),
         label="Email Address",
         help_text="A temporary 6-digit OTP will be sent here to verify your access."
     )
@@ -188,7 +188,7 @@ class UserRegisterForm(forms.ModelForm):
         model = User
         fields = ['username', 'email', 'first_name', 'last_name']
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Choose a username'}),
+            'username': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Enter your username'}),
             'first_name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'First name'}),
             'last_name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Last name'}),
         }

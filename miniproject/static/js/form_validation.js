@@ -19,7 +19,7 @@
 
 window.ReuseHubValidationLoaded = true;
 
-document.addEventListener('DOMContentLoaded', function () {
+function bootFormEngine() {
   initPasswordToggles();
   initLoginForm();
   initRegisterForm();
@@ -32,7 +32,13 @@ document.addEventListener('DOMContentLoaded', function () {
   initProfileForm();
   initCategoryForm();
   initUniversalFormValidation();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootFormEngine);
+} else {
+  bootFormEngine();
+}
 
 function markFormBound(form) {
   if (!form) return false;
@@ -152,6 +158,7 @@ function initPasswordToggles() {
         input.type = 'text';
         if (eyeOpen) eyeOpen.style.display = 'none';
         if (eyeClosed) eyeClosed.style.display = 'block';
+        button.classList.add('is-active');
         button.setAttribute('aria-label', 'Hide password');
         button.title = 'Hide password';
       } else {
@@ -159,6 +166,7 @@ function initPasswordToggles() {
         input.type = 'password';
         if (eyeOpen) eyeOpen.style.display = 'block';
         if (eyeClosed) eyeClosed.style.display = 'none';
+        button.classList.remove('is-active');
         button.setAttribute('aria-label', 'Show password');
         button.title = 'Show password';
       }
@@ -173,6 +181,7 @@ function initPasswordToggles() {
     });
   });
 }
+window.initPasswordToggles = initPasswordToggles;
 
 // ==============================================================================
 // 3. LOGIN FORM VALIDATION

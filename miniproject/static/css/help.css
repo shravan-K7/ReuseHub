@@ -21,8 +21,8 @@
 
 .help-hero {
   padding: 48px 0;
-  background: linear-gradient(180deg, rgba(235, 243, 238, 0.75) 0%, rgba(250, 249, 246, 0.95) 100%);
-  border-bottom: 1px solid var(--border-color);
+  background: #FFFFFF;
+  border-bottom: 1px solid #E6E3F2;
   text-align: center;
 }
 
@@ -37,9 +37,9 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--primary);
-  background-color: var(--primary-light);
-  border: 1px solid rgba(30, 58, 43, 0.16);
+  color: #4B3BA8;
+  background-color: #EFECFC;
+  border: 1px solid rgba(109, 91, 208, 0.2);
   padding: 4px 14px;
   border-radius: var(--radius-full);
   margin-bottom: 14px;
@@ -49,14 +49,14 @@
   font-size: clamp(2.2rem, 4vw, 3rem);
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: var(--text-main);
+  color: #221F33;
   line-height: 1.15;
   margin-bottom: 12px;
 }
 
 .help-hero-desc {
   font-size: 1.08rem;
-  color: var(--text-secondary);
+  color: #625F78;
   line-height: 1.6;
   margin-bottom: 0;
 }
@@ -80,8 +80,8 @@
 .quick-card {
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-page);
-  border: 1px solid var(--border-color);
+  background-color: #FFFFFF;
+  border: 1px solid #E6E3F2;
   border-radius: var(--radius-lg);
   padding: 24px 20px;
   text-decoration: none;
@@ -92,14 +92,22 @@
 
 .quick-card:hover {
   transform: translateY(-3px);
-  border-color: var(--primary);
-  box-shadow: var(--shadow-md);
+  border-color: #6D5BD0;
+  box-shadow: 0 8px 24px -4px rgba(109, 91, 208, 0.15);
   text-decoration: none;
 }
 
 .quick-card-icon {
-  font-size: 1.8rem;
-  margin-bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background-color: #EFECFC;
+  color: #6D5BD0;
+  margin-bottom: 14px;
+  flex-shrink: 0;
 }
 
 .quick-card h3 {
@@ -120,7 +128,7 @@
 .quick-card-link {
   font-size: 0.84rem;
   font-weight: 600;
-  color: var(--primary);
+  color: #6D5BD0;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -131,7 +139,7 @@
    ------------------------------------------------------------------------------ */
 
 .help-main-body {
-  padding: 56px 0 80px;
+  padding: 56px 0 0px;
 }
 
 .help-content-block {
@@ -203,7 +211,7 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background-color: var(--primary);
+  background-color: #6D5BD0;
   color: #ffffff;
   font-size: 0.72rem;
   font-weight: 700;
@@ -220,17 +228,17 @@
 }
 
 .pipe-arrow {
-  color: var(--text-muted);
+  color: #625F78;
   font-weight: bold;
 }
 
 .pipe-node-success {
-  background-color: #ecfdf5;
-  border-color: #a7f3d0;
+  background-color: #E3F5EF;
+  border-color: #C2EADC;
 }
 
 .pipe-node-success .pipe-num {
-  background-color: #059669;
+  background-color: #1F7A64;
 }
 
 .steps-detail-grid {
@@ -240,8 +248,8 @@
 }
 
 .step-card {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-color);
+  background-color: #FFFFFF;
+  border: 1px solid #E6E3F2;
   border-radius: var(--radius-md);
   padding: 20px 18px;
 }
@@ -271,8 +279,8 @@
 }
 
 .role-column-card {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-color);
+  background-color: #FFFFFF;
+  border: 1px solid #E6E3F2;
   border-radius: var(--radius-lg);
   padding: 28px 24px;
   box-shadow: var(--shadow-xs);
@@ -290,15 +298,15 @@
 }
 
 .role-badge.donor {
-  background-color: #ecfdf5;
-  color: #047857;
-  border: 1px solid #d1fae5;
+  background-color: #EFECFC;
+  color: #4B3BA8;
+  border: 1px solid rgba(109, 91, 208, 0.2);
 }
 
 .role-badge.requester {
-  background-color: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #dbeafe;
+  background-color: #E3F5EF;
+  color: #1F7A64;
+  border: 1px solid #C2EADC;
 }
 
 .role-actions-list {
@@ -322,7 +330,7 @@
   content: "•";
   position: absolute;
   left: 4px;
-  color: var(--primary);
+  color: #6D5BD0;
   font-size: 1.2rem;
   line-height: 1;
 }
@@ -373,22 +381,29 @@
 }
 
 .location-callout-box {
-  background: linear-gradient(135deg, rgba(235, 243, 238, 0.9) 0%, rgba(243, 242, 238, 0.8) 100%);
-  border: 1px solid rgba(30, 58, 43, 0.15);
+  background: #E3F5EF;
+  border: 1px solid #C2EADC;
   border-radius: var(--radius-lg);
   padding: 24px 20px;
   text-align: center;
 }
 
 .callout-icon {
-  font-size: 2rem;
-  margin-bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: rgba(31, 122, 100, 0.15);
+  color: #1F7A64;
+  margin: 0 auto 12px;
 }
 
 .location-callout-box h4 {
   font-size: 1.05rem;
   font-weight: 700;
-  color: var(--text-main);
+  color: #1F7A64;
   margin-bottom: 8px;
 }
 
@@ -410,16 +425,17 @@
 }
 
 .help-acc-item {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-color);
+  background-color: #FFFFFF;
+  border: 1px solid #E6E3F2;
   border-radius: var(--radius-md);
   overflow: hidden;
   transition: all 0.2s ease;
 }
 
 .help-acc-item[open] {
-  border-color: var(--primary);
-  box-shadow: var(--shadow-sm);
+  border-color: #6D5BD0;
+  background-color: #EFECFC;
+  box-shadow: 0 4px 12px rgba(109, 91, 208, 0.08);
 }
 
 .help-acc-summary {
@@ -449,7 +465,7 @@
 
 .help-acc-item[open] .help-acc-summary::after {
   content: "−";
-  color: var(--primary);
+  color: #6D5BD0;
   font-weight: 600;
 }
 
@@ -485,8 +501,16 @@
 }
 
 .safety-icon {
-  font-size: 1.8rem;
-  margin-bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  background-color: var(--primary-light);
+  color: var(--primary);
+  margin-bottom: 14px;
+  flex-shrink: 0;
 }
 
 .safety-card h4 {
@@ -514,8 +538,8 @@
 }
 
 .report-option-card {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-color);
+  background-color: #FFFFFF;
+  border: 1px solid #E6E3F2;
   border-radius: var(--radius-lg);
   padding: 28px 22px;
   display: flex;
@@ -524,8 +548,16 @@
 }
 
 .report-option-icon {
-  font-size: 2rem;
-  margin-bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-md);
+  background-color: #EFECFC;
+  color: #6D5BD0;
+  margin-bottom: 14px;
+  flex-shrink: 0;
 }
 
 .report-option-card h3 {
@@ -617,9 +649,9 @@
 }
 
 .form-control:focus {
-  background-color: #ffffff;
+  background-color: var(--bg-surface);
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(30, 58, 43, 0.12);
+  box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.22);
 }
 
 .contact-form-actions {
