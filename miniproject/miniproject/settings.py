@@ -24,10 +24,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = ["*"]
 
@@ -35,6 +35,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
+    "django.contrib.sites",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -42,17 +43,28 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "app.apps.AppConfig",
-    
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+
+SITE_ID = 1
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
 ROOT_URLCONF = "miniproject.urls"
@@ -173,8 +185,44 @@ EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "10"))
 
 # Development fallback: If in DEBUG mode and no SMTP password is configured,
 # route emails to the console so local development and tests function smoothly.
-if DEBUG and not EMAIL_HOST_PASSWORD and EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
+if (
+    DEBUG
+    and not EMAIL_HOST_PASSWORD
+    and EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend"
+):
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # Stay logged in for 30 days
 # SESSION_COOKIE_AGE = 2592000  # 60 * 60 * 24 * 30
+
+
+# ==============================================================================
+# Django-Allauth & Google OAuth 2.0 Configuration
+# ==============================================================================
+ACCOUNT_LOGIN_METHODS = {"username", "email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*"]
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_LOGOUT_ON_GET = True
+
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_ADAPTER = "app.adapters.ReuseHubSocialAccountAdapter"
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": os.environ.get("GOOGLE_CLIENT_ID", ""),
+            "secret": os.environ.get("GOOGLE_CLIENT_SECRET", ""),
+            "key": "",
+        },
+        "SCOPE": [
+            "profile",
+            "email",
+        ],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+            "prompt": "select_account",
+        },
+    }
+}

@@ -243,6 +243,74 @@ body.login-card-page .footer {
   font-weight: 500;
 }
 
+/* ==============================================================================
+   Google Authentication Button & Divider
+   ============================================================================== */
+.google-auth-form {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.btn-google-auth {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  height: 44px;
+  background-color: #FFFFFF;
+  color: #221F33;
+  border: 1.5px solid #E6E3F2;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+}
+
+.btn-google-auth:hover {
+  background-color: #FAF9FD;
+  border-color: #6D5BD0;
+  color: #1A1726;
+  box-shadow: 0 4px 14px rgba(109, 91, 208, 0.12);
+  transform: translateY(-1px);
+}
+
+.btn-google-auth:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-google-auth .google-icon {
+  flex-shrink: 0;
+  display: block;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 14px 0 12px;
+  color: #8C89A0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid #E6E3F2;
+}
+
+.auth-divider span {
+  padding: 0 12px;
+}
+
 /* Submit Button */
 .btn-login-submit {
   display: flex;

@@ -36,8 +36,15 @@ venv.bak/
 
 # Environment Variables & Secrets (Keep your credentials secure!)
 .env
-.env.local
-.env.*.local
+.env*
+*.env
+*.env.*
+!.env.example
+!*.env.example
+*.pem
+*.key
+credentials*.json
+client_secret*.json
 
 # Django specific
 *.log

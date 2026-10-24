@@ -1187,7 +1187,7 @@ def verify_otp_view(request):
                 request.session.pop("verify_email", None)
 
                 # Log user in
-                login(request, user)
+                login(request, user, backend="django.contrib.auth.backends.ModelBackend")
                 messages.success(
                     request,
                     f"Welcome to ReuseHub, {user.username}! Your email has been verified successfully. Let's reduce waste together!",

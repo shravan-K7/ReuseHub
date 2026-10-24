@@ -20,8 +20,13 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from django.views.generic import RedirectView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("accounts/login/", RedirectView.as_view(pattern_name="login", permanent=False)),
+    path("accounts/signup/", RedirectView.as_view(pattern_name="register", permanent=False)),
+    path("accounts/", include("allauth.urls")),
     path("", include("app.urls")),
 ]
 

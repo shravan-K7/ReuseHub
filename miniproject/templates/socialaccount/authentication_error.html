@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sign In Issue — ReuseHub{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 600px; margin: 60px auto; padding: 0 20px;">
+  <div style="background: #FFFFFF; border: 1px solid #E6E3F2; border-radius: 24px; padding: 48px 40px; text-align: center; box-shadow: 0 14px 38px -10px rgba(109, 91, 208, 0.08);">
+    <div style="width: 64px; height: 64px; margin: 0 auto 20px; border-radius: 50%; background-color: #FEF2F2; display: flex; align-items: center; justify-content: center; color: #DC2626;">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+    </div>
+    <h1 style="font-size: 1.6rem; font-weight: 800; color: #221F33; margin: 0 0 10px; text-transform: uppercase;">Authentication Cancelled or Failed</h1>
+    <p style="font-size: 0.95rem; color: #625F78; line-height: 1.5; margin: 0 0 28px;">
+      We were unable to complete authentication with Google. This can happen if the sign-in was cancelled, permissions were not granted, or the session timed out.
+    </p>
+
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <a href="{% url 'login' %}" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 44px; background-color: #6D5BD0; color: #FFFFFF; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 0.95rem; box-shadow: 0 4px 12px rgba(109, 91, 208, 0.3); transition: background-color 0.18s ease;">
+        Return to Sign In
+      </a>
+      <a href="{% url 'home' %}" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 42px; background-color: #FFFFFF; color: #625F78; text-decoration: none; border: 1.5px solid #E6E3F2; border-radius: 10px; font-weight: 600; font-size: 0.90rem;">
+        Back to Home
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
