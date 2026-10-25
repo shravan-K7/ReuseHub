@@ -33,12 +33,35 @@ DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
+    ".onrender.com",
 ]
 
 render_hostname = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
 
 if render_hostname:
     ALLOWED_HOSTS.append(render_hostname)
+
+extra_allowed_hosts = os.getenv("ALLOWED_HOSTS")
+if extra_allowed_hosts:
+    ALLOWED_HOSTS.extend([h.strip() for h in extra_allowed_hosts.split(",") if h.strip()])
+
+# CSRF Trusted Origins for HTTPS reverse proxy (Render & Custom Domains)
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+    "https://*.onrender.com",
+]
+
+if render_hostname:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{render_hostname}")
+
+extra_csrf_trusted = os.getenv("CSRF_TRUSTED_ORIGINS")
+if extra_csrf_trusted:
+    CSRF_TRUSTED_ORIGINS.extend([origin.strip() for origin in extra_csrf_trusted.split(",") if origin.strip()])
+
+# Behind Render's reverse proxy terminating HTTPS
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
 
 # Application definition
 
