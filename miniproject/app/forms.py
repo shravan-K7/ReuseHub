@@ -1,7 +1,11 @@
 import os
+
 from django import forms
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
 from django.contrib.auth.models import User
-from .models import Item, ItemRequest, Report, Category, UserProfile, UserReview
+from django.core.validators import validate_email
+
+from .models import Category, Item, ItemRequest, Report, UserProfile, UserReview
 
 
 class MultipleFileInput(forms.ClearableFileInput):
@@ -26,10 +30,17 @@ class MultipleFileField(forms.FileField):
     def clean(self, data, initial=None):
         single_file_clean = super().clean
         if isinstance(data, (list, tuple)):
-            result = [single_file_clean(d, initial) for d in data]
-        else:
-            result = single_file_clean(data, initial)
-        return result
+            clean_data = [d for d in data if d]
+            if not clean_data:
+                if self.required:
+                    raise forms.ValidationError(self.error_messages["required"], code="required")
+                return []
+            return [single_file_clean(d, initial) for d in clean_data]
+        if not data:
+            if self.required:
+                raise forms.ValidationError(self.error_messages["required"], code="required")
+            return []
+        return [single_file_clean(data, initial)]
 
 
 class ItemForm(forms.ModelForm):
@@ -86,12 +97,25 @@ class ItemForm(forms.ModelForm):
         }
 
     def clean(self):
-        cleaned_data = super().clean()
-        files = self.files.getlist('images')
+        cleaned_data = super().clean() or {}
+        if hasattr(self, 'files') and self.files:
+            if hasattr(self.files, 'getlist'):
+                files = self.files.getlist('images')
+            else:
+                raw_files = self.files.get('images', [])
+                files = raw_files if isinstance(raw_files, (list, tuple)) else ([raw_files] if raw_files else [])
+        else:
+            files = []
 
         existing_count = 0
         if self.instance and self.instance.pk:
-            delete_ids = self.data.getlist('delete_images')
+            if hasattr(self.data, 'getlist'):
+                delete_ids = self.data.getlist('delete_images')
+            elif isinstance(self.data, dict):
+                raw_del = self.data.get('delete_images', [])
+                delete_ids = raw_del if isinstance(raw_del, (list, tuple)) else ([raw_del] if raw_del else [])
+            else:
+                delete_ids = []
             existing_count = self.instance.images.exclude(id__in=delete_ids).count()
 
         total_count = existing_count + len(files)
@@ -105,18 +129,20 @@ class ItemForm(forms.ModelForm):
 
         # image format checking
         for f in files:
-            ext = os.path.splitext(f.name)[1].lower()
+            fname = getattr(f, 'name', '') or ''
+            ext = os.path.splitext(fname)[1].lower()
             if ext not in valid_extensions:
                 self.add_error(
                     'images',
-                    f"'{f.name}' has an unsupported format. Allowed formats: JPEG (.jpg, .jpeg), PNG (.png), WebP (.webp), and GIF (.gif)."
+                    f"'{fname}' has an unsupported format. Allowed formats: JPEG (.jpg, .jpeg), PNG (.png), WebP (.webp), and GIF (.gif)."
                 )
                 break
             # image size checking
-            if f.size > 10 * 1024 * 1024:
+            fsize = getattr(f, 'size', 0) or 0
+            if fsize > 10 * 1024 * 1024:
                 self.add_error(
                     'images',
-                    f"'{f.name}' exceeds the 10MB limit (size: {f.size / (1024 * 1024):.1f}MB)."
+                    f"'{fname}' exceeds the 10MB limit (size: {fsize / (1024 * 1024):.1f}MB)."
                 )
                 break
 
@@ -162,10 +188,6 @@ class CategoryForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Category Name'}),
             'description': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 3, 'placeholder': 'Category description...'}),
         }
-
-
-from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
-from django.core.validators import validate_email
 
 
 class UserRegisterForm(forms.ModelForm):
@@ -215,12 +237,22 @@ class UserRegisterForm(forms.ModelForm):
         return username
 
     def clean(self):
-        cleaned_data = super().clean()
+        cleaned_data = super().clean() or {}
         password = cleaned_data.get('password')
         confirm_password = cleaned_data.get('confirm_password')
 
         if password and confirm_password and password != confirm_password:
             self.add_error('confirm_password', "Passwords do not match.")
+
+        username = cleaned_data.get('username')
+        email = cleaned_data.get('email')
+        if username and email:
+            existing_user = User.objects.filter(username__iexact=username).first()
+            if existing_user and existing_user.email.lower() != email.lower():
+                if existing_user.is_active:
+                    self.add_error('username', "A user with this username already exists.")
+                else:
+                    self.add_error('username', "This username is reserved by another registration. Please choose another username.")
         return cleaned_data
 
 

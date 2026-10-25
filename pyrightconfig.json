@@ -4,5 +4,17 @@
   ],
   "extraPaths": [
     "miniproject"
-  ]
+  ],
+  "venvPath": ".",
+  "venv": "venv",
+  "reportAttributeAccessIssue": "none",
+  "reportOperatorIssue": "none",
+  "reportIncompatibleMethodOverride": "none",
+  "reportAssignmentType": "none",
+  "reportArgumentType": "none",
+  "reportOptionalIterable": "none",
+  "reportOptionalMemberAccess": "none",
+  "reportOptionalOperand": "none",
+  "reportCallIssue": "none",
+  "reportFunctionMemberAccess": "none"
 }

@@ -10,7 +10,7 @@ from django.utils.encoding import force_bytes
 
 from .models import Category, Item, ItemRequest, Report, EmailOTP, SupportInquiry
 from .emails import send_reusehub_email
-from .forms import ReuseHubPasswordResetForm
+from .forms import ReuseHubPasswordResetForm, ItemForm, UserRegisterForm
 
 # test.py is used to automatically test whether your features are working correctly. Your file contains a ReuseHubTests(TestCase) class with tests for pages, requests, admin access, profiles, OTP, emails, password reset, etc
 
@@ -458,6 +458,65 @@ class ReuseHubTests(TestCase):
         resp3 = self.client.post(reverse('password_reset'), {'email': 'nonexistent@example.com'})
         self.assertEqual(resp3.status_code, 302)
         self.assertEqual(resp3.url, reverse('password_reset_done'))
+
+    def test_item_form_with_dict_and_instance(self):
+        """ItemForm should clean gracefully with dictionary data and instance without getlist errors."""
+        form = ItemForm(
+            data={
+                'title': 'Restored Chair',
+                'category': self.category.id,
+                'condition': 'GOOD',
+                'pickup_location': 'East Library',
+                'description': 'A sturdy restored wooden chair.',
+                'delete_images': [],
+            },
+            instance=self.item,
+        )
+        self.assertTrue(form.is_valid(), f"Errors: {form.errors}")
+
+    def test_admin_moderate_action_without_referer(self):
+        """admin_moderate_action should safely redirect to admin_listings when HTTP_REFERER is absent."""
+        self.client.login(username='superadmin', password='password123')
+        resp = self.client.get(
+            reverse('admin_moderate_action', kwargs={'pk': self.item.pk, 'action': 'approve'})
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, reverse('admin_listings'))
+
+    def test_admin_users_distinct_counts(self):
+        """Admin users view should calculate distinct counts without Cartesian product multiplication."""
+        ItemRequest.objects.create(item=self.item, requester=self.requester, message="Req 1")
+        Item.objects.create(
+            donor=self.requester,
+            category=self.category,
+            title='Extra Item',
+            description='Test item description',
+            condition='GOOD',
+            pickup_location='Downtown',
+            status='AVAILABLE',
+            moderation_status='APPROVED'
+        )
+        self.client.login(username='superadmin', password='password123')
+        resp = self.client.get(reverse('admin_users'))
+        self.assertEqual(resp.status_code, 200)
+        users = list(resp.context['users'])
+        requester_user = next(u for u in users if u.username == self.requester.username)
+        self.assertEqual(requester_user.items_listed, 1)
+        self.assertEqual(requester_user.requests_count, 1)
+
+    def test_user_register_form_duplicate_username_with_different_email(self):
+        """UserRegisterForm should reject registration if username is taken by another account."""
+        User.objects.create_user(username='reserveduser', email='original@example.com', password='password123', is_active=False)
+        form = UserRegisterForm(data={
+            'username': 'reserveduser',
+            'email': 'different@example.com',
+            'password': 'StrongPassword123!',
+            'confirm_password': 'StrongPassword123!',
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('username', form.errors)
+
+
 
 
 

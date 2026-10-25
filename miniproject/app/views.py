@@ -243,7 +243,7 @@ def help_view(request):
         # Bind to authenticated user credentials to prevent identity spoofing
         user = request.user
         name = user.get_full_name() or user.username
-        email = user.email or request.POST.get("email", "").strip()
+        email = user.email or request.POST.get("email", "").strip() or f"{user.username}@reusehub.local"
 
         if message:
             # 1. Always record in SupportInquiry so admin portal tracks all tickets
@@ -477,6 +477,8 @@ def item_delete(request, pk):
         title = item.title
         item.delete()
         messages.success(request, f"Listing '{title}' was removed.")
+        if request.user.is_staff and item.donor != request.user:
+            return redirect("admin_listings")
         return redirect("my_listings")
 
     return render(request, "app/item_confirm_delete.html", {"item": item})
@@ -518,6 +520,11 @@ def request_item(request, pk):
             send_item_request_notification(req, action_url=action_url)
 
             messages.success(request, "Your request has been submitted to the donor!")
+            return redirect("item_detail", pk=pk)
+        else:
+            for errs in form.errors.values():
+                for err in errs:
+                    messages.error(request, f"{err}")
             return redirect("item_detail", pk=pk)
 
     return redirect("item_detail", pk=pk)
@@ -590,6 +597,8 @@ def respond_request(request, request_id, action):
             item_req, action="reject", action_url=action_url
         )
         messages.info(request, f"You declined {item_req.requester.username}'s request.")
+    else:
+        messages.warning(request, "Invalid action request.")
 
     return redirect("item_detail", pk=item_req.item.pk)
 
@@ -1029,6 +1038,11 @@ def report_user_view(request, username):
                 request,
                 f"Thank you for looking out for our community. Your report regarding user '{target_user.username}' has been submitted for moderation.",
             )
+            return redirect("public_profile", username=username)
+        else:
+            for errors in form.errors.values():
+                for error in errors:
+                    messages.error(request, f"{error}")
             return redirect("public_profile", username=username)
     else:
         form = UserReportForm()
@@ -1506,7 +1520,8 @@ def admin_moderate_action(request, pk, action):
             request, f"Inappropriate listing '{title}' permanently deleted."
         )
 
-    return redirect(request.META.get("HTTP_REFERER", "admin_listings"))
+    referer = request.META.get("HTTP_REFERER")
+    return redirect(referer or "admin_listings")
 
 
 @user_passes_test(is_admin)
@@ -1571,22 +1586,28 @@ def admin_report_resolve(request, pk, action):
         report.status = "DISMISSED"
         report.save()
         messages.info(request, f"Report #{report.id} dismissed.")
-    elif action == "take_down_item" and report.item:
-        report.status = "RESOLVED"
-        report.save()
-        report.item.moderation_status = "REJECTED"
-        report.item.save()
-        messages.warning(
-            request, f"Listing '{report.item.title}' has been removed from public view."
-        )
-    elif action == "deactivate_user" and report.reported_user:
-        report.status = "RESOLVED"
-        report.save()
-        report.reported_user.is_active = False
-        report.reported_user.save()
-        messages.warning(
-            request, f"User '{report.reported_user.username}' has been deactivated."
-        )
+    elif action == "take_down_item":
+        if report.item:
+            report.status = "RESOLVED"
+            report.save()
+            report.item.moderation_status = "REJECTED"
+            report.item.save()
+            messages.warning(
+                request, f"Listing '{report.item.title}' has been removed from public view."
+            )
+        else:
+            messages.error(request, "This report is not associated with an item listing.")
+    elif action == "deactivate_user":
+        if report.reported_user:
+            report.status = "RESOLVED"
+            report.save()
+            report.reported_user.is_active = False
+            report.reported_user.save()
+            messages.warning(
+                request, f"User '{report.reported_user.username}' has been deactivated."
+            )
+        else:
+            messages.error(request, "This report is not associated with a specific user profile.")
 
     return redirect("admin_reports")
 
@@ -1675,7 +1696,8 @@ def admin_users(request):
     users = (
         User.objects.select_related("profile")
         .annotate(
-            items_listed=Count("donated_items"), requests_count=Count("item_requests")
+            items_listed=Count("donated_items", distinct=True),
+            requests_count=Count("item_requests", distinct=True),
         )
         .order_by("-date_joined")
     )

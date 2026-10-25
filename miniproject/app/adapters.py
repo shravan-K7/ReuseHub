@@ -45,6 +45,8 @@ class ReuseHubSocialAccountAdapter(DefaultSocialAccountAdapter):
         # Case 1: Existing Google social account connection
         if sociallogin.is_existing:
             user = sociallogin.user
+            if not user:
+                return
             needs_save = False
 
             if not user.is_active:
