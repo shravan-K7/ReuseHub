@@ -1,16 +1,20 @@
 from datetime import timedelta
-from django.core import mail
-from django.test import TestCase, Client
-from django.urls import reverse
-from django.utils import timezone
+from unittest.mock import patch
+
+import resend
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode
+from django.core import mail
+from django.test import Client, TestCase
+from django.urls import reverse
+from django.utils import timezone
 from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+from resend.exceptions import RateLimitError, ResendError
 
-from .models import Category, Item, ItemRequest, Report, EmailOTP, SupportInquiry
 from .emails import send_reusehub_email
-from .forms import ReuseHubPasswordResetForm, ItemForm, UserRegisterForm
+from .forms import ItemForm, ReuseHubPasswordResetForm, UserRegisterForm
+from .models import Category, EmailOTP, Item, ItemRequest, Report, SupportInquiry
 
 # test.py is used to automatically test whether your features are working correctly. Your file contains a ReuseHubTests(TestCase) class with tests for pages, requests, admin access, profiles, OTP, emails, password reset, etc
 
@@ -515,6 +519,122 @@ class ReuseHubTests(TestCase):
         })
         self.assertFalse(form.is_valid())
         self.assertIn('username', form.errors)
+
+    @patch.object(resend.Emails, 'send')
+    def test_resend_api_dispatch_success(self, mock_resend_send):
+        """send_reusehub_email successfully sends over Resend API when RESEND_API_KEY is configured."""
+        mock_resend_send.return_value = {'id': 'msg_resend_test_12345'}
+        with self.settings(RESEND_API_KEY='re_test_mock_key_xyz', RESEND_FROM_EMAIL='ReuseHub <onboarding@resend.dev>'):
+            success = send_reusehub_email(
+                subject='Account Notice',
+                to_email='member@example.com',
+                template_name='emails/account_notification.html',
+                context={'user': self.user, 'headline': 'Notice', 'message_body': 'Test content'},
+            )
+            self.assertTrue(success)
+            mock_resend_send.assert_called_once()
+            call_args = mock_resend_send.call_args[0][0]
+            self.assertEqual(call_args['to'], ['member@example.com'])
+            self.assertEqual(call_args['from'], 'ReuseHub <onboarding@resend.dev>')
+            self.assertEqual(call_args['subject'], '[ReuseHub] Account Notice')
+            self.assertIn('Notice', call_args['html'])
+            self.assertIn('Test content', call_args['text'])
+
+    @patch.object(resend.Emails, 'send')
+    def test_resend_api_dispatch_error_handling(self, mock_resend_send):
+        """send_reusehub_email catches ResendError and returns False cleanly."""
+        mock_resend_send.side_effect = ResendError(
+            code=400,
+            error_type='validation_error',
+            message='Domain not verified in Resend dashboard',
+            suggested_action='Verify domain at resend.com/domains',
+        )
+        with self.settings(RESEND_API_KEY='re_test_mock_key_xyz'):
+            success = send_reusehub_email(
+                subject='Failure Notice',
+                to_email='member@example.com',
+                template_name='emails/account_notification.html',
+                context={'user': self.user, 'headline': 'Notice', 'message_body': 'Test content'},
+                fail_silently=True,
+            )
+            self.assertFalse(success)
+
+    @patch.object(resend.Emails, 'send')
+    def test_registration_otp_email_via_resend_and_account_activation(self, mock_resend_send):
+        """User registration sends OTP via Resend, keeps account inactive until verified."""
+        mock_resend_send.return_value = {'id': 'msg_reg_otp_456'}
+        with self.settings(RESEND_API_KEY='re_test_mock_key_xyz'):
+            reg_resp = self.client.post(reverse('register'), {
+                'username': 'resenduser',
+                'email': 'resenduser@example.com',
+                'password': 'SecurePassword123!',
+                'confirm_password': 'SecurePassword123!',
+            })
+            self.assertEqual(reg_resp.status_code, 302)
+            self.assertRedirects(reg_resp, reverse('verify_otp'))
+
+            # Verify user exists in database and is inactive
+            new_user = User.objects.get(username='resenduser')
+            self.assertFalse(new_user.is_active)
+
+            # Verify Resend API was called with OTP email
+            mock_resend_send.assert_called_once()
+            call_args = mock_resend_send.call_args[0][0]
+            self.assertEqual(call_args['to'], ['resenduser@example.com'])
+            self.assertIn('Verification Code', call_args['subject'])
+
+            # Retrieve OTP from database and verify
+            otp = EmailOTP.objects.filter(user=new_user, purpose='REGISTRATION', is_used=False).first()
+            self.assertIsNotNone(otp)
+
+            verify_resp = self.client.post(reverse('verify_otp'), {'otp': otp.code})
+            self.assertEqual(verify_resp.status_code, 302)
+
+            new_user.refresh_from_db()
+            self.assertTrue(new_user.is_active)
+
+    @patch.object(resend.Emails, 'send')
+    def test_registration_delivery_failure_does_not_leak_otp(self, mock_resend_send):
+        """When Resend delivery fails, user is informed, account remains inactive, and OTP is never exposed in response."""
+        mock_resend_send.side_effect = RateLimitError(
+            message='Too many requests',
+            error_type='rate_limit_exceeded',
+            code=429,
+        )
+        with self.settings(RESEND_API_KEY='re_test_mock_key_xyz'):
+            reg_resp = self.client.post(reverse('register'), {
+                'username': 'failedemailuser',
+                'email': 'faileduser@example.com',
+                'password': 'SecurePassword123!',
+                'confirm_password': 'SecurePassword123!',
+            }, follow=True)
+            self.assertEqual(reg_resp.status_code, 200)
+
+            user = User.objects.get(username='failedemailuser')
+            self.assertFalse(user.is_active)
+
+            otp = EmailOTP.objects.filter(user=user, purpose='REGISTRATION', is_used=False).first()
+            self.assertIsNotNone(otp)
+
+            # CRITICAL SECURITY CHECK: OTP code must NEVER be present in page response or error messages
+            page_text = reg_resp.content.decode('utf-8')
+            self.assertNotIn(otp.code, page_text)
+            self.assertIn('unable to deliver', page_text.lower())
+
+    @patch.object(resend.Emails, 'send')
+    def test_password_reset_email_dispatches_via_resend(self, mock_resend_send):
+        """Password reset email dispatches reset URL via Resend API."""
+        mock_resend_send.return_value = {'id': 'msg_pw_reset_789'}
+        with self.settings(RESEND_API_KEY='re_test_mock_key_xyz'):
+            resp = self.client.post(reverse('password_reset'), {'email': self.user.email})
+            self.assertEqual(resp.status_code, 302)
+            self.assertRedirects(resp, reverse('password_reset_done'))
+
+            mock_resend_send.assert_called_once()
+            call_args = mock_resend_send.call_args[0][0]
+            self.assertEqual(call_args['to'], [self.user.email])
+            self.assertIn('Reset Your Account Password', call_args['subject'])
+            self.assertIn('password-reset-confirm', call_args['html'])
 
 
 

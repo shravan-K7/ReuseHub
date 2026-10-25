@@ -26,6 +26,7 @@ PyJWT==2.15.1
 python-dotenv==1.2.3
 pytokens==0.4.1
 requests==2.34.2
+resend==2.50.0
 six==1.17.0
 sqlparse==0.6.0
 types-PyYAML==6.0.12.20260906

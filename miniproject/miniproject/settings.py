@@ -210,41 +210,23 @@ LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "home"
 
 # ==============================================================================
-# Email Configuration (Centralized ReuseHub Mailing System)
+# Email Configuration (Resend HTTPS API over Port 443)
 # ==============================================================================
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "ReuseHub <onboarding@resend.dev>")
+DEFAULT_FROM_EMAIL = RESEND_FROM_EMAIL
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "15"))
+
+# Safe fallback backend for local dev & automated tests when RESEND_API_KEY is not set:
+# - When DEBUG=True without RESEND_API_KEY, emails print to console instead of failing
+# - When running automated tests, Django's test runner will use locmem backend
 EMAIL_BACKEND = os.getenv(
     "EMAIL_BACKEND",
-    "django.core.mail.backends.smtp.EmailBackend",
+    "django.core.mail.backends.console.EmailBackend"
+    if DEBUG and not RESEND_API_KEY
+    else "django.core.mail.backends.smtp.EmailBackend",
 )
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
-EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() == "true"
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "reusehub.support@gmail.com")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
-DEFAULT_FROM_EMAIL = os.getenv(
-    "DEFAULT_FROM_EMAIL",
-    f"ReuseHub Support <{EMAIL_HOST_USER}>",
-)
-SERVER_EMAIL = DEFAULT_FROM_EMAIL
-EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "10"))
-
-# HTTPS REST Email Providers (Bypasses Render Free Tier outbound SMTP port blocks)
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "")
-BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")
-BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL", "")
-
-# Development fallback: If in DEBUG mode and no SMTP password or HTTPS key is configured,
-# route emails to the console so local development and tests function smoothly.
-if (
-    DEBUG
-    and not EMAIL_HOST_PASSWORD
-    and not RESEND_API_KEY
-    and not BREVO_API_KEY
-    and EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend"
-):
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # Stay logged in for 30 days
 # SESSION_COOKIE_AGE = 2592000  # 60 * 60 * 24 * 30

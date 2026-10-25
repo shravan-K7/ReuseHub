@@ -1117,16 +1117,11 @@ def register_view(request):
                     f"We sent a 6-digit verification code to {user.email}. Enter it below to activate your account.",
                 )
             else:
-                if settings.DEBUG:
-                    messages.warning(
-                        request,
-                        f"Email could not be delivered via SMTP. (DEBUG mode active: your verification code is {otp.code})",
-                    )
-                else:
-                    messages.warning(
-                        request,
-                        f"We generated a verification code for {user.email}. If you don't receive an email, check your server logs.",
-                    )
+                messages.error(
+                    request,
+                    f"We were unable to deliver the verification code to {user.email}. "
+                    "Please verify your email address and click 'Resend Verification Code' below, or try again shortly.",
+                )
             return redirect("verify_otp")
     else:
         form = UserRegisterForm()
@@ -1272,16 +1267,10 @@ def resend_otp_view(request):
             request, f"A fresh 6-digit verification code has been sent to {user.email}."
         )
     else:
-        if settings.DEBUG:
-            messages.warning(
-                request,
-                f"Email delivery failed. (DEBUG mode active: your new verification code is {new_otp.code})",
-            )
-        else:
-            messages.warning(
-                request,
-                f"A new verification code was generated for {user.email}. If not received, please check your server logs.",
-            )
+        messages.error(
+            request,
+            f"We were unable to deliver the verification code to {user.email}. Please try again shortly.",
+        )
     return redirect("verify_otp")
 
 
@@ -1329,16 +1318,10 @@ def login_view(request):
                         f"Your account is not verified yet. We have sent a new verification code to {inactive_user.email}.",
                     )
                 else:
-                    if settings.DEBUG:
-                        messages.warning(
-                            request,
-                            f"Account not verified. (DEBUG mode active: your verification code is {otp.code})",
-                        )
-                    else:
-                        messages.warning(
-                            request,
-                            f"Your account is not verified yet. A new code was generated for {inactive_user.email}. If not received, check server logs.",
-                        )
+                    messages.warning(
+                        request,
+                        f"Your account is not verified yet. We were unable to deliver a verification code to {inactive_user.email}. Please try again shortly.",
+                    )
                 return redirect("verify_otp")
             messages.error(request, "Invalid username or password.")
     else:
