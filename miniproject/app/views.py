@@ -1105,16 +1105,28 @@ def register_view(request):
             otp = EmailOTP.generate_otp(
                 user=user, email=user.email, purpose="REGISTRATION", validity_minutes=15
             )
-            send_registration_otp_email(user, otp.code, validity_minutes=15)
+            email_sent = send_registration_otp_email(user, otp.code, validity_minutes=15)
 
             # Keep user info in session for OTP verification step
             request.session["verify_user_id"] = user.id
             request.session["verify_email"] = user.email
 
-            messages.info(
-                request,
-                f"We sent a 6-digit verification code to {user.email}. Enter it below to activate your account.",
-            )
+            if email_sent:
+                messages.info(
+                    request,
+                    f"We sent a 6-digit verification code to {user.email}. Enter it below to activate your account.",
+                )
+            else:
+                if settings.DEBUG:
+                    messages.warning(
+                        request,
+                        f"Email could not be delivered via SMTP. (DEBUG mode active: your verification code is {otp.code})",
+                    )
+                else:
+                    messages.warning(
+                        request,
+                        f"We generated a verification code for {user.email}. If you don't receive an email, check your server logs.",
+                    )
             return redirect("verify_otp")
     else:
         form = UserRegisterForm()
@@ -1254,10 +1266,22 @@ def resend_otp_view(request):
     new_otp = EmailOTP.generate_otp(
         user=user, email=user.email, purpose="REGISTRATION", validity_minutes=15
     )
-    send_registration_otp_email(user, new_otp.code, validity_minutes=15)
-    messages.success(
-        request, f"A fresh 6-digit verification code has been sent to {user.email}."
-    )
+    email_sent = send_registration_otp_email(user, new_otp.code, validity_minutes=15)
+    if email_sent:
+        messages.success(
+            request, f"A fresh 6-digit verification code has been sent to {user.email}."
+        )
+    else:
+        if settings.DEBUG:
+            messages.warning(
+                request,
+                f"Email delivery failed. (DEBUG mode active: your new verification code is {new_otp.code})",
+            )
+        else:
+            messages.warning(
+                request,
+                f"A new verification code was generated for {user.email}. If not received, please check your server logs.",
+            )
     return redirect("verify_otp")
 
 
@@ -1298,11 +1322,23 @@ def login_view(request):
                     email=inactive_user.email,
                     purpose="REGISTRATION",
                 )
-                send_registration_otp_email(inactive_user, otp.code)
-                messages.warning(
-                    request,
-                    f"Your account is not verified yet. We have sent a new verification code to {inactive_user.email}.",
-                )
+                email_sent = send_registration_otp_email(inactive_user, otp.code)
+                if email_sent:
+                    messages.warning(
+                        request,
+                        f"Your account is not verified yet. We have sent a new verification code to {inactive_user.email}.",
+                    )
+                else:
+                    if settings.DEBUG:
+                        messages.warning(
+                            request,
+                            f"Account not verified. (DEBUG mode active: your verification code is {otp.code})",
+                        )
+                    else:
+                        messages.warning(
+                            request,
+                            f"Your account is not verified yet. A new code was generated for {inactive_user.email}. If not received, check server logs.",
+                        )
                 return redirect("verify_otp")
             messages.error(request, "Invalid username or password.")
     else:

@@ -164,12 +164,17 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STORAGES = {
     "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+        "BACKEND": (
+            "cloudinary_storage.storage.MediaCloudinaryStorage"
+            if os.environ.get("CLOUDINARY_CLOUD_NAME")
+            else "django.core.files.storage.FileSystemStorage"
+        ),
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
+WHITENOISE_MANIFEST_STRICT = False
 
 
 # Media files (User uploads)
@@ -201,11 +206,19 @@ DEFAULT_FROM_EMAIL = os.getenv(
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "10"))
 
-# Development fallback: If in DEBUG mode and no SMTP password is configured,
+# HTTPS REST Email Providers (Bypasses Render Free Tier outbound SMTP port blocks)
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "")
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")
+BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL", "")
+
+# Development fallback: If in DEBUG mode and no SMTP password or HTTPS key is configured,
 # route emails to the console so local development and tests function smoothly.
 if (
     DEBUG
     and not EMAIL_HOST_PASSWORD
+    and not RESEND_API_KEY
+    and not BREVO_API_KEY
     and EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend"
 ):
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

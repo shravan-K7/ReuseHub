@@ -14,6 +14,9 @@ Handles:
 """
 
 import logging
+import os
+
+import requests
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -32,7 +35,10 @@ def send_reusehub_email(
 ):
     """
     Central helper to send beautiful responsive HTML and plain-text emails.
-    Uses DEFAULT_FROM_EMAIL configured with Gmail SMTP or environment settings.
+    Supports:
+    1. Resend HTTPS REST API (Port 443 - recommended for Render Free tier)
+    2. Brevo HTTPS REST API (Port 443 - works on Render Free tier)
+    3. Django SMTP / Console Email Backend (Default fallback)
     """
     if not to_email:
         logger.warning("Attempted to send email with empty recipient: subject=%s", subject)
@@ -49,19 +55,96 @@ def send_reusehub_email(
     try:
         html_content = render_to_string(template_name, context)
         text_content = plain_message or strip_tags(html_content)
+    except Exception:
+        logger.exception("Failed to render email template '%s'", template_name)
+        if not fail_silently:
+            raise
+        return False
 
+    recipient_list = [to_email] if isinstance(to_email, str) else list(to_email)
+
+    # 1. Primary HTTP Provider: Resend (Port 443 HTTPS - bypasses Render SMTP port 587 block)
+    resend_api_key = getattr(settings, "RESEND_API_KEY", None) or os.getenv("RESEND_API_KEY")
+    if resend_api_key:
+        try:
+            resend_sender = getattr(settings, "RESEND_FROM_EMAIL", None) or os.getenv(
+                "RESEND_FROM_EMAIL", "ReuseHub <onboarding@resend.dev>"
+            )
+            resp = requests.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {resend_api_key.strip()}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "from": resend_sender,
+                    "to": recipient_list,
+                    "subject": f"[ReuseHub] {subject}",
+                    "html": html_content,
+                    "text": text_content,
+                },
+                timeout=12,
+            )
+            if resp.status_code in (200, 201):
+                logger.info("Successfully sent email '%s' to %s via Resend HTTPS API", subject, to_email)
+                return True
+            else:
+                logger.error("Resend API rejected email '%s' (%s): %s", subject, resp.status_code, resp.text)
+        except Exception:
+            logger.exception("Failed to dispatch email via Resend API")
+
+    # 2. Secondary HTTP Provider: Brevo (Port 443 HTTPS - bypasses Render SMTP port 587 block)
+    brevo_api_key = getattr(settings, "BREVO_API_KEY", None) or os.getenv("BREVO_API_KEY")
+    if brevo_api_key:
+        try:
+            sender_email = getattr(settings, "BREVO_SENDER_EMAIL", None) or os.getenv(
+                "BREVO_SENDER_EMAIL", getattr(settings, "EMAIL_HOST_USER", "reusehub.support@gmail.com")
+            )
+            sender_name = getattr(settings, "BREVO_SENDER_NAME", None) or os.getenv(
+                "BREVO_SENDER_NAME", "ReuseHub Support"
+            )
+            resp = requests.post(
+                "https://api.brevo.com/v3/smtp/email",
+                headers={
+                    "api-key": brevo_api_key.strip(),
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "sender": {"name": sender_name, "email": sender_email},
+                    "to": [{"email": e} for e in recipient_list],
+                    "subject": f"[ReuseHub] {subject}",
+                    "htmlContent": html_content,
+                    "textContent": text_content,
+                },
+                timeout=12,
+            )
+            if resp.status_code in (200, 201):
+                logger.info("Successfully sent email '%s' to %s via Brevo HTTPS API", subject, to_email)
+                return True
+            else:
+                logger.error("Brevo API rejected email '%s' (%s): %s", subject, resp.status_code, resp.text)
+        except Exception:
+            logger.exception("Failed to dispatch email via Brevo API")
+
+    # 3. Standard Django Mail Backend (SMTP / Console / In-Memory)
+    try:
         email = EmailMultiAlternatives(
             subject=f"[ReuseHub] {subject}",
             body=text_content,
             from_email=from_email,
-            to=[to_email] if isinstance(to_email, str) else list(to_email),
+            to=recipient_list,
         )
         email.attach_alternative(html_content, "text/html")
         email.send(fail_silently=False)
-        logger.info("Successfully sent email '%s' to %s", subject, to_email)
+        logger.info("Successfully sent email '%s' to %s via Django mail backend", subject, to_email)
         return True
-    except Exception as exc:
-        logger.exception("Failed to send email '%s' to %s: %s", subject, to_email, exc)
+    except Exception:
+        logger.exception("Failed to send email '%s' to %s via Django mail backend", subject, to_email)
+        logger.warning(
+            "RENDER NOTE: Render Free tier blocks outbound SMTP ports 25, 465, and 587. "
+            "To send emails reliably from Render Free tier, add RESEND_API_KEY (from https://resend.com) "
+            "to your Render Environment variables to send via HTTPS on port 443."
+        )
         if not fail_silently:
             raise
         return False
@@ -69,6 +152,8 @@ def send_reusehub_email(
 
 def send_registration_otp_email(user, otp_code, validity_minutes=15):
     """Send 6-digit verification OTP code to new user during registration."""
+    # Always log OTP in server logs so it is visible in Render logs even if email delivery fails
+    logger.info("Generated registration OTP for user '%s' (%s): %s", user.username, user.email, otp_code)
     subject = f"Your Verification Code is {otp_code}"
     context = {
         "user": user,
