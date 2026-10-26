@@ -86,9 +86,12 @@ def send_reusehub_email(
     safe_log_subject = re.sub(r"\d{4,8}", "[REDACTED]", subject)
 
     # 1. Primary Delivery Method: Official Brevo HTTPS API (Port 443)
-    brevo_api_key = getattr(settings, "BREVO_API_KEY", None) or os.getenv(
-        "BREVO_API_KEY"
-    )
+    brevo_setting = getattr(settings, "BREVO_API_KEY", None)
+    if brevo_setting is not None:
+        brevo_api_key = str(brevo_setting).strip().strip("'\"")
+    else:
+        brevo_api_key = os.getenv("BREVO_API_KEY", "").strip().strip("'\"")
+
     if brevo_api_key:
         last_error: Exception | None = None
         timeout = int(getattr(settings, "EMAIL_TIMEOUT", 15))
@@ -132,18 +135,32 @@ def send_reusehub_email(
                 return True
             elif resp.status_code == 401:
                 logger.error(
-                    "Brevo authentication failed: configured API key is invalid."
+                    "Brevo authentication failed (HTTP 401) dispatching email '%s': %s. "
+                    "If this mentions unrecognized IP, visit https://app.brevo.com/security/authorised_ips "
+                    "and deactivate IP blocking.",
+                    safe_log_subject,
+                    resp.text,
+                )
+            elif resp.status_code == 400:
+                logger.error(
+                    "Brevo bad request (HTTP 400) dispatching email '%s': %s. "
+                    "Ensure sender '%s' is registered and verified under Senders in Brevo dashboard.",
+                    safe_log_subject,
+                    resp.text,
+                    sender_email,
                 )
             elif resp.status_code == 429:
                 logger.error(
-                    "Brevo API rate limit exceeded while dispatching email '%s'.",
+                    "Brevo API rate limit exceeded while dispatching email '%s': %s",
                     safe_log_subject,
+                    resp.text,
                 )
             else:
                 logger.error(
-                    "Brevo API error dispatching email '%s': HTTP %s",
+                    "Brevo API error dispatching email '%s': HTTP %s - %s",
                     safe_log_subject,
                     resp.status_code,
+                    resp.text,
                 )
 
             if not fail_silently:

@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
@@ -18,6 +18,7 @@ from .models import Category, EmailOTP, Item, ItemRequest, Report, SupportInquir
 # test.py is used to automatically test whether your features are working correctly. Your file contains a ReuseHubTests(TestCase) class with tests for pages, requests, admin access, profiles, OTP, emails, password reset, etc
 
 
+@override_settings(BREVO_API_KEY="")
 class ReuseHubTests(TestCase):
     def setUp(self):
         self.client = Client()
