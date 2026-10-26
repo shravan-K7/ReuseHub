@@ -35,6 +35,7 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
     ".onrender.com",
+    "reusehub-nkdj.onrender.com",
 ]
 
 render_hostname = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
@@ -51,10 +52,16 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:8000",
     "http://localhost:8000",
     "https://*.onrender.com",
+    "https://*.onrender.com:443",
+    "https://reusehub-nkdj.onrender.com",
+    "https://reusehub-nkdj.onrender.com:443",
 ]
 
 if render_hostname:
-    CSRF_TRUSTED_ORIGINS.append(f"https://{render_hostname}")
+    CSRF_TRUSTED_ORIGINS.extend([
+        f"https://{render_hostname}",
+        f"https://{render_hostname}:443",
+    ])
 
 extra_csrf_trusted = os.getenv("CSRF_TRUSTED_ORIGINS")
 if extra_csrf_trusted:
@@ -63,6 +70,11 @@ if extra_csrf_trusted:
 # Behind Render's reverse proxy terminating HTTPS
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
+
+if not DEBUG:
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
 
 # Application definition
 

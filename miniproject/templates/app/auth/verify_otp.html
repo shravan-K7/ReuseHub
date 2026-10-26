@@ -109,7 +109,7 @@
       <strong style="color: #334155;">Why verification?</strong> Email validation checks that the address format is legitimate, while this One-Time Password confirms that you own the inbox. If the email was mistyped or doesn't exist, the code won't arrive and the account remains safely unverified.
     </div>
 
-    <form method="POST" class="register-form" id="otpForm" novalidate>
+    <form method="POST" action="{% url 'verify_otp' %}" class="register-form" id="otpForm" novalidate>
       {% csrf_token %}
 
       <div class="form-group" style="text-align: left;">
@@ -124,7 +124,7 @@
         {% endif %}
       </div>
 
-      <button type="submit" class="btn btn-primary register-submit-btn" style="margin-top: 16px;">
+      <button type="submit" id="verifySubmitBtn" class="btn btn-primary register-submit-btn" style="margin-top: 16px;">
         Verify & Activate Account
       </button>
     </form>
@@ -167,16 +167,41 @@
       }
     }, 1000);
 
-    // Auto-focus OTP input and clean non-digit chars
+    // Auto-focus OTP input, sanitize digits, and prevent duplicate submission
     var otpInput = document.querySelector('.otp-code-input');
-    if (otpInput) {
+    var otpForm = document.getElementById('otpForm');
+    var isSubmitted = false;
+
+    if (otpForm) {
+      otpForm.addEventListener('submit', function(e) {
+        if (isSubmitted) {
+          e.preventDefault();
+          return false;
+        }
+        isSubmitted = true;
+        var btn = document.getElementById('verifySubmitBtn');
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = 'Verifying...';
+        }
+      });
+    }
+
+    if (otpInput && otpForm) {
       otpInput.addEventListener('input', function(e) {
         this.value = this.value.replace(/[^0-9]/g, '');
-        if (this.value.length === 6) {
-          // Auto submit after small delay for seamless UX
+        if (this.value.length === 6 && !isSubmitted) {
           setTimeout(function() {
-            document.getElementById('otpForm').submit();
-          }, 300);
+            if (!isSubmitted) {
+              isSubmitted = true;
+              var btn = document.getElementById('verifySubmitBtn');
+              if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Verifying...';
+              }
+              otpForm.submit();
+            }
+          }, 250);
         }
       });
     }
