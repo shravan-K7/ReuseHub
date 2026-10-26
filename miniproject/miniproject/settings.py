@@ -10,10 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
-from pathlib import Path
 import os
-from dotenv import load_dotenv
+from pathlib import Path
+
 import dj_database_url
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -210,22 +211,23 @@ LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "home"
 
 # ==============================================================================
-# Email Configuration (Resend HTTPS API over Port 443)
+# Email Configuration (Brevo HTTPS API over Port 443)
 # ==============================================================================
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "ReuseHub <onboarding@resend.dev>")
-DEFAULT_FROM_EMAIL = RESEND_FROM_EMAIL
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")
+BREVO_FROM_EMAIL = os.getenv(
+    "BREVO_FROM_EMAIL", "ReuseHub Support <reusehub.support@gmail.com>"
+)
+DEFAULT_FROM_EMAIL = BREVO_FROM_EMAIL
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "15"))
 
-# Safe fallback backend for local dev & automated tests when RESEND_API_KEY is not set:
-# - When DEBUG=True without RESEND_API_KEY, emails print to console instead of failing
-# - When running automated tests, Django's test runner will use locmem backend
+# Fallback backend for local development & automated tests when BREVO_API_KEY is not set:
+# - In test suites, Django's test runner automatically uses locmem backend
+# - In local development (DEBUG=True) without BREVO_API_KEY, emails print to console
+# - Never attempts outbound SMTP connections to avoid Render port blocks
 EMAIL_BACKEND = os.getenv(
     "EMAIL_BACKEND",
-    "django.core.mail.backends.console.EmailBackend"
-    if DEBUG and not RESEND_API_KEY
-    else "django.core.mail.backends.smtp.EmailBackend",
+    "django.core.mail.backends.console.EmailBackend",
 )
 
 # Stay logged in for 30 days
