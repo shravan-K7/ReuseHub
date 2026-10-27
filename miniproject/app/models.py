@@ -144,6 +144,16 @@ class ItemImage(models.Model):
         cover_tag = " (Cover)" if self.is_cover else ""
         return f"Photo #{self.id} for {self.item.title}{cover_tag}"
 
+    def save(self, *args, **kwargs):
+        if self.image and hasattr(self.image, "file"):
+            from django.core.files.uploadedfile import UploadedFile
+            from .image_utils import compress_and_convert_to_webp
+
+            if isinstance(self.image.file, UploadedFile):
+                if getattr(self.image.file, "content_type", "") != "image/webp":
+                    self.image = compress_and_convert_to_webp(self.image.file)
+        super().save(*args, **kwargs)
+
 
 class ItemRequest(models.Model):
     """Requests submitted by users to claim an item."""

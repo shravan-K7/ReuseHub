@@ -5,6 +5,7 @@ from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
 from django.contrib.auth.models import User
 from django.core.validators import validate_email
 
+from .image_utils import validate_image_file
 from .models import Category, Item, ItemRequest, Report, UserProfile, UserReview
 
 
@@ -20,7 +21,7 @@ class MultipleFileField(forms.FileField):
                 attrs={
                     "class": "form-file-input",
                     "id": "id_images",
-                    "accept": ".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif",
+                    "accept": ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp",
                     "multiple": True,
                 }
             ),
@@ -46,7 +47,7 @@ class MultipleFileField(forms.FileField):
 class ItemForm(forms.ModelForm):
     images = MultipleFileField(
         required=False,
-        help_text="Upload up to 5 photos. Formats: JPEG (.jpg, .jpeg), PNG (.png), WebP (.webp), GIF (.gif). Max 10MB per image."
+        help_text="Upload up to 5 photos. Formats: JPEG (.jpg, .jpeg), PNG (.png), WebP (.webp). Max 5MB per image."
     )
 
     class Meta:
@@ -125,25 +126,12 @@ class ItemForm(forms.ModelForm):
                 f"You can have at most 5 images in total (currently {existing_count} existing + {len(files)} new selected)."
             )
 
-        valid_extensions = ('.jpg', '.jpeg', '.png', '.webp', '.gif')
-
-        # image format checking
+        # Content and size validation via Pillow
         for f in files:
-            fname = getattr(f, 'name', '') or ''
-            ext = os.path.splitext(fname)[1].lower()
-            if ext not in valid_extensions:
-                self.add_error(
-                    'images',
-                    f"'{fname}' has an unsupported format. Allowed formats: JPEG (.jpg, .jpeg), PNG (.png), WebP (.webp), and GIF (.gif)."
-                )
-                break
-            # image size checking
-            fsize = getattr(f, 'size', 0) or 0
-            if fsize > 10 * 1024 * 1024:
-                self.add_error(
-                    'images',
-                    f"'{fname}' exceeds the 10MB limit (size: {fsize / (1024 * 1024):.1f}MB)."
-                )
+            try:
+                validate_image_file(f)
+            except forms.ValidationError as e:
+                self.add_error('images', e.message if hasattr(e, 'message') else str(e))
                 break
 
         return cleaned_data

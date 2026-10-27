@@ -861,8 +861,25 @@ class ReuseHubTests(TestCase):
             self.assertEqual(mail.outbox[0].to, ["devuser@example.com"])
             self.assertIn("Dev Test", mail.outbox[0].subject)
 
+    def test_item_create_no_images(self):
+        """Creating an item without uploading images succeeds cleanly."""
+        self.client.login(username="testdonor", password="password123")
+        data = {
+            "title": "Bookshelf Free Giveaway",
+            "category": self.category.pk,
+            "condition": "GOOD",
+            "pickup_location": "East Side Park",
+            "description": "Solid pine bookshelf, free to collect.",
+        }
+        resp = self.client.post(reverse("item_create"), data, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        item = Item.objects.filter(title="Bookshelf Free Giveaway").first()
+        self.assertIsNotNone(item)
+        self.assertFalse(bool(item.image))
+        self.assertEqual(item.images.count(), 0)
+
     def test_item_create_with_single_image(self):
-        """Creating an item with an uploaded image works without 500 error and associates ItemImage."""
+        """Creating an item with an uploaded image compresses to WebP and associates ItemImage."""
         self.client.login(username="testdonor", password="password123")
         img_io = io.BytesIO()
         Image.new("RGB", (50, 50), color="blue").save(img_io, format="JPEG")
@@ -886,9 +903,11 @@ class ReuseHubTests(TestCase):
         self.assertTrue(bool(created_item.image))
         self.assertEqual(created_item.images.count(), 1)
         self.assertTrue(created_item.images.first().is_cover)
+        with Image.open(created_item.image) as saved_img:
+            self.assertEqual(saved_img.format, "WEBP")
 
     def test_item_create_with_multiple_images_and_custom_cover(self):
-        """Creating an item with multiple images correctly sets chosen cover and does not fail with Empty file."""
+        """Creating an item with multiple images correctly converts to WebP and sets chosen cover."""
         self.client.login(username="testdonor", password="password123")
 
         img1_io = io.BytesIO()
@@ -921,3 +940,174 @@ class ReuseHubTests(TestCase):
         self.assertIsNotNone(cover_img)
         self.assertIn("photo2", cover_img.image.name)
         self.assertEqual(item.image.name, cover_img.image.name)
+        with Image.open(cover_img.image) as saved_img:
+            self.assertEqual(saved_img.format, "WEBP")
+
+    def test_item_create_transparent_png_preserves_alpha(self):
+        """Transparent PNG converted to WebP retains alpha transparency without black background."""
+        self.client.login(username="testdonor", password="password123")
+        png_io = io.BytesIO()
+        img = Image.new("RGBA", (100, 100), (0, 0, 0, 0))
+        for x in range(30, 70):
+            for y in range(30, 70):
+                img.putpixel((x, y), (255, 0, 0, 255))
+        img.save(png_io, format="PNG")
+        png_io.seek(0)
+        uploaded = SimpleUploadedFile("logo_transparent.png", png_io.read(), content_type="image/png")
+
+        data = {
+            "title": "Transparent Art Piece",
+            "category": self.category.pk,
+            "condition": "LIKE_NEW",
+            "pickup_location": "Art Studio",
+            "description": "Digital art sticker graphic.",
+            "images": [uploaded],
+            "cover_choice": "new:0",
+        }
+        resp = self.client.post(reverse("item_create"), data, follow=True)
+        self.assertEqual(resp.status_code, 200)
+
+        item = Item.objects.filter(title="Transparent Art Piece").first()
+        self.assertIsNotNone(item)
+        with Image.open(item.image) as saved_img:
+            self.assertEqual(saved_img.format, "WEBP")
+            self.assertEqual(saved_img.mode, "RGBA")
+            corner_pixel = saved_img.getpixel((0, 0))
+            self.assertEqual(corner_pixel, (0, 0, 0, 0))
+
+    def test_proportional_resizing_landscape_and_portrait(self):
+        """Images exceeding 1600px are downscaled proportionally without exceeding 1600 on either axis."""
+        from .image_utils import compress_and_convert_to_webp
+
+        # Landscape 2400x1200 -> should resize to 1600x800
+        land_io = io.BytesIO()
+        Image.new("RGB", (2400, 1200), color="blue").save(land_io, format="JPEG")
+        land_io.seek(0)
+        land_file = SimpleUploadedFile("wide.jpg", land_io.read(), content_type="image/jpeg")
+        proc_land = compress_and_convert_to_webp(land_file)
+        with Image.open(proc_land) as im:
+            self.assertEqual(im.size, (1600, 800))
+            self.assertEqual(im.format, "WEBP")
+
+        # Portrait 1200x2400 -> should resize to 800x1600
+        port_io = io.BytesIO()
+        Image.new("RGB", (1200, 2400), color="green").save(port_io, format="JPEG")
+        port_io.seek(0)
+        port_file = SimpleUploadedFile("tall.jpg", port_io.read(), content_type="image/jpeg")
+        proc_port = compress_and_convert_to_webp(port_file)
+        with Image.open(proc_port) as im:
+            self.assertEqual(im.size, (800, 1600))
+            self.assertEqual(im.format, "WEBP")
+
+    def test_already_compressed_webp_upload(self):
+        """Uploading an existing WebP image compresses and processes cleanly."""
+        self.client.login(username="testdonor", password="password123")
+        webp_io = io.BytesIO()
+        Image.new("RGB", (400, 300), color="purple").save(webp_io, format="WEBP", quality=90)
+        webp_io.seek(0)
+        uploaded = SimpleUploadedFile("already.webp", webp_io.read(), content_type="image/webp")
+
+        data = {
+            "title": "WebP Item Listing",
+            "category": self.category.pk,
+            "condition": "GOOD",
+            "pickup_location": "North Station",
+            "description": "Item with WebP photo upload.",
+            "images": [uploaded],
+            "cover_choice": "new:0",
+        }
+        resp = self.client.post(reverse("item_create"), data, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        item = Item.objects.filter(title="WebP Item Listing").first()
+        self.assertIsNotNone(item)
+        with Image.open(item.image) as saved_img:
+            self.assertEqual(saved_img.format, "WEBP")
+
+    def test_oversized_image_rejected(self):
+        """Files exceeding 5 MB are rejected with a clear user-friendly error message."""
+        self.client.login(username="testdonor", password="password123")
+        huge_bytes = b"0" * (5500 * 1024)
+        huge_file = SimpleUploadedFile("huge.jpg", huge_bytes, content_type="image/jpeg")
+
+        data = {
+            "title": "Oversized Photo Item",
+            "category": self.category.pk,
+            "condition": "GOOD",
+            "pickup_location": "Main Square",
+            "description": "Should fail validation.",
+            "images": [huge_file],
+        }
+        resp = self.client.post(reverse("item_create"), data)
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "exceeds the 5MB limit")
+        self.assertFalse(Item.objects.filter(title="Oversized Photo Item").exists())
+
+    def test_unsupported_format_rejected(self):
+        """Unsupported formats such as .pdf are rejected with clear error."""
+        self.client.login(username="testdonor", password="password123")
+        bad_file = SimpleUploadedFile("document.pdf", b"%PDF-1.4...", content_type="application/pdf")
+
+        data = {
+            "title": "Bad Format Item",
+            "category": self.category.pk,
+            "condition": "GOOD",
+            "pickup_location": "Town Hall",
+            "description": "Should fail format validation.",
+            "images": [bad_file],
+        }
+        resp = self.client.post(reverse("item_create"), data)
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "has an unsupported format")
+
+    def test_corrupted_image_rejected(self):
+        """Files disguised as images but with invalid content are caught and rejected by Pillow validation."""
+        self.client.login(username="testdonor", password="password123")
+        corrupted = SimpleUploadedFile("fake.jpg", b"This is not a real JPEG image file content at all.", content_type="image/jpeg")
+
+        data = {
+            "title": "Fake Image Item",
+            "category": self.category.pk,
+            "condition": "GOOD",
+            "pickup_location": "Harbor View",
+            "description": "Should fail content verification.",
+            "images": [corrupted],
+        }
+        resp = self.client.post(reverse("item_create"), data)
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "corrupted or not a valid image")
+
+    def test_uploading_5_large_images(self):
+        """Uploading 5 images converts all 5 to WebP with dimensions <= 1600."""
+        self.client.login(username="testdonor", password="password123")
+        uploaded_files = []
+        for i in range(5):
+            buf = io.BytesIO()
+            Image.new("RGB", (1800, 1200), color=(i * 40, 100, 150)).save(buf, format="JPEG", quality=90)
+            buf.seek(0)
+            uploaded_files.append(
+                SimpleUploadedFile(f"batch_{i}.jpg", buf.read(), content_type="image/jpeg")
+            )
+
+        data = {
+            "title": "Five Photo Showcase",
+            "category": self.category.pk,
+            "condition": "LIKE_NEW",
+            "pickup_location": "Riverside Plaza",
+            "description": "Listing with all 5 photo slots utilized.",
+            "images": uploaded_files,
+            "cover_choice": "new:2",
+        }
+        resp = self.client.post(reverse("item_create"), data, follow=True)
+        self.assertEqual(resp.status_code, 200)
+
+        item = Item.objects.filter(title="Five Photo Showcase").first()
+        self.assertIsNotNone(item)
+        self.assertEqual(item.images.count(), 5)
+        cover = item.images.filter(is_cover=True).first()
+        self.assertIsNotNone(cover)
+        self.assertIn("batch_2", cover.image.name)
+        for photo in item.images.all():
+            with Image.open(photo.image) as im:
+                self.assertEqual(im.format, "WEBP")
+                self.assertLessEqual(im.width, 1600)
+                self.assertLessEqual(im.height, 1600)

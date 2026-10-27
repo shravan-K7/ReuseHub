@@ -24,6 +24,7 @@ from .emails import (
     send_registration_otp_email,
     send_request_status_notification,
 )
+from .image_utils import compress_and_convert_to_webp
 from .forms import (
     CategoryForm,
     ItemForm,
@@ -357,13 +358,9 @@ def item_create(request):
             created_images = []
             try:
                 for i, img_file in enumerate(uploaded_files):
-                    if hasattr(img_file, "seek"):
-                        try:
-                            img_file.seek(0)
-                        except Exception:
-                            pass
+                    processed_file = compress_and_convert_to_webp(img_file)
                     img_obj = ItemImage.objects.create(
-                        item=item, image=img_file, is_cover=(i == cover_idx)
+                        item=item, image=processed_file, is_cover=(i == cover_idx)
                     )
                     created_images.append(img_obj)
 
@@ -421,13 +418,9 @@ def item_edit(request, pk):
             new_images = []
             try:
                 for img_file in new_files:
-                    if hasattr(img_file, "seek"):
-                        try:
-                            img_file.seek(0)
-                        except Exception:
-                            pass
+                    processed_file = compress_and_convert_to_webp(img_file)
                     new_images.append(
-                        ItemImage.objects.create(item=item, image=img_file, is_cover=False)
+                        ItemImage.objects.create(item=item, image=processed_file, is_cover=False)
                     )
             except Exception as e:
                 logger.error("Failed uploading new images for item %s: %s", item.pk, e, exc_info=True)

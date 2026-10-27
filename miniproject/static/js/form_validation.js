@@ -730,8 +730,8 @@ function initItemForm() {
       return false;
     }
 
-    const validExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
-    const validMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    const validExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+    const validMimes = ['image/jpeg', 'image/png', 'image/webp'];
 
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
@@ -740,13 +740,13 @@ function initItemForm() {
       const isValidMime = !f.type || validMimes.includes(f.type) || f.type.startsWith('image/');
 
       if (!isValidExt) {
-        showFieldError(imageInput, `'${f.name}' has an unsupported format. Allowed formats: JPEG (.jpg, .jpeg), PNG (.png), WebP (.webp), and GIF (.gif).`);
+        showFieldError(imageInput, `'${f.name}' has an unsupported format. Allowed formats: JPEG (.jpg, .jpeg), PNG (.png), and WebP (.webp).`);
         return false;
       }
 
-      if (f.size > 10 * 1024 * 1024) {
+      if (f.size > 5 * 1024 * 1024) {
         const sizeMb = (f.size / (1024 * 1024)).toFixed(1);
-        showFieldError(imageInput, `'${f.name}' exceeds the 10MB limit (size: ${sizeMb}MB).`);
+        showFieldError(imageInput, `'${f.name}' exceeds the 5MB limit (size: ${sizeMb}MB).`);
         return false;
       }
     }

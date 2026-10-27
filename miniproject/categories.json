@@ -1,0 +1,102 @@
+[
+{
+  "model": "app.category",
+  "pk": 1,
+  "fields": {
+    "name": "Furniture",
+    "slug": "furniture",
+    "description": "Chairs, tables, desks, bookshelves, sofas, and bedframes.",
+    "created_at": "2026-09-25T04:34:02.560Z"
+  }
+},
+{
+  "model": "app.category",
+  "pk": 2,
+  "fields": {
+    "name": "Electronics & Appliances",
+    "slug": "electronics-appliances",
+    "description": "Monitors, blenders, radios, audio gear, cables, and kitchen appliances.",
+    "created_at": "2026-09-25T04:34:02.573Z"
+  }
+},
+{
+  "model": "app.category",
+  "pk": 3,
+  "fields": {
+    "name": "Home & Kitchen",
+    "slug": "home-kitchen",
+    "description": "Cookware, tableware, storage organizers, lamps, and decor.",
+    "created_at": "2026-09-25T04:34:02.574Z"
+  }
+},
+{
+  "model": "app.category",
+  "pk": 4,
+  "fields": {
+    "name": "Tools & DIY Hardware",
+    "slug": "tools-diy-hardware",
+    "description": "Hand tools, power tools, gardening supplies, and scrap materials.",
+    "created_at": "2026-09-25T04:34:02.576Z"
+  }
+},
+{
+  "model": "app.category",
+  "pk": 5,
+  "fields": {
+    "name": "Books & Media",
+    "slug": "books-media",
+    "description": "Textbooks, novels, records,board games, and magazines.",
+    "created_at": "2026-09-25T04:34:02.577Z"
+  }
+},
+{
+  "model": "app.category",
+  "pk": 6,
+  "fields": {
+    "name": "Clothing & Linens",
+    "slug": "clothing-linens",
+    "description": "Jackets, clean textiles, blankets, and bags.",
+    "created_at": "2026-09-25T04:34:02.578Z"
+  }
+},
+{
+  "model": "app.category",
+  "pk": 7,
+  "fields": {
+    "name": "Bicycles & Sports",
+    "slug": "bicycles-sports",
+    "description": "Bikes, scooters, repair parts, and sporting gear.",
+    "created_at": "2026-09-25T04:34:02.580Z"
+  }
+},
+{
+  "model": "app.category",
+  "pk": 8,
+  "fields": {
+    "name": "Repairable Goods",
+    "slug": "repairable-goods",
+    "description": "Items needing minor fixes, parts, soldering, or restoration before reuse.",
+    "created_at": "2026-09-25T04:34:02.582Z"
+  }
+},
+{
+  "model": "app.category",
+  "pk": 9,
+  "fields": {
+    "name": "Electronics",
+    "slug": "electronics",
+    "description": "",
+    "created_at": "2026-09-26T09:44:23.528Z"
+  }
+},
+{
+  "model": "app.category",
+  "pk": 10,
+  "fields": {
+    "name": "Test Category",
+    "slug": "test-cat",
+    "description": "test",
+    "created_at": "2026-09-26T10:26:24.168Z"
+  }
+}
+]
