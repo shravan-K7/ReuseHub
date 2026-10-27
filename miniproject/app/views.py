@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 from django.conf import settings
 from django.contrib import messages
@@ -47,6 +48,8 @@ from .models import (
     UserProfile,
     UserReview,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def global_context(request):
@@ -337,6 +340,7 @@ def item_create(request):
         if form.is_valid():
             item = form.save(commit=False)
             item.donor = request.user
+            item.save()
 
             uploaded_files = request.FILES.getlist("images")
             cover_choice = request.POST.get("cover_choice", "new:0")
@@ -350,14 +354,29 @@ def item_create(request):
             if cover_idx < 0 or cover_idx >= len(uploaded_files):
                 cover_idx = 0
 
-            if uploaded_files:
-                item.image = uploaded_files[cover_idx]
-            item.save()
+            created_images = []
+            try:
+                for i, img_file in enumerate(uploaded_files):
+                    if hasattr(img_file, "seek"):
+                        try:
+                            img_file.seek(0)
+                        except Exception:
+                            pass
+                    img_obj = ItemImage.objects.create(
+                        item=item, image=img_file, is_cover=(i == cover_idx)
+                    )
+                    created_images.append(img_obj)
 
-            for i, img_file in enumerate(uploaded_files):
-                ItemImage.objects.create(
-                    item=item, image=img_file, is_cover=(i == cover_idx)
+                if created_images:
+                    item.image = created_images[cover_idx].image
+                    item.save(update_fields=["image"])
+            except Exception as e:
+                logger.error("Failed uploading images for item %s: %s", item.pk, e, exc_info=True)
+                messages.error(
+                    request,
+                    f"Item listed, but some images could not be uploaded: {e}. You can manage or retry adding photos by editing your listing."
                 )
+                return redirect("item_edit", pk=item.pk)
 
             messages.success(request, f"'{item.title}' has been listed successfully!")
             return redirect("item_detail", pk=item.pk)
@@ -385,7 +404,7 @@ def item_edit(request, pk):
 
     # Legacy backfill: ensure item.image has an ItemImage row
     if item.image and not item.images.exists():
-        ItemImage.objects.create(item=item, image=item.image, is_cover=True)
+        ItemImage.objects.create(item=item, image=item.image.name, is_cover=True)
 
     if request.method == "POST":
         form = ItemForm(request.POST, request.FILES, instance=item)
@@ -400,10 +419,19 @@ def item_edit(request, pk):
             # Handle newly uploaded images
             new_files = request.FILES.getlist("images")
             new_images = []
-            for img_file in new_files:
-                new_images.append(
-                    ItemImage.objects.create(item=item, image=img_file, is_cover=False)
-                )
+            try:
+                for img_file in new_files:
+                    if hasattr(img_file, "seek"):
+                        try:
+                            img_file.seek(0)
+                        except Exception:
+                            pass
+                    new_images.append(
+                        ItemImage.objects.create(item=item, image=img_file, is_cover=False)
+                    )
+            except Exception as e:
+                logger.error("Failed uploading new images for item %s: %s", item.pk, e, exc_info=True)
+                messages.error(request, f"Some new images could not be uploaded: {e}")
 
             cover_choice = request.POST.get("cover_choice", "")
             cover_image_obj = None

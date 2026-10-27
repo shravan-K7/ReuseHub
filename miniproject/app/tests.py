@@ -11,9 +11,13 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 import requests
 
+import io
+from PIL import Image
+from django.core.files.uploadedfile import SimpleUploadedFile
+
 from .emails import send_reusehub_email
 from .forms import ItemForm, ReuseHubPasswordResetForm, UserRegisterForm
-from .models import Category, EmailOTP, Item, ItemRequest, Report, SupportInquiry
+from .models import Category, EmailOTP, Item, ItemImage, ItemRequest, Report, SupportInquiry
 
 # test.py is used to automatically test whether your features are working correctly. Your file contains a ReuseHubTests(TestCase) class with tests for pages, requests, admin access, profiles, OTP, emails, password reset, etc
 
@@ -856,3 +860,64 @@ class ReuseHubTests(TestCase):
             self.assertEqual(len(mail.outbox), 1)
             self.assertEqual(mail.outbox[0].to, ["devuser@example.com"])
             self.assertIn("Dev Test", mail.outbox[0].subject)
+
+    def test_item_create_with_single_image(self):
+        """Creating an item with an uploaded image works without 500 error and associates ItemImage."""
+        self.client.login(username="testdonor", password="password123")
+        img_io = io.BytesIO()
+        Image.new("RGB", (50, 50), color="blue").save(img_io, format="JPEG")
+        img_io.seek(0)
+        uploaded = SimpleUploadedFile("lamp.jpg", img_io.read(), content_type="image/jpeg")
+
+        data = {
+            "title": "Retro Desk Lamp",
+            "category": self.category.pk,
+            "condition": "GOOD",
+            "pickup_location": "Uptown Cafe",
+            "description": "Sturdy reading lamp in good condition.",
+            "images": [uploaded],
+            "cover_choice": "new:0",
+        }
+        resp = self.client.post(reverse("item_create"), data, follow=True)
+        self.assertEqual(resp.status_code, 200)
+
+        created_item = Item.objects.filter(title="Retro Desk Lamp").first()
+        self.assertIsNotNone(created_item)
+        self.assertTrue(bool(created_item.image))
+        self.assertEqual(created_item.images.count(), 1)
+        self.assertTrue(created_item.images.first().is_cover)
+
+    def test_item_create_with_multiple_images_and_custom_cover(self):
+        """Creating an item with multiple images correctly sets chosen cover and does not fail with Empty file."""
+        self.client.login(username="testdonor", password="password123")
+
+        img1_io = io.BytesIO()
+        Image.new("RGB", (50, 50), color="red").save(img1_io, format="JPEG")
+        img1_io.seek(0)
+        f1 = SimpleUploadedFile("photo1.jpg", img1_io.read(), content_type="image/jpeg")
+
+        img2_io = io.BytesIO()
+        Image.new("RGB", (50, 50), color="green").save(img2_io, format="JPEG")
+        img2_io.seek(0)
+        f2 = SimpleUploadedFile("photo2.jpg", img2_io.read(), content_type="image/jpeg")
+
+        data = {
+            "title": "Wooden Chair Set",
+            "category": self.category.pk,
+            "condition": "GOOD",
+            "pickup_location": "Community Center",
+            "description": "Pair of solid wooden chairs.",
+            "images": [f1, f2],
+            "cover_choice": "new:1",
+        }
+        resp = self.client.post(reverse("item_create"), data, follow=True)
+        self.assertEqual(resp.status_code, 200)
+
+        item = Item.objects.filter(title="Wooden Chair Set").first()
+        self.assertIsNotNone(item)
+        self.assertEqual(item.images.count(), 2)
+
+        cover_img = item.images.filter(is_cover=True).first()
+        self.assertIsNotNone(cover_img)
+        self.assertIn("photo2", cover_img.image.name)
+        self.assertEqual(item.image.name, cover_img.image.name)
