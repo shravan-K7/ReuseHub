@@ -60,10 +60,24 @@ class ReuseHubTests(TestCase):
         self.assertContains(response, "ReuseHub")
 
     def test_item_detail_view(self):
-        response = self.client.get(reverse("item_detail", kwargs={"pk": self.item.pk}))
+        # Canonical slug URL returns 200
+        response = self.client.get(self.item.get_absolute_url())
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Vintage Lamp")
         self.assertContains(response, "Downtown Library")
+
+        # Legacy /items/<pk>/ redirects to canonical slug URL
+        legacy_response = self.client.get(reverse("item_detail", kwargs={"pk": self.item.pk}))
+        self.assertRedirects(legacy_response, self.item.get_absolute_url())
+
+    def test_item_slug_generation_and_redirect(self):
+        self.assertEqual(self.item.slug, "vintage-lamp")
+        self.assertEqual(self.item.get_absolute_url(), f"/items/{self.item.pk}/vintage-lamp/")
+
+        # Mismatched slug automatically redirects to canonical slug
+        wrong_slug_url = reverse("item_detail_slug", kwargs={"pk": self.item.pk, "slug": "outdated-title"})
+        response = self.client.get(wrong_slug_url)
+        self.assertRedirects(response, self.item.get_absolute_url())
 
     def test_request_item_flow(self):
         self.client.login(username="testrequester", password="password123")

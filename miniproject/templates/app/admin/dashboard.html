@@ -176,7 +176,7 @@
           {% for item in recent_items %}
             <div class="recent-listing-row">
               <div class="listing-row-left">
-                <a href="{% url 'item_detail' pk=item.pk %}" class="listing-row-title">
+                <a href="{{ item.get_absolute_url }}" class="listing-row-title">
                   {{ item.title }}
                 </a>
                 <div class="listing-row-sub">

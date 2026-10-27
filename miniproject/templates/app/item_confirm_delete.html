@@ -19,7 +19,7 @@
     <form method="POST">
       {% csrf_token %}
       <div class="delete-actions-group">
-        <a href="{% url 'item_detail' pk=item.pk %}" class="btn btn-secondary">Keep Listing</a>
+        <a href="{{ item.get_absolute_url }}" class="btn btn-secondary">Keep Listing</a>
         <button type="submit" class="btn btn-danger">Confirm Delete</button>
       </div>
     </form>

@@ -74,7 +74,7 @@
               {% endif %}
             </div>
             {% if rep.item %}
-              <a href="{% url 'item_detail' pk=rep.item.pk %}" target="_blank" style="color: var(--text-main); font-weight: 600; text-decoration: underline;">
+              <a href="{{ rep.item.get_absolute_url }}" target="_blank" style="color: var(--text-main); font-weight: 600; text-decoration: underline;">
                 View Listing &rarr;
               </a>
             {% elif rep.reported_user %}

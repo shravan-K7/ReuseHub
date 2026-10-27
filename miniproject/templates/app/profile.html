@@ -242,7 +242,7 @@
           {% if recent_listings %}
             <div class="preview-items-list">
               {% for item in recent_listings %}
-                <a href="{% url 'item_detail' pk=item.pk %}" class="preview-item-row" data-status="{{ item.status|lower }}">
+                <a href="{{ item.get_absolute_url }}" class="preview-item-row" data-status="{{ item.status|lower }}">
                   <div class="preview-item-main">
                     {% if item.image %}
                       <img src="{{ item.image.url }}" alt="{{ item.title }}" class="preview-thumb-tiny">
@@ -317,7 +317,7 @@
           {% if recent_requests %}
             <div class="preview-items-list">
               {% for req in recent_requests %}
-                <a href="{% url 'item_detail' pk=req.item.pk %}" class="preview-item-row" data-status="{{ req.status|lower }}">
+                <a href="{{ req.item.get_absolute_url }}" class="preview-item-row" data-status="{{ req.status|lower }}">
                   <div class="preview-item-main">
                     {% if req.item.image %}
                       <img src="{{ req.item.image.url }}" alt="{{ req.item.title }}" class="preview-thumb-tiny">

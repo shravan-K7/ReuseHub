@@ -83,7 +83,7 @@
             <!-- Center: Details -->
             <div class="card-details-col">
               <h3 class="card-item-title">
-                <a href="{% url 'item_detail' pk=req.item.pk %}">{{ req.item.title }}</a>
+                <a href="{{ req.item.get_absolute_url }}">{{ req.item.title }}</a>
               </h3>
 
               <div class="card-item-donor-row">
@@ -170,7 +170,7 @@
               {% endif %}
 
               <!-- Action Buttons -->
-              <a href="{% url 'item_detail' pk=req.item.pk %}" class="btn-dash-action">
+              <a href="{{ req.item.get_absolute_url }}" class="btn-dash-action">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 <span>View Item</span>
               </a>

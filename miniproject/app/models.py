@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
 
@@ -125,6 +126,18 @@ class Item(models.Model):
                     self.id = 0
             return [ImageFallback(self.image)]
         return []
+
+    @property
+    def slug(self):
+        """URL-friendly slug derived from item title."""
+        s = slugify(self.title)
+        if not s:
+            s = slugify(self.title, allow_unicode=True)
+        return s or f"item-{self.pk or 'listing'}"
+
+    def get_absolute_url(self):
+        """Canonical SEO-friendly URL for the item listing."""
+        return reverse("item_detail_slug", kwargs={"pk": self.pk, "slug": self.slug})
 
 
 class ItemImage(models.Model):

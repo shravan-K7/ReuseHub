@@ -11,7 +11,7 @@
 <div class="container report-container">
   
   <div class="report-header">
-    <a href="{% url 'item_detail' pk=item.pk %}" class="btn btn-ghost btn-sm" style="padding-left: 0;">
+    <a href="{{ item.get_absolute_url }}" class="btn btn-ghost btn-sm" style="padding-left: 0;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
       Cancel & Return to Item
     </a>
@@ -42,7 +42,7 @@
       </div>
 
       <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
-        <a href="{% url 'item_detail' pk=item.pk %}" class="btn btn-secondary">Cancel</a>
+        <a href="{{ item.get_absolute_url }}" class="btn btn-secondary">Cancel</a>
         <button type="submit" class="btn btn-danger">Submit Report to Moderators</button>
       </div>
     </form>

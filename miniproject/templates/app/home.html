@@ -172,7 +172,7 @@
       <div class="items-grid">
         {% for item in items %}
           <article class="card">
-            <a href="{% url 'item_detail' pk=item.pk %}" class="card-image-wrap">
+            <a href="{{ item.get_absolute_url }}" class="card-image-wrap">
               {% if item.image %}
                 <img src="{{ item.image.url }}" alt="{{ item.title }}" class="card-img" loading="lazy">
               {% else %}
@@ -211,7 +211,7 @@
               </div>
 
               <h3 class="card-title">
-                <a href="{% url 'item_detail' pk=item.pk %}">{{ item.title }}</a>
+                <a href="{{ item.get_absolute_url }}">{{ item.title }}</a>
               </h3>
 
               <p class="card-desc">{{ item.description }}</p>

@@ -7,13 +7,14 @@ urlpatterns = [
     path('about/', views.about_view, name='about'), # About page of website.
     path('help/', views.help_view, name='help'), # Help page of website.
     path('items/create/', views.item_create, name='item_create'), # Calls item_create(). Used when a user wants to list an item to give away.
-    path('items/<int:pk>/', views.item_detail, name='item_detail'), # Calls item_detail(). Used when a user wants to view an item.
     path('items/<int:pk>/edit/', views.item_edit, name='item_edit'), # Calls item_edit(). Used when a user wants to edit an item.
     path('items/<int:pk>/delete/', views.item_delete, name='item_delete'), # Calls item_delete(). Used when a user wants to delete an item.
     path('items/<int:pk>/request/', views.request_item, name='request_item'), # Calls request_item(). Used when a user wants to request an item.
     path('items/<int:pk>/mark-given/', views.mark_given_away, name='mark_given_away'), # Calls mark_given_away(). Used when a user wants to mark an item as given away.
     path('items/<int:pk>/mark-available/', views.mark_available, name='mark_available'), # Calls mark_available(). Used when a user wants to mark an item as available.
     path('items/<int:pk>/report/', views.report_item, name='report_item'), # Calls report_item(). Used when a user wants to report an item.
+    path('items/<int:pk>/', views.item_detail, name='item_detail'), # Calls item_detail(). Used when a user wants to view an item.
+    path('items/<int:pk>/<slug:slug>/', views.item_detail, name='item_detail_slug'), # Canonical SEO slug route for item details.
 
     # Request responses & Requester actions
     path('requests/<int:request_id>/cancel/', views.cancel_request, name='cancel_request'),

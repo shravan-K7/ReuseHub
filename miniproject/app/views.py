@@ -298,9 +298,14 @@ def help_view(request):
     return render(request, "app/help.html")
 
 
-def item_detail(request, pk):
+def item_detail(request, pk, slug=None):
     """View complete item details and handle item requests."""
     item = get_object_or_404(Item, pk=pk)
+
+    # SEO canonical redirect: if accessed via /items/<pk>/ or with mismatched slug,
+    # redirect to the canonical slugified URL /items/<pk>/<slug>/
+    if slug != item.slug:
+        return redirect("item_detail_slug", pk=item.pk, slug=item.slug)
 
     user_request = None
     all_requests = []
@@ -376,7 +381,7 @@ def item_create(request):
                 return redirect("item_edit", pk=item.pk)
 
             messages.success(request, f"'{item.title}' has been listed successfully!")
-            return redirect("item_detail", pk=item.pk)
+            return redirect("item_detail_slug", pk=item.pk, slug=item.slug)
     else:
         form = ItemForm()
 
@@ -461,7 +466,7 @@ def item_edit(request, pk):
                 item.save(update_fields=["image"])
 
             messages.success(request, "Listing updated successfully.")
-            return redirect("item_detail", pk=item.pk)
+            return redirect("item_detail_slug", pk=item.pk, slug=item.slug)
     else:
         form = ItemForm(instance=item)
 

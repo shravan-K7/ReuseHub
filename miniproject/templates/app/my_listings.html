@@ -104,7 +104,7 @@
             <!-- Center: Details -->
             <div class="card-details-col">
               <h3 class="card-item-title">
-                <a href="{% url 'item_detail' pk=item.pk %}">{{ item.title }}</a>
+                <a href="{{ item.get_absolute_url }}">{{ item.title }}</a>
               </h3>
 
               <div class="card-badges-row">
@@ -160,7 +160,7 @@
             <div class="card-actions-col">
               {% with req_count=item.requests.count %}
                 {% if req_count > 0 %}
-                  <a href="{% url 'item_detail' pk=item.pk %}#requests" class="btn-request-pill" title="{{ req_count }} request{{ req_count|pluralize }} received">
+                  <a href="{{ item.get_absolute_url }}#requests" class="btn-request-pill" title="{{ req_count }} request{{ req_count|pluralize }} received">
                     <span>{{ req_count }} Request{{ req_count|pluralize }}</span>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                   </a>
@@ -172,7 +172,7 @@
                 {% endif %}
               {% endwith %}
 
-              <a href="{% url 'item_detail' pk=item.pk %}" class="btn-dash-action">
+              <a href="{{ item.get_absolute_url }}" class="btn-dash-action">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 <span>View</span>
               </a>
