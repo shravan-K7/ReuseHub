@@ -329,7 +329,7 @@
           <!-- Incoming Requests List -->
           <div>
             <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 10px;">
-              Item Requests ({{ all_requests.count }})
+              Item Requests ({{ all_requests|length }})
             </h4>
 
             {% if all_requests %}
@@ -380,13 +380,22 @@
                           Agreed Pickup Area:
                         </div>
                         <div style="color: var(--text-main); font-weight: 600;">{{ item.pickup_location }}</div>
-                        {% if req.contact_info %}
+                        {% if req.requester_contact_phone %}
                           <div style="margin-top: 4px; font-size: 0.775rem; color: #1F7A64;">
-                            <strong>Requester Contact:</strong> {{ req.contact_info }}
+                            <strong>Requester Contact:</strong> {{ req.requester_contact_phone }}
                           </div>
                         {% endif %}
                       </div>
-                      <div style="display: flex; gap: 8px; margin-top: 8px;">
+                      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                        {% if req.requester_whatsapp_url %}
+                          <a href="{% url 'contact_requester_whatsapp' request_id=req.id %}"
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             class="btn btn-sm btn-outline contact-requester-whatsapp-btn"
+                             style="font-size: 0.75rem; padding: 4px 10px; color: #15803d; border-color: #86efac; background: #ffffff;">
+                            Message Requester on WhatsApp
+                          </a>
+                        {% endif %}
                         <a href="{% url 'respond_request' request_id=req.id action='complete' %}" class="btn btn-primary btn-sm" style="font-size: 0.75rem; padding: 4px 10px;">
                           Mark Collected & Completed
                         </a>

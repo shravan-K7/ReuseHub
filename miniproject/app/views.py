@@ -28,7 +28,12 @@ from .emails import (
     send_request_status_notification,
 )
 from .image_utils import compress_and_convert_to_webp
-from .phone_utils import get_owner_phone_for_accepted_request, get_owner_whatsapp_url
+from .phone_utils import (
+    get_owner_phone_for_accepted_request,
+    get_owner_whatsapp_url,
+    get_requester_phone_for_accepted_request,
+    get_requester_whatsapp_url,
+)
 from .forms import (
     CategoryForm,
     ItemForm,
@@ -319,9 +324,14 @@ def item_detail(request, pk, slug=None):
 
     if request.user.is_authenticated:
         if is_donor:
-            all_requests = item.requests.select_related(
-                "requester", "requester__profile"
-            ).all()
+            all_requests = list(
+                item.requests.select_related("requester", "requester__profile").all()
+            )
+            for req in all_requests:
+                req.requester_contact_phone = get_requester_phone_for_accepted_request(
+                    req
+                )
+                req.requester_whatsapp_url = get_requester_whatsapp_url(req)
         else:
             user_request = item.requests.filter(requester=request.user).first()
 
@@ -778,30 +788,77 @@ def cancel_request(request, request_id):
     return redirect("my_requests")
 
 
+def _contact_request_party_whatsapp(
+    request,
+    request_id,
+    *,
+    is_requester_view,
+    redirect_name,
+    url_builder,
+    unauthorized_msg,
+    not_accepted_msg,
+    target_user_getter,
+):
+    """Authorize a request participant on an ACCEPTED request and redirect to WhatsApp."""
+    item_req = get_object_or_404(
+        ItemRequest.objects.select_related(
+            "item",
+            "item__donor",
+            "item__donor__profile",
+            "requester",
+            "requester__profile",
+        ),
+        id=request_id,
+    )
+    authorized_user = item_req.requester if is_requester_view else item_req.item.donor
+    if authorized_user != request.user:
+        messages.error(request, unauthorized_msg)
+        return redirect(redirect_name)
+
+    if item_req.status != "ACCEPTED":
+        messages.info(request, not_accepted_msg)
+        return redirect(redirect_name)
+
+    whatsapp_url = url_builder(item_req)
+    if not whatsapp_url:
+        target_user = target_user_getter(item_req)
+        messages.warning(
+            request,
+            f"@{target_user.username} has not added a valid mobile number for WhatsApp yet.",
+        )
+        return redirect(redirect_name)
+
+    return redirect(whatsapp_url)
+
+
 @login_required
 def contact_owner_whatsapp(request, request_id):
     """Fetch the donor's mobile number for an accepted request and redirect to WhatsApp app/web."""
-    item_req = get_object_or_404(
-        ItemRequest.objects.select_related("item", "item__donor", "item__donor__profile"),
-        id=request_id,
+    return _contact_request_party_whatsapp(
+        request,
+        request_id,
+        is_requester_view=True,
+        redirect_name="my_requests",
+        url_builder=get_owner_whatsapp_url,
+        unauthorized_msg="You are not authorized to contact the owner for this request.",
+        not_accepted_msg="You can message the owner only when your request is accepted.",
+        target_user_getter=lambda req: req.item.donor,
     )
-    if item_req.requester != request.user:
-        messages.error(request, "You are not authorized to contact the owner for this request.")
-        return redirect("my_requests")
 
-    if item_req.status != "ACCEPTED":
-        messages.info(request, "You can message the owner only when your request is accepted.")
-        return redirect("my_requests")
 
-    whatsapp_url = get_owner_whatsapp_url(item_req)
-    if not whatsapp_url:
-        messages.warning(
-            request,
-            f"@{item_req.item.donor.username} has not added a valid mobile number for WhatsApp yet.",
-        )
-        return redirect("my_requests")
-
-    return redirect(whatsapp_url)
+@login_required
+def contact_requester_whatsapp(request, request_id):
+    """Fetch the accepted requester's mobile number for the donor and redirect to WhatsApp app/web."""
+    return _contact_request_party_whatsapp(
+        request,
+        request_id,
+        is_requester_view=False,
+        redirect_name="my_listings",
+        url_builder=get_requester_whatsapp_url,
+        unauthorized_msg="You are not authorized to contact the requester for this request.",
+        not_accepted_msg="You can message the requester only when the request is accepted.",
+        target_user_getter=lambda req: req.requester,
+    )
 
 
 @login_required
@@ -995,7 +1052,11 @@ def mark_available(request, pk):
 @login_required
 def my_listings(request):
     """Modern User dashboard to manage their own donated belongings."""
-    user_items = Item.objects.filter(donor=request.user).select_related("category").prefetch_related("images", "requests")
+    user_items = (
+        Item.objects.filter(donor=request.user)
+        .select_related("category")
+        .prefetch_related("images", "requests__requester__profile")
+    )
     status_tab = request.GET.get("tab", "ALL").upper()
     q = request.GET.get("q", "").strip()
 
@@ -1022,6 +1083,23 @@ def my_listings(request):
     paginator = Paginator(filtered_items.order_by("-created_at"), 10)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
+
+    for item in page_obj:
+        accepted_req = next(
+            (r for r in item.requests.all() if r.status == "ACCEPTED"),
+            None,
+        )
+        item.accepted_request = accepted_req
+        item.accepted_requester_phone = (
+            get_requester_phone_for_accepted_request(accepted_req)
+            if accepted_req
+            else ""
+        )
+        item.accepted_requester_whatsapp_url = (
+            get_requester_whatsapp_url(accepted_req)
+            if accepted_req
+            else None
+        )
 
     context = {
         "items": page_obj,

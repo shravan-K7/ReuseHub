@@ -1325,6 +1325,161 @@ class WhatsAppMessageOwnerTests(TestCase):
         self.assertContains(accepted_detail, whatsapp_url)
 
 
+class WhatsAppMessageRequesterTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.category = Category.objects.create(name="Electronics", slug="electronics")
+        self.donor = User.objects.create_user(
+            username="donor_maya",
+            email="maya@example.com",
+            password="StrongPass123!",
+            is_active=True,
+        )
+        self.requester = User.objects.create_user(
+            username="requester_kiran",
+            email="kiran@example.com",
+            password="StrongPass123!",
+            is_active=True,
+        )
+        self.requester.profile.phone = "+91 91234 56789"
+        self.requester.profile.save()
+
+        self.other_user = User.objects.create_user(
+            username="stranger_sam",
+            email="sam@example.com",
+            password="StrongPass123!",
+            is_active=True,
+        )
+        self.item = Item.objects.create(
+            title="Bluetooth Keyboard",
+            description="Compact wireless keyboard in clean condition.",
+            category=self.category,
+            condition="GOOD",
+            pickup_location="MG Road, Kochi",
+            donor=self.donor,
+            status="REQUESTED",
+        )
+        self.item_request = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.requester,
+            message="Would love to pick this up tomorrow.",
+            status="ACCEPTED",
+        )
+
+    def test_my_listings_shows_accepted_requester_phone_and_whatsapp_link(self):
+        self.client.force_login(self.donor)
+        expected_href = reverse(
+            "contact_requester_whatsapp", kwargs={"request_id": self.item_request.id}
+        )
+
+        dash_resp = self.client.get(reverse("my_listings"))
+        self.assertEqual(dash_resp.status_code, 200)
+        self.assertContains(dash_resp, "@requester_kiran")
+        self.assertContains(dash_resp, "+91 91234 56789")
+        self.assertContains(dash_resp, expected_href)
+        self.assertContains(dash_resp, "contact-requester-whatsapp-btn")
+
+        # Request-level contact_info takes precedence if valid phone and profile phone is absent
+        self.requester.profile.phone = ""
+        self.requester.profile.save()
+        self.item_request.contact_info = "9876501234"
+        self.item_request.save()
+
+        dash_resp_contact = self.client.get(reverse("my_listings"))
+        self.assertEqual(dash_resp_contact.status_code, 200)
+        self.assertContains(dash_resp_contact, "9876501234")
+        self.assertContains(dash_resp_contact, expected_href)
+
+    def test_donor_redirected_to_requester_whatsapp(self):
+        self.client.force_login(self.donor)
+        response = self.client.get(
+            reverse(
+                "contact_requester_whatsapp",
+                kwargs={"request_id": self.item_request.id},
+            )
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response["Location"].startswith("https://wa.me/919123456789?text="))
+        self.assertIn("Bluetooth+Keyboard", response["Location"])
+
+    def test_item_detail_shows_accepted_requester_phone_and_whatsapp_link(self):
+        self.client.force_login(self.donor)
+        detail_url = reverse(
+            "item_detail_slug", kwargs={"pk": self.item.id, "slug": self.item.slug}
+        )
+        expected_href = reverse(
+            "contact_requester_whatsapp", kwargs={"request_id": self.item_request.id}
+        )
+
+        resp = self.client.get(detail_url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "+91 91234 56789")
+        self.assertContains(resp, "Message Requester on WhatsApp")
+        self.assertContains(resp, expected_href)
+
+    def test_requester_whatsapp_authorization_and_status_guards(self):
+        whatsapp_url = reverse(
+            "contact_requester_whatsapp", kwargs={"request_id": self.item_request.id}
+        )
+        phone = self.requester.profile.phone
+
+        # Unauthenticated users cannot access redirect
+        anon_resp = self.client.get(whatsapp_url)
+        self.assertEqual(anon_resp.status_code, 302)
+        self.assertIn("/login/", anon_resp["Location"])
+
+        # Unrelated user, requester themselves, and non-donor staff cannot trigger donor redirect
+        staff_user = User.objects.create_user(
+            username="staff_guard",
+            email="staffg@example.com",
+            password="StrongPass123!",
+            is_staff=True,
+            is_active=True,
+        )
+        for user in (self.other_user, self.requester, staff_user):
+            self.client.force_login(user)
+            resp = self.client.get(whatsapp_url)
+            self.assertRedirects(resp, reverse("my_listings"))
+
+        # Donor only sees phone/WhatsApp in My Listings while request status is ACCEPTED
+        self.client.force_login(self.donor)
+        for non_accepted_status in ("PENDING", "REJECTED", "CANCELLED", "COMPLETED"):
+            self.item_request.status = non_accepted_status
+            self.item_request.save()
+
+            dash_resp = self.client.get(reverse("my_listings"))
+            self.assertEqual(dash_resp.status_code, 200)
+            self.assertNotContains(dash_resp, phone)
+            self.assertNotContains(dash_resp, whatsapp_url)
+
+            wa_resp = self.client.get(whatsapp_url)
+            self.assertRedirects(wa_resp, reverse("my_listings"))
+
+    def test_missing_requester_phone_falls_back_gracefully(self):
+        self.requester.profile.phone = ""
+        self.requester.profile.save()
+        self.item_request.contact_info = ""
+        self.item_request.save()
+
+        self.client.force_login(self.donor)
+        dash_resp = self.client.get(reverse("my_listings"))
+        self.assertEqual(dash_resp.status_code, 200)
+        self.assertContains(dash_resp, "accepted-requester-contact-box")
+        self.assertContains(dash_resp, "No mobile/WhatsApp number provided by requester yet.")
+        self.assertNotContains(dash_resp, "contact-requester-whatsapp-btn")
+
+        direct_resp = self.client.get(
+            reverse(
+                "contact_requester_whatsapp",
+                kwargs={"request_id": self.item_request.id},
+            ),
+            follow=True,
+        )
+        self.assertRedirects(direct_resp, reverse("my_listings"))
+        msgs = [str(m) for m in direct_resp.context["messages"]]
+        self.assertTrue(any("mobile number" in m.lower() for m in msgs))
+
+
 @override_settings(BREVO_API_KEY="")
 class ItemRequestWorkflowTests(TestCase):
     """Tests for single-acceptance enforcement, rejection handling, and public visibility."""

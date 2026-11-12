@@ -57,6 +57,17 @@ def build_whatsapp_redirect_url(raw_phone, message=None, default_country_code=No
     return base_url
 
 
+def _get_user_profile_phone(user):
+    """Safely return the user's profile phone string, or empty string."""
+    if user is None:
+        return ""
+    try:
+        profile = user.profile
+    except ObjectDoesNotExist:
+        return ""
+    return (getattr(profile, "phone", "") or "").strip()
+
+
 def get_owner_phone_for_accepted_request(item_request):
     """Return the item owner's phone number only when the request status is ACCEPTED."""
     if item_request is None or getattr(item_request, "status", None) != "ACCEPTED":
@@ -64,15 +75,23 @@ def get_owner_phone_for_accepted_request(item_request):
 
     item = getattr(item_request, "item", None)
     donor = getattr(item, "donor", None) if item is not None else None
-    if donor is None:
+    return _get_user_profile_phone(donor)
+
+
+def get_requester_phone_for_accepted_request(item_request):
+    """Return the requester's phone/contact number only when the request status is ACCEPTED."""
+    if item_request is None or getattr(item_request, "status", None) != "ACCEPTED":
         return ""
 
-    try:
-        profile = donor.profile
-    except ObjectDoesNotExist:
-        return ""
+    requester = getattr(item_request, "requester", None)
+    profile_phone = _get_user_profile_phone(requester)
+    request_contact = (getattr(item_request, "contact_info", "") or "").strip()
 
-    return getattr(profile, "phone", "") or ""
+    if normalize_phone_for_whatsapp(request_contact):
+        return request_contact
+    if normalize_phone_for_whatsapp(profile_phone):
+        return profile_phone
+    return profile_phone or request_contact
 
 
 def get_owner_whatsapp_url(item_request):
@@ -86,6 +105,21 @@ def get_owner_whatsapp_url(item_request):
     message = (
         f"Hi @{donor.username}, my request for '{item.title}' on ReuseHub was accepted. "
         "When would be a good time to coordinate pickup?"
+    )
+    return build_whatsapp_redirect_url(raw_phone, message=message)
+
+
+def get_requester_whatsapp_url(item_request):
+    """Fetch the requester's phone for an accepted request and return a WhatsApp chat URL, or None."""
+    raw_phone = get_requester_phone_for_accepted_request(item_request)
+    if not raw_phone:
+        return None
+
+    item = item_request.item
+    requester = item_request.requester
+    message = (
+        f"Hi @{requester.username}, I accepted your request for '{item.title}' on ReuseHub. "
+        "Let's coordinate pickup!"
     )
     return build_whatsapp_redirect_url(raw_phone, message=message)
 
