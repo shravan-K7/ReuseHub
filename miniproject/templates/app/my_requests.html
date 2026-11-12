@@ -187,15 +187,28 @@
                   <span>Cancel Request</span>
                 </button>
               {% elif req.status == 'ACCEPTED' %}
-                <button type="button" class="btn-dash-action contact-donor-trigger-btn"
-                        data-donor="{{ req.item.donor.username }}"
-                        data-location="{{ req.item.pickup_location }}"
-                        data-notes="{{ req.donor_notes|default:'Please coordinate directly with the donor to collect this item.' }}">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                  </svg>
-                  <span>Message Owner</span>
-                </button>
+                {% if req.whatsapp_url %}
+                  <a href="{% url 'contact_owner_whatsapp' request_id=req.id %}"
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     class="btn-dash-action contact-donor-whatsapp-btn"
+                     title="Message @{{ req.item.donor.username }} on WhatsApp">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>Message Owner</span>
+                  </a>
+                {% else %}
+                  <button type="button" class="btn-dash-action contact-donor-trigger-btn"
+                          data-donor="{{ req.item.donor.username }}"
+                          data-location="{{ req.item.pickup_location }}"
+                          data-notes="{{ req.donor_notes|default:'Please coordinate directly with the donor to collect this item.' }}">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>Message Owner</span>
+                  </button>
+                {% endif %}
               {% endif %}
 
               {% if req.can_review %}
@@ -326,6 +339,9 @@
         <p style="margin: 0 0 12px 0; font-size: 0.9rem; color: var(--dash-text-main);">
           Your request was accepted by <strong id="modalDonorName">@donor</strong>!
         </p>
+        <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.82rem; color: #92400e;">
+          The owner has not added a mobile/WhatsApp number to their profile yet. Use the pickup location and instructions below to coordinate pickup.
+        </div>
         <div style="background: #f9fafb; border: 1px solid var(--dash-border); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;">
           <div style="font-size: 0.775rem; font-weight: 600; color: var(--dash-text-muted); margin-bottom: 4px;">PICKUP LOCATION</div>
           <div id="modalPickupLocation" style="font-size: 0.88rem; font-weight: 600; color: var(--dash-text-main);">Location</div>

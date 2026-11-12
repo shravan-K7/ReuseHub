@@ -1125,3 +1125,132 @@ class ReuseHubTests(TestCase):
                 self.assertEqual(im.format, "WEBP")
                 self.assertLessEqual(im.width, 1600)
                 self.assertLessEqual(im.height, 1600)
+
+
+class WhatsAppMessageOwnerTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.category = Category.objects.create(name="Utility & Bags", slug="utility-bags")
+        self.donor = User.objects.create_user(
+            username="demo_rahul",
+            email="demo_rahul@example.com",
+            password="StrongPass123!",
+            is_active=True,
+        )
+        self.donor.profile.phone = "+91 98765 43210"
+        self.donor.profile.save()
+
+        self.requester = User.objects.create_user(
+            username="requester_anu",
+            email="anu@example.com",
+            password="StrongPass123!",
+            is_active=True,
+        )
+        self.other_user = User.objects.create_user(
+            username="bystander",
+            email="bystander@example.com",
+            password="StrongPass123!",
+            is_active=True,
+        )
+        self.item = Item.objects.create(
+            title="Laptop Backpack",
+            description="A spacious brown canvas backpack with multiple compartments.",
+            category=self.category,
+            condition="GOOD",
+            pickup_location="Feroke, Kozhikode, Kerala, 673631, India",
+            donor=self.donor,
+            status="AVAILABLE",
+        )
+        self.item_request = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.requester,
+            message="Would love to pick this up for college commute.",
+            status="ACCEPTED",
+            donor_notes="Available after 5 PM near Feroke bus stand.",
+        )
+
+    def test_phone_normalization_variants(self):
+        from .phone_utils import build_whatsapp_redirect_url, normalize_phone_for_whatsapp
+
+        self.assertEqual(normalize_phone_for_whatsapp("+91 98765 43210"), "919876543210")
+        self.assertEqual(normalize_phone_for_whatsapp("0091-98765-43210"), "919876543210")
+        self.assertEqual(normalize_phone_for_whatsapp("9876543210"), "919876543210")
+        self.assertEqual(normalize_phone_for_whatsapp("09876543210"), "919876543210")
+        self.assertEqual(normalize_phone_for_whatsapp("919876543210"), "919876543210")
+        self.assertEqual(normalize_phone_for_whatsapp("+1 (555) 987-6543"), "15559876543")
+
+        self.assertIsNone(normalize_phone_for_whatsapp("@telegram_handle"))
+        self.assertIsNone(normalize_phone_for_whatsapp(""))
+        self.assertIsNone(normalize_phone_for_whatsapp("12345"))
+        self.assertIsNone(normalize_phone_for_whatsapp("0000000000"))
+        self.assertIsNone(normalize_phone_for_whatsapp("+1234567890123456"))
+
+        url = build_whatsapp_redirect_url("9876543210", message="Hello donor")
+        self.assertTrue(url.startswith("https://wa.me/919876543210?text="))
+        self.assertIn("Hello+donor", url)
+
+    def test_accepted_requester_redirected_to_whatsapp(self):
+        self.client.force_login(self.requester)
+        response = self.client.get(
+            reverse("contact_owner_whatsapp", kwargs={"request_id": self.item_request.id})
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response["Location"].startswith("https://wa.me/919876543210?text="))
+        self.assertIn("Laptop+Backpack", response["Location"])
+
+    def test_authorization_and_status_guards(self):
+        url = reverse("contact_owner_whatsapp", kwargs={"request_id": self.item_request.id})
+
+        # Unauthenticated users cannot trigger WhatsApp redirect
+        anon_resp = self.client.get(url)
+        self.assertEqual(anon_resp.status_code, 302)
+        self.assertIn("/login/", anon_resp["Location"])
+
+        # Unrelated user cannot access donor's WhatsApp redirect
+        self.client.force_login(self.other_user)
+        other_resp = self.client.get(url)
+        self.assertRedirects(other_resp, reverse("my_requests"))
+
+        # Pending request cannot access donor's WhatsApp redirect
+        self.item_request.status = "PENDING"
+        self.item_request.save()
+        self.client.force_login(self.requester)
+        pending_resp = self.client.get(url)
+        self.assertRedirects(pending_resp, reverse("my_requests"))
+
+    def test_missing_donor_phone_falls_back_gracefully(self):
+        self.donor.profile.phone = ""
+        self.donor.profile.save()
+
+        self.client.force_login(self.requester)
+        dash_resp = self.client.get(reverse("my_requests"))
+        self.assertEqual(dash_resp.status_code, 200)
+        self.assertContains(dash_resp, "contact-donor-trigger-btn")
+        self.assertNotContains(dash_resp, "contact-donor-whatsapp-btn")
+
+        direct_resp = self.client.get(
+            reverse("contact_owner_whatsapp", kwargs={"request_id": self.item_request.id}),
+            follow=True,
+        )
+        self.assertRedirects(direct_resp, reverse("my_requests"))
+        msgs = [str(m) for m in direct_resp.context["messages"]]
+        self.assertTrue(any("mobile number" in m.lower() for m in msgs))
+
+    def test_my_requests_and_item_detail_render_whatsapp_links(self):
+        self.client.force_login(self.requester)
+        expected_href = reverse(
+            "contact_owner_whatsapp", kwargs={"request_id": self.item_request.id}
+        )
+
+        dash_resp = self.client.get(reverse("my_requests"))
+        self.assertEqual(dash_resp.status_code, 200)
+        self.assertContains(dash_resp, expected_href)
+        self.assertContains(dash_resp, "contact-donor-whatsapp-btn")
+
+        detail_resp = self.client.get(
+            reverse("item_detail_slug", kwargs={"pk": self.item.id, "slug": self.item.slug})
+        )
+        self.assertEqual(detail_resp.status_code, 200)
+        self.assertContains(detail_resp, "+91 98765 43210")
+        self.assertContains(detail_resp, "Message Owner on WhatsApp")
+        self.assertContains(detail_resp, expected_href)

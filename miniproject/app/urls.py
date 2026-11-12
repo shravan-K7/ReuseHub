@@ -18,6 +18,7 @@ urlpatterns = [
 
     # Request responses & Requester actions
     path('requests/<int:request_id>/cancel/', views.cancel_request, name='cancel_request'),
+    path('requests/<int:request_id>/whatsapp/', views.contact_owner_whatsapp, name='contact_owner_whatsapp'),
     path('requests/<int:request_id>/<str:action>/', views.respond_request, name='respond_request'), # Calls respond_request(). Used when a user wants to respond to a request.
 
     # User Dashboards & Public Community Profiles

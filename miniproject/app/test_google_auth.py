@@ -11,10 +11,12 @@ from allauth.socialaccount.models import SocialAccount, SocialLogin
 from django.contrib.auth.models import User
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.sessions.backends.db import SessionStore
-from django.test import RequestFactory, TestCase
+from django.contrib.sites.models import Site
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from app.adapters import ReuseHubSocialAccountAdapter
+from allauth.socialaccount.models import SocialApp
+from app.adapters import ReuseHubSocialAccountAdapter, is_google_oauth_configured
 from app.models import UserProfile
 
 
@@ -43,6 +45,7 @@ class GoogleOAuthIntegrationTests(TestCase):
         params = parse_qs(parsed.query)
 
         self.assertIn("client_id", params)
+        self.assertTrue(params["client_id"][0].strip())
         self.assertIn("redirect_uri", params)
         self.assertTrue(params["redirect_uri"][0].endswith("/accounts/google/login/callback/"))
         self.assertIn("scope", params)
@@ -161,3 +164,77 @@ class GoogleOAuthIntegrationTests(TestCase):
         response = cm.exception.response
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers.get("Location"), reverse("login"))
+
+    @override_settings(
+        SOCIALACCOUNT_PROVIDERS={
+            "google": {
+                "SCOPE": ["profile", "email"],
+                "AUTH_PARAMS": {"access_type": "online", "prompt": "select_account"},
+            }
+        }
+    )
+    def test_unconfigured_google_oauth_hides_button_and_blocks_broken_redirect(self):
+        """Missing Google OAuth credentials must not crash auth pages or emit empty client_id."""
+        self.assertFalse(is_google_oauth_configured())
+
+        login_resp = self.client.get(reverse("login"))
+        self.assertEqual(login_resp.status_code, 200)
+        self.assertNotContains(login_resp, "googleSignInBtn")
+
+        register_resp = self.client.get(reverse("register"))
+        self.assertEqual(register_resp.status_code, 200)
+        self.assertNotContains(register_resp, "googleSignUpBtn")
+
+        for method in ("get", "post"):
+            oauth_resp = getattr(self.client, method)(reverse("google_login"), follow=True)
+            self.assertEqual(oauth_resp.status_code, 200)
+            self.assertRedirects(oauth_resp, reverse("login"))
+            self.assertContains(oauth_resp, "Google sign-in is currently unavailable")
+
+    @override_settings(
+        SOCIALACCOUNT_PROVIDERS={
+            "google": {
+                "APP": {"client_id": "   ", "secret": "", "key": ""},
+                "SCOPE": ["profile", "email"],
+            }
+        }
+    )
+    def test_blank_google_app_credentials_are_filtered_out(self):
+        """Whitespace or empty client_id/secret must not trigger Google Error 400."""
+        self.assertFalse(is_google_oauth_configured())
+        resp = self.client.get(reverse("google_login"))
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.headers.get("Location"), reverse("login"))
+
+    @override_settings(
+        SOCIALACCOUNT_PROVIDERS={
+            "google": {
+                "SCOPE": ["profile", "email"],
+                "AUTH_PARAMS": {"access_type": "online", "prompt": "select_account"},
+            }
+        }
+    )
+    def test_database_socialapp_works_when_env_app_is_omitted(self):
+        """Admin-configured SocialApp in DB works cleanly without env vars."""
+        site = Site.objects.get_current()
+        db_app = SocialApp.objects.create(
+            provider="google",
+            name="Google DB App",
+            client_id="db-client-id-123.apps.googleusercontent.com",
+            secret="db-secret-xyz",
+        )
+        db_app.sites.add(site)
+
+        self.assertTrue(is_google_oauth_configured())
+        login_resp = self.client.get(reverse("login"))
+        self.assertEqual(login_resp.status_code, 200)
+        self.assertContains(login_resp, "googleSignInBtn")
+
+        oauth_resp = self.client.get(reverse("google_login"))
+        self.assertEqual(oauth_resp.status_code, 302)
+        parsed = urlparse(oauth_resp.headers.get("Location", ""))
+        params = parse_qs(parsed.query)
+        self.assertEqual(
+            params.get("client_id"),
+            ["db-client-id-123.apps.googleusercontent.com"],
+        )

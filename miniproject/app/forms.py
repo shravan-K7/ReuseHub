@@ -300,7 +300,7 @@ class UserProfileForm(forms.ModelForm):
         fields = ['bio', 'phone', 'location', 'avatar']
         widgets = {
             'bio': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 3, 'placeholder': 'Short bio about yourself...'}),
-            'phone': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Phone number'}),
+            'phone': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Mobile / WhatsApp number (e.g. +91 98765 43210)'}),
             'location': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'City, state, or area'}),
             'avatar': forms.FileInput(attrs={'class': 'form-file-input', 'accept': 'image/*'}),
         }

@@ -8,7 +8,7 @@ from typing import cast
 
 from allauth.account.models import EmailAddress
 from allauth.core.exceptions import ImmediateHttpResponse
-from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from allauth.socialaccount.adapter import DefaultSocialAccountAdapter, get_adapter
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.shortcuts import redirect
@@ -16,6 +16,15 @@ from django.shortcuts import redirect
 from app.models import UserProfile
 
 logger = logging.getLogger(__name__)
+
+
+def is_google_oauth_configured(request=None) -> bool:
+    """Return True when a Google OAuth app has non-empty client credentials."""
+    try:
+        adapter = get_adapter(request)
+        return bool(adapter.list_apps(request, provider="google"))
+    except Exception:
+        return False
 
 
 class ReuseHubSocialAccountAdapter(DefaultSocialAccountAdapter):
@@ -26,6 +35,16 @@ class ReuseHubSocialAccountAdapter(DefaultSocialAccountAdapter):
     - Ensures UserProfile exists and sets email_verified = True for Google users.
     - Gracefully handles cancelled logins and authentication errors.
     """
+
+    def list_apps(self, request, provider=None, client_id=None):
+        """Filter out Google app configs whose client_id or secret is blank."""
+        apps = super().list_apps(request, provider=provider, client_id=client_id)
+        return [
+            app
+            for app in apps
+            if app.provider != "google"
+            or (bool((app.client_id or "").strip()) and bool((app.secret or "").strip()))
+        ]
 
     def pre_social_login(self, request, sociallogin):
         """

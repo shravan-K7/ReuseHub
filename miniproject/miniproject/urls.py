@@ -22,10 +22,13 @@ from django.conf.urls.static import static
 
 from django.views.generic import RedirectView
 
+from app import views as app_views
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/login/", RedirectView.as_view(pattern_name="login", permanent=False)),
     path("accounts/signup/", RedirectView.as_view(pattern_name="register", permanent=False)),
+    path("accounts/google/login/", app_views.google_login_entry),
     path("accounts/", include("allauth.urls")),
     path("", include("app.urls")),
 ]

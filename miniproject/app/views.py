@@ -15,6 +15,7 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
+from .adapters import is_google_oauth_configured
 from .community import get_user_badges, get_user_stats
 from .emails import (
     send_admin_or_account_notification,
@@ -25,6 +26,7 @@ from .emails import (
     send_request_status_notification,
 )
 from .image_utils import compress_and_convert_to_webp
+from .phone_utils import get_owner_whatsapp_url
 from .forms import (
     CategoryForm,
     ItemForm,
@@ -324,6 +326,11 @@ def item_detail(request, pk, slug=None):
 
     donor_stats = get_user_stats(item.donor)
     donor_badges = get_user_badges(item.donor, donor_stats)
+    donor_whatsapp_url = (
+        get_owner_whatsapp_url(user_request)
+        if user_request and user_request.status in ("ACCEPTED", "COMPLETED")
+        else None
+    )
 
     context = {
         "item": item,
@@ -334,6 +341,7 @@ def item_detail(request, pk, slug=None):
         "report_form": report_form,
         "donor_stats": donor_stats,
         "donor_badges": donor_badges,
+        "donor_whatsapp_url": donor_whatsapp_url,
     }
     return render(request, "app/item_detail.html", context)
 
@@ -574,6 +582,32 @@ def cancel_request(request, request_id):
 
 
 @login_required
+def contact_owner_whatsapp(request, request_id):
+    """Fetch the donor's mobile number for an accepted request and redirect to WhatsApp app/web."""
+    item_req = get_object_or_404(
+        ItemRequest.objects.select_related("item", "item__donor", "item__donor__profile"),
+        id=request_id,
+    )
+    if item_req.requester != request.user and not request.user.is_staff:
+        messages.error(request, "You are not authorized to contact the owner for this request.")
+        return redirect("my_requests")
+
+    if item_req.status not in ("ACCEPTED", "COMPLETED"):
+        messages.info(request, "You can message the owner once your request is accepted.")
+        return redirect("my_requests")
+
+    whatsapp_url = get_owner_whatsapp_url(item_req)
+    if not whatsapp_url:
+        messages.warning(
+            request,
+            f"@{item_req.item.donor.username} has not added a valid mobile number for WhatsApp yet.",
+        )
+        return redirect("my_requests")
+
+    return redirect(whatsapp_url)
+
+
+@login_required
 def respond_request(request, request_id, action):
     """Donor accepts or rejects an item request."""
     item_req = get_object_or_404(ItemRequest, id=request_id)
@@ -776,6 +810,11 @@ def my_requests(request):
         req.can_review = (
             req.status == "COMPLETED" or req.item.status == "GIVEN_AWAY"
         ) and not req.has_reviewed
+        req.whatsapp_url = (
+            get_owner_whatsapp_url(req)
+            if req.status in ("ACCEPTED", "COMPLETED")
+            else None
+        )
 
     context = {
         "requests": page_obj,
@@ -1152,7 +1191,14 @@ def register_view(request):
     else:
         form = UserRegisterForm()
 
-    return render(request, "app/auth/register.html", {"form": form})
+    return render(
+        request,
+        "app/auth/register.html",
+        {
+            "form": form,
+            "google_oauth_enabled": is_google_oauth_configured(request),
+        },
+    )
 
 
 def verify_otp_view(request):
@@ -1353,7 +1399,32 @@ def login_view(request):
     else:
         form = AuthenticationForm()
 
-    return render(request, "app/auth/login.html", {"form": form})
+    return render(
+        request,
+        "app/auth/login.html",
+        {
+            "form": form,
+            "google_oauth_enabled": is_google_oauth_configured(request),
+        },
+    )
+
+
+def google_login_entry(request):
+    """Redirect to Google OAuth only when valid client credentials are configured."""
+    if not is_google_oauth_configured(request):
+        logger.error(
+            "Google OAuth login requested while GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET "
+            "(or a configured Google SocialApp) are missing or empty."
+        )
+        messages.error(
+            request,
+            "Google sign-in is currently unavailable. Please sign in with your username and password.",
+        )
+        return redirect("login")
+
+    from allauth.socialaccount.providers.google.views import oauth2_login
+
+    return oauth2_login(request)
 
 
 def password_reset_request_view(request):

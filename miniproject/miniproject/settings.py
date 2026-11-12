@@ -255,27 +255,36 @@ ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_LOGOUT_ON_GET = True
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "http" if DEBUG else "https"
 
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_ADAPTER = "app.adapters.ReuseHubSocialAccountAdapter"
 
-SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        "APP": {
-            "client_id": os.environ.get("GOOGLE_CLIENT_ID", ""),
-            "secret": os.environ.get("GOOGLE_CLIENT_SECRET", ""),
-            "key": "",
-        },
-        "SCOPE": [
-            "profile",
-            "email",
-        ],
-        "AUTH_PARAMS": {
-            "access_type": "online",
-            "prompt": "select_account",
-        },
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "").strip().strip("'\"")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "").strip().strip("'\"")
+
+_google_provider_settings = {
+    "SCOPE": [
+        "profile",
+        "email",
+    ],
+    "AUTH_PARAMS": {
+        "access_type": "online",
+        "prompt": "select_account",
+    },
+}
+# Register APP from env only when both credentials are present so empty vars
+# neither emit broken `?client_id=` redirects nor clash with DB SocialApp rows.
+if GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
+    _google_provider_settings["APP"] = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "secret": GOOGLE_CLIENT_SECRET,
+        "key": "",
     }
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": _google_provider_settings,
 }
 
 CLOUDINARY_STORAGE = {
@@ -311,3 +320,7 @@ LOGGING = {
         },
     },
 }
+
+DEFAULT_WHATSAPP_COUNTRY_CODE = (
+    os.getenv("DEFAULT_PHONE_COUNTRY_CODE", "91").strip().lstrip("+") or "91"
+)
