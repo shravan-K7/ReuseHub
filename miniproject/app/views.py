@@ -1,4 +1,5 @@
 import logging
+import time
 from datetime import timedelta
 from django.conf import settings
 from django.contrib import messages
@@ -8,6 +9,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.core.paginator import Paginator
+from django.db import OperationalError, connection, transaction
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -26,7 +28,7 @@ from .emails import (
     send_request_status_notification,
 )
 from .image_utils import compress_and_convert_to_webp
-from .phone_utils import get_owner_whatsapp_url
+from .phone_utils import get_owner_phone_for_accepted_request, get_owner_whatsapp_url
 from .forms import (
     CategoryForm,
     ItemForm,
@@ -144,7 +146,10 @@ def global_context(request):
 
 def item_list(request):
     """Explore and filter free items."""
-    items = Item.objects.filter(moderation_status="APPROVED")
+    items = Item.objects.filter(
+        moderation_status="APPROVED",
+        status="AVAILABLE",
+    )
 
     # Search query
     query = request.GET.get("q", "").strip()
@@ -172,10 +177,9 @@ def item_list(request):
     if repairable == "1":
         items = items.filter(is_repairable=True)
 
-    # Status filter (default to AVAILABLE for normal browsing)
-    status_filter = request.GET.get("status", "AVAILABLE").strip()
-    if status_filter != "ALL":
-        items = items.filter(status=status_filter)
+    # Public explore/search pages always restrict listings to AVAILABLE items;
+    # ignore any user-supplied status query overrides.
+    status_filter = "AVAILABLE"
 
     # Sort
     sort = request.GET.get("sort", "newest")
@@ -326,11 +330,8 @@ def item_detail(request, pk, slug=None):
 
     donor_stats = get_user_stats(item.donor)
     donor_badges = get_user_badges(item.donor, donor_stats)
-    donor_whatsapp_url = (
-        get_owner_whatsapp_url(user_request)
-        if user_request and user_request.status in ("ACCEPTED", "COMPLETED")
-        else None
-    )
+    donor_contact_phone = get_owner_phone_for_accepted_request(user_request)
+    donor_whatsapp_url = get_owner_whatsapp_url(user_request)
 
     context = {
         "item": item,
@@ -341,6 +342,7 @@ def item_detail(request, pk, slug=None):
         "report_form": report_form,
         "donor_stats": donor_stats,
         "donor_badges": donor_badges,
+        "donor_contact_phone": donor_contact_phone,
         "donor_whatsapp_url": donor_whatsapp_url,
     }
     return render(request, "app/item_detail.html", context)
@@ -518,6 +520,152 @@ def item_delete(request, pk):
     return render(request, "app/item_confirm_delete.html", {"item": item})
 
 
+def _run_atomic_with_sqlite_retry(operation, max_attempts=6):
+    """
+    Run `operation` inside `transaction.atomic()`.
+
+    PostgreSQL serializes concurrent row locks via `select_for_update()`.
+    Under SQLite's shared-cache or rollback-journal modes, concurrent threads
+    upgrading locks can raise `OperationalError: database [table] is locked`
+    immediately; retrying briefly lets the contending request observe the
+    committed state cleanly without failing.
+    """
+    for attempt in range(max_attempts):
+        try:
+            with transaction.atomic():
+                return operation()
+        except OperationalError as exc:
+            is_sqlite_lock = (
+                connection.vendor == "sqlite"
+                and "locked" in str(exc).lower()
+                and attempt < max_attempts - 1
+            )
+            if not is_sqlite_lock:
+                raise
+            time.sleep(0.02 * (attempt + 1))
+
+
+def _accept_item_request(item, item_req):
+    """
+    Atomically accept a pending request, mark the item REQUESTED, and reject
+    all other pending requests for the same item.
+
+    Must be executed inside `transaction.atomic()` with `item` and `item_req`
+    locked via `select_for_update()`. Returns `(outcome, rejected_request_ids)`.
+    """
+    if item_req.status == "ACCEPTED":
+        return "already_accepted", []
+    if item_req.status != "PENDING":
+        return "invalid_status", []
+
+    if (
+        ItemRequest.objects.filter(item=item, status="ACCEPTED")
+        .exclude(pk=item_req.pk)
+        .exists()
+    ):
+        return "conflict_accepted", []
+    if item.status != "AVAILABLE":
+        return "item_unavailable", []
+
+    now = timezone.now()
+    # Conditional updates guarantee only one concurrent transaction transitions the item.
+    if (
+        Item.objects.filter(pk=item.pk, status="AVAILABLE").update(
+            status="REQUESTED", updated_at=now
+        )
+        != 1
+    ):
+        return "item_unavailable", []
+
+    if (
+        ItemRequest.objects.filter(pk=item_req.pk, status="PENDING").update(
+            status="ACCEPTED", updated_at=now
+        )
+        != 1
+    ):
+        transaction.set_rollback(True)
+        return "invalid_status", []
+
+    other_pending_ids = list(
+        ItemRequest.objects.select_for_update()
+        .filter(item=item, status="PENDING")
+        .exclude(pk=item_req.pk)
+        .values_list("pk", flat=True)
+    )
+    if other_pending_ids:
+        ItemRequest.objects.filter(
+            pk__in=other_pending_ids, status="PENDING"
+        ).update(status="REJECTED", updated_at=now)
+
+    item.status = "REQUESTED"
+    item_req.status = "ACCEPTED"
+    return "accepted", other_pending_ids
+
+
+def _reject_item_request(item, item_req):
+    """
+    Reject a PENDING or ACCEPTED request inside a locked atomic transaction.
+
+    Declining a PENDING request leaves `item.status` untouched so an already
+    ACCEPTED request on the item is never overwritten. Declining an ACCEPTED
+    request restores the item to AVAILABLE only if it is REQUESTED and no
+    other ACCEPTED request remains.
+    """
+    if item_req.status not in ("PENDING", "ACCEPTED"):
+        return "already_processed"
+
+    was_accepted = item_req.status == "ACCEPTED"
+    now = timezone.now()
+    if (
+        ItemRequest.objects.filter(pk=item_req.pk, status=item_req.status).update(
+            status="REJECTED", updated_at=now
+        )
+        != 1
+    ):
+        return "already_processed"
+
+    item_req.status = "REJECTED"
+
+    if was_accepted and item.status == "REQUESTED":
+        has_other_accepted = (
+            ItemRequest.objects.filter(item=item, status="ACCEPTED")
+            .exclude(pk=item_req.pk)
+            .exists()
+        )
+        if not has_other_accepted:
+            Item.objects.filter(pk=item.pk, status="REQUESTED").update(
+                status="AVAILABLE", updated_at=now
+            )
+            item.status = "AVAILABLE"
+
+    return "rejected"
+
+
+def _complete_item_request(item, item_req):
+    """
+    Complete an ACCEPTED request inside a locked atomic transaction,
+    marking the request COMPLETED and the item GIVEN_AWAY.
+    """
+    if item_req.status == "COMPLETED":
+        return "already_completed"
+    if item_req.status != "ACCEPTED":
+        return "not_accepted"
+
+    now = timezone.now()
+    if (
+        ItemRequest.objects.filter(pk=item_req.pk, status="ACCEPTED").update(
+            status="COMPLETED", updated_at=now
+        )
+        != 1
+    ):
+        return "not_accepted"
+
+    Item.objects.filter(pk=item.pk).update(status="GIVEN_AWAY", updated_at=now)
+    item.status = "GIVEN_AWAY"
+    item_req.status = "COMPLETED"
+    return "completed"
+
+
 @login_required
 def request_item(request, pk):
     """Submit a request for an item."""
@@ -533,19 +681,43 @@ def request_item(request, pk):
     if request.method == "POST":
         form = ItemRequestForm(request.POST)
         if form.is_valid():
-            req, created = ItemRequest.objects.get_or_create(
-                item=item,
-                requester=request.user,
-                defaults={
-                    "message": form.cleaned_data["message"],
-                    "contact_info": form.cleaned_data["contact_info"],
-                },
-            )
-            if not created:
-                req.message = form.cleaned_data["message"]
-                req.contact_info = form.cleaned_data["contact_info"]
-                req.status = "PENDING"
-                req.save()
+            def _submit_op():
+                locked_item = get_object_or_404(
+                    Item.objects.select_for_update(), pk=pk
+                )
+                if locked_item.donor == request.user:
+                    return "self_request", None
+                if locked_item.status != "AVAILABLE" or ItemRequest.objects.filter(
+                    item=locked_item, status="ACCEPTED"
+                ).exists():
+                    return "unavailable", None
+
+                req_obj = (
+                    ItemRequest.objects.select_for_update()
+                    .filter(item=locked_item, requester=request.user)
+                    .first()
+                )
+                if req_obj is None:
+                    req_obj = ItemRequest.objects.create(
+                        item=locked_item,
+                        requester=request.user,
+                        message=form.cleaned_data["message"],
+                        contact_info=form.cleaned_data["contact_info"],
+                    )
+                else:
+                    req_obj.message = form.cleaned_data["message"]
+                    req_obj.contact_info = form.cleaned_data["contact_info"]
+                    req_obj.status = "PENDING"
+                    req_obj.save()
+                return "created", req_obj
+
+            status_code, req = _run_atomic_with_sqlite_retry(_submit_op)
+            if status_code == "self_request":
+                messages.warning(request, "You cannot request your own listed item.")
+                return redirect("item_detail", pk=pk)
+            if status_code == "unavailable":
+                messages.error(request, "This item is no longer available for requests.")
+                return redirect("item_detail", pk=pk)
 
             # Trigger notification email to the donor via central ReuseHub sender
             action_url = request.build_absolute_uri(
@@ -566,16 +738,41 @@ def request_item(request, pk):
 
 @login_required
 def cancel_request(request, request_id):
-    """Requester cancels their pending request."""
-    item_req = get_object_or_404(ItemRequest, id=request_id)
-    if item_req.requester != request.user and not request.user.is_staff:
-        messages.error(request, "You are not authorized to cancel this request.")
-        return redirect("my_requests")
+    """Requester cancels their pending request (or staff cancels an accepted request)."""
+    def _cancel_op():
+        req_ref = get_object_or_404(
+            ItemRequest.objects.only("id", "item_id"), id=request_id
+        )
+        item = get_object_or_404(Item.objects.select_for_update(), pk=req_ref.item_id)
+        item_req = get_object_or_404(
+            ItemRequest.objects.select_for_update(), id=request_id
+        )
+        if item_req.requester != request.user and not request.user.is_staff:
+            return "unauthorized", item.title
 
-    if item_req.status == "PENDING":
-        item_req.status = "CANCELLED"
-        item_req.save()
-        messages.success(request, f"Your request for '{item_req.item.title}' has been cancelled.")
+        if item_req.status == "PENDING":
+            item_req.status = "CANCELLED"
+            item_req.save(update_fields=["status", "updated_at"])
+            return "cancelled", item.title
+        if item_req.status == "ACCEPTED" and request.user.is_staff:
+            item_req.status = "CANCELLED"
+            item_req.save(update_fields=["status", "updated_at"])
+            if (
+                item.status == "REQUESTED"
+                and not ItemRequest.objects.filter(
+                    item=item, status="ACCEPTED"
+                ).exists()
+            ):
+                item.status = "AVAILABLE"
+                item.save(update_fields=["status", "updated_at"])
+            return "cancelled", item.title
+        return "not_pending", item.title
+
+    result, item_title = _run_atomic_with_sqlite_retry(_cancel_op)
+    if result == "unauthorized":
+        messages.error(request, "You are not authorized to cancel this request.")
+    elif result == "cancelled":
+        messages.success(request, f"Your request for '{item_title}' has been cancelled.")
     else:
         messages.info(request, "Only pending requests can be cancelled.")
     return redirect("my_requests")
@@ -588,12 +785,12 @@ def contact_owner_whatsapp(request, request_id):
         ItemRequest.objects.select_related("item", "item__donor", "item__donor__profile"),
         id=request_id,
     )
-    if item_req.requester != request.user and not request.user.is_staff:
+    if item_req.requester != request.user:
         messages.error(request, "You are not authorized to contact the owner for this request.")
         return redirect("my_requests")
 
-    if item_req.status not in ("ACCEPTED", "COMPLETED"):
-        messages.info(request, "You can message the owner once your request is accepted.")
+    if item_req.status != "ACCEPTED":
+        messages.info(request, "You can message the owner only when your request is accepted.")
         return redirect("my_requests")
 
     whatsapp_url = get_owner_whatsapp_url(item_req)
@@ -609,82 +806,145 @@ def contact_owner_whatsapp(request, request_id):
 
 @login_required
 def respond_request(request, request_id, action):
-    """Donor accepts or rejects an item request."""
-    item_req = get_object_or_404(ItemRequest, id=request_id)
-    if item_req.item.donor != request.user and not request.user.is_staff:
-        messages.error(request, "You are not authorized to respond to this request.")
-        return redirect("item_detail", pk=item_req.item.pk)
+    """Donor accepts, rejects, or completes an item request."""
+    def _respond_op():
+        req_ref = get_object_or_404(
+            ItemRequest.objects.only("id", "item_id"), id=request_id
+        )
+        # Always lock Item before ItemRequest to avoid lock-ordering deadlocks.
+        item = get_object_or_404(Item.objects.select_for_update(), pk=req_ref.item_id)
+        item_req = get_object_or_404(
+            ItemRequest.objects.select_for_update(), id=request_id
+        )
 
+        if item.donor != request.user and not request.user.is_staff:
+            return "unauthorized", item.pk, []
+        if action not in ("accept", "complete", "reject"):
+            return "invalid_action", item.pk, []
+
+        if action == "accept":
+            op_outcome, op_rejected_ids = _accept_item_request(item, item_req)
+            return op_outcome, item.pk, op_rejected_ids
+        if action == "complete":
+            return _complete_item_request(item, item_req), item.pk, []
+        return _reject_item_request(item, item_req), item.pk, []
+
+    outcome, item_pk, rejected_ids = _run_atomic_with_sqlite_retry(_respond_op)
+    if outcome == "unauthorized":
+        messages.error(request, "You are not authorized to respond to this request.")
+        return redirect("item_detail", pk=item_pk)
+    if outcome == "invalid_action":
+        messages.warning(request, "Invalid action request.")
+        return redirect("item_detail", pk=item_pk)
+
+    # Refresh related user/item objects for notification rendering outside locks.
+    item_req = ItemRequest.objects.select_related(
+        "item", "item__donor", "requester"
+    ).get(pk=request_id)
     action_url = request.build_absolute_uri(
-        reverse("item_detail", kwargs={"pk": item_req.item.pk})
+        reverse("item_detail", kwargs={"pk": item_pk})
     )
 
     if action == "accept":
-        item_req.status = "ACCEPTED"
-        item_req.item.status = "REQUESTED"
-        item_req.item.save()
-        item_req.save()
-        send_request_status_notification(
-            item_req, action="accept", action_url=action_url
-        )
-        messages.success(
-            request,
-            f"You accepted {item_req.requester.username}'s request! You can now coordinate pickup.",
-        )
-    elif action == "complete":
-        item_req.status = "COMPLETED"
-        item_req.item.status = "GIVEN_AWAY"
-        item_req.item.save()
-        item_req.save()
-        review_url = request.build_absolute_uri(
-            reverse("submit_review", kwargs={"request_id": item_req.id})
-        )
-        send_request_status_notification(
-            item_req, action="complete", action_url=action_url, review_url=review_url
-        )
-        messages.success(
-            request,
-            f"Exchange completed with {item_req.requester.username}! You can now leave a community review.",
-        )
-    elif action == "reject":
-        item_req.status = "REJECTED"
-        item_req.save()
-        # If this item was requested by them, put it back to available
-        if item_req.item.status == "REQUESTED":
-            item_req.item.status = "AVAILABLE"
-            item_req.item.save()
-        send_request_status_notification(
-            item_req, action="reject", action_url=action_url
-        )
-        messages.info(request, f"You declined {item_req.requester.username}'s request.")
-    else:
-        messages.warning(request, "Invalid action request.")
+        if outcome == "accepted":
+            send_request_status_notification(
+                item_req, action="accept", action_url=action_url
+            )
+            if rejected_ids:
+                auto_rejected = ItemRequest.objects.filter(
+                    pk__in=rejected_ids
+                ).select_related("item", "item__donor", "requester")
+                for rejected_req in auto_rejected:
+                    send_request_status_notification(
+                        rejected_req, action="reject", action_url=action_url
+                    )
+            messages.success(
+                request,
+                f"You accepted {item_req.requester.username}'s request! You can now coordinate pickup.",
+            )
+        elif outcome == "already_accepted":
+            messages.info(request, "This request has already been accepted.")
+        elif outcome == "conflict_accepted":
+            messages.warning(
+                request, "Another request has already been accepted for this item."
+            )
+        elif outcome == "item_unavailable":
+            messages.error(
+                request, "This item is no longer available to accept requests."
+            )
+        else:
+            messages.warning(request, "Only pending requests can be accepted.")
 
-    return redirect("item_detail", pk=item_req.item.pk)
+    elif action == "complete":
+        if outcome == "completed":
+            review_url = request.build_absolute_uri(
+                reverse("submit_review", kwargs={"request_id": item_req.id})
+            )
+            send_request_status_notification(
+                item_req,
+                action="complete",
+                action_url=action_url,
+                review_url=review_url,
+            )
+            messages.success(
+                request,
+                f"Exchange completed with {item_req.requester.username}! You can now leave a community review.",
+            )
+        elif outcome == "already_completed":
+            messages.info(request, "This exchange has already been marked as completed.")
+        else:
+            messages.warning(
+                request, "Only an accepted request can be marked as completed."
+            )
+
+    elif action == "reject":
+        if outcome == "rejected":
+            send_request_status_notification(
+                item_req, action="reject", action_url=action_url
+            )
+            messages.info(
+                request, f"You declined {item_req.requester.username}'s request."
+            )
+        else:
+            messages.info(
+                request,
+                f"This request is already {item_req.get_status_display().lower()}.",
+            )
+
+    return redirect("item_detail", pk=item_pk)
 
 
 @login_required
 def mark_given_away(request, pk):
     """Donor marks the item as given away once collected."""
-    item = get_object_or_404(Item, pk=pk)
-    if item.donor != request.user and not request.user.is_staff:
+    def _given_op():
+        item = get_object_or_404(Item.objects.select_for_update(), pk=pk)
+        if item.donor != request.user and not request.user.is_staff:
+            return "unauthorized", None, None
+
+        old_status = item.status
+        item.status = "GIVEN_AWAY"
+        item.save(update_fields=["status", "updated_at"])
+
+        # Automatically complete any accepted request for this item
+        accepted_req = (
+            item.requests.select_for_update().filter(status="ACCEPTED").first()
+        )
+        if accepted_req:
+            accepted_req.status = "COMPLETED"
+            accepted_req.save(update_fields=["status", "updated_at"])
+        return "updated", item, old_status
+
+    status_code, item, old_status = _run_atomic_with_sqlite_retry(_given_op)
+    if status_code == "unauthorized":
         messages.error(request, "Unauthorized action.")
         return redirect("item_detail", pk=pk)
-
-    item.status = "GIVEN_AWAY"
-    item.save()
-
-    # Automatically complete any accepted request for this item
-    accepted_req = item.requests.filter(status="ACCEPTED").first()
-    if accepted_req:
-        accepted_req.status = "COMPLETED"
-        accepted_req.save()
 
     action_url = request.build_absolute_uri(
         reverse("item_detail", kwargs={"pk": item.pk})
     )
     send_item_status_update(
-        item, old_status="AVAILABLE", new_status="GIVEN_AWAY", action_url=action_url
+        item, old_status=old_status, new_status="GIVEN_AWAY", action_url=action_url
     )
 
     messages.success(
@@ -697,19 +957,35 @@ def mark_given_away(request, pk):
 @login_required
 def mark_available(request, pk):
     """Donor puts the item back as available."""
-    item = get_object_or_404(Item, pk=pk)
-    if item.donor != request.user and not request.user.is_staff:
+    def _available_op():
+        item = get_object_or_404(Item.objects.select_for_update(), pk=pk)
+        if item.donor != request.user and not request.user.is_staff:
+            return "unauthorized", None, None
+
+        if ItemRequest.objects.filter(item=item, status="ACCEPTED").exists():
+            return "accepted_exists", item, None
+
+        old_status = item.status
+        item.status = "AVAILABLE"
+        item.save(update_fields=["status", "updated_at"])
+        return "updated", item, old_status
+
+    status_code, item, old_status = _run_atomic_with_sqlite_retry(_available_op)
+    if status_code == "unauthorized":
         messages.error(request, "Unauthorized action.")
         return redirect("item_detail", pk=pk)
-
-    item.status = "AVAILABLE"
-    item.save()
+    if status_code == "accepted_exists":
+        messages.warning(
+            request,
+            "Cannot mark this item as available while an accepted request exists.",
+        )
+        return redirect("item_detail", pk=pk)
 
     action_url = request.build_absolute_uri(
         reverse("item_detail", kwargs={"pk": item.pk})
     )
     send_item_status_update(
-        item, old_status="GIVEN_AWAY", new_status="AVAILABLE", action_url=action_url
+        item, old_status=old_status, new_status="AVAILABLE", action_url=action_url
     )
 
     messages.info(request, f"'{item.title}' is now marked as available again.")
@@ -812,7 +1088,7 @@ def my_requests(request):
         ) and not req.has_reviewed
         req.whatsapp_url = (
             get_owner_whatsapp_url(req)
-            if req.status in ("ACCEPTED", "COMPLETED")
+            if req.status == "ACCEPTED"
             else None
         )
 

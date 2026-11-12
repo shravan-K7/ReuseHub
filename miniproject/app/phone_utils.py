@@ -57,25 +57,32 @@ def build_whatsapp_redirect_url(raw_phone, message=None, default_country_code=No
     return base_url
 
 
-def get_owner_whatsapp_url(item_request):
-    """Fetch the item owner's phone from their profile and return a WhatsApp chat URL, or None."""
-    if item_request is None:
-        return None
+def get_owner_phone_for_accepted_request(item_request):
+    """Return the item owner's phone number only when the request status is ACCEPTED."""
+    if item_request is None or getattr(item_request, "status", None) != "ACCEPTED":
+        return ""
 
     item = getattr(item_request, "item", None)
     donor = getattr(item, "donor", None) if item is not None else None
     if donor is None:
-        return None
+        return ""
 
     try:
         profile = donor.profile
     except ObjectDoesNotExist:
-        return None
+        return ""
 
-    raw_phone = getattr(profile, "phone", "")
+    return getattr(profile, "phone", "") or ""
+
+
+def get_owner_whatsapp_url(item_request):
+    """Fetch the item owner's phone for an accepted request and return a WhatsApp chat URL, or None."""
+    raw_phone = get_owner_phone_for_accepted_request(item_request)
     if not raw_phone:
         return None
 
+    item = item_request.item
+    donor = item.donor
     message = (
         f"Hi @{donor.username}, my request for '{item.title}' on ReuseHub was accepted. "
         "When would be a good time to coordinate pickup?"

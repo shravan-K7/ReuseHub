@@ -1,10 +1,13 @@
 from datetime import timedelta
+import threading
+import traceback
 from unittest.mock import MagicMock, patch
 
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
-from django.test import Client, TestCase, override_settings
+from django.db import connections
+from django.test import Client, TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
@@ -1254,3 +1257,637 @@ class WhatsAppMessageOwnerTests(TestCase):
         self.assertContains(detail_resp, "+91 98765 43210")
         self.assertContains(detail_resp, "Message Owner on WhatsApp")
         self.assertContains(detail_resp, expected_href)
+
+    def test_owner_mobile_number_hidden_unless_request_accepted(self):
+        detail_url = reverse(
+            "item_detail_slug", kwargs={"pk": self.item.id, "slug": self.item.slug}
+        )
+        whatsapp_url = reverse(
+            "contact_owner_whatsapp", kwargs={"request_id": self.item_request.id}
+        )
+        phone = self.donor.profile.phone
+
+        # Anonymous visitor on item detail and donor's public profile must never see phone
+        for url in (
+            detail_url,
+            reverse("public_profile", kwargs={"username": self.donor.username}),
+        ):
+            resp = self.client.get(url)
+            self.assertEqual(resp.status_code, 200)
+            self.assertNotContains(resp, phone)
+            self.assertNotContains(resp, whatsapp_url)
+
+        # Other logged-in user (even when requester has ACCEPTED request) must not see phone
+        self.client.force_login(self.other_user)
+        other_detail = self.client.get(detail_url)
+        self.assertEqual(other_detail.status_code, 200)
+        self.assertNotContains(other_detail, phone)
+        self.assertNotContains(other_detail, whatsapp_url)
+
+        # Requester with non-accepted statuses must never see phone or reach WhatsApp redirect
+        self.client.force_login(self.requester)
+        for non_accepted_status in ("PENDING", "REJECTED", "CANCELLED", "COMPLETED"):
+            self.item_request.status = non_accepted_status
+            self.item_request.save()
+
+            resp = self.client.get(detail_url)
+            self.assertEqual(resp.status_code, 200)
+            self.assertNotContains(resp, phone)
+            self.assertNotContains(resp, whatsapp_url)
+
+            dash_resp = self.client.get(reverse("my_requests"))
+            self.assertEqual(dash_resp.status_code, 200)
+            self.assertNotContains(dash_resp, phone)
+            self.assertNotContains(dash_resp, whatsapp_url)
+
+            wa_resp = self.client.get(whatsapp_url)
+            self.assertRedirects(wa_resp, reverse("my_requests"))
+
+        # Staff user who is not the requester must not trigger WhatsApp redirect either
+        staff_user = User.objects.create_user(
+            username="moderator_user",
+            email="mod@example.com",
+            password="StrongPass123!",
+            is_staff=True,
+            is_active=True,
+        )
+        self.item_request.status = "ACCEPTED"
+        self.item_request.save()
+        self.client.force_login(staff_user)
+        staff_wa_resp = self.client.get(whatsapp_url)
+        self.assertRedirects(staff_wa_resp, reverse("my_requests"))
+
+        # Accepted requester sees mobile number and can use WhatsApp redirect
+        self.client.force_login(self.requester)
+        accepted_detail = self.client.get(detail_url)
+        self.assertEqual(accepted_detail.status_code, 200)
+        self.assertContains(accepted_detail, phone)
+        self.assertContains(accepted_detail, whatsapp_url)
+
+
+@override_settings(BREVO_API_KEY="")
+class ItemRequestWorkflowTests(TestCase):
+    """Tests for single-acceptance enforcement, rejection handling, and public visibility."""
+
+    def setUp(self):
+        self.client = Client()
+        self.donor = User.objects.create_user(
+            username="workflow_donor",
+            email="wdonor@example.com",
+            password="StrongPass123!",
+            is_active=True,
+        )
+        self.req_user_1 = User.objects.create_user(
+            username="requester_one",
+            email="req1@example.com",
+            password="StrongPass123!",
+            is_active=True,
+        )
+        self.req_user_2 = User.objects.create_user(
+            username="requester_two",
+            email="req2@example.com",
+            password="StrongPass123!",
+            is_active=True,
+        )
+        self.req_user_3 = User.objects.create_user(
+            username="requester_three",
+            email="req3@example.com",
+            password="StrongPass123!",
+            is_active=True,
+        )
+        self.category = Category.objects.create(
+            name="Furniture", description="Home furniture"
+        )
+        self.other_category = Category.objects.create(
+            name="Books", description="Community books"
+        )
+        self.item = Item.objects.create(
+            donor=self.donor,
+            category=self.category,
+            title="Wooden Study Desk",
+            description="Sturdy oak study desk in good shape.",
+            condition="GOOD",
+            pickup_location="Maple Avenue",
+            status="AVAILABLE",
+            moderation_status="APPROVED",
+        )
+
+    def test_multiple_users_can_request_available_item(self):
+        for user, msg in (
+            (self.req_user_1, "I need this for my study room."),
+            (self.req_user_2, "Can pick up this evening."),
+            (self.req_user_3, "Available tomorrow morning."),
+        ):
+            self.client.force_login(user)
+            resp = self.client.post(
+                reverse("request_item", kwargs={"pk": self.item.pk}),
+                {"message": msg, "contact_info": "555-1234"},
+            )
+            self.assertEqual(resp.status_code, 302)
+
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.status, "AVAILABLE")
+        self.assertEqual(
+            self.item.requests.filter(status="PENDING").count(), 3
+        )
+
+    def test_accepting_one_request_rejects_other_pending_requests_and_notifies(self):
+        req1 = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.req_user_1,
+            message="First request",
+            status="PENDING",
+        )
+        req2 = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.req_user_2,
+            message="Second request",
+            status="PENDING",
+        )
+        req3 = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.req_user_3,
+            message="Already cancelled earlier",
+            status="CANCELLED",
+        )
+
+        mail.outbox.clear()
+        self.client.force_login(self.donor)
+        resp = self.client.get(
+            reverse("respond_request", kwargs={"request_id": req1.id, "action": "accept"})
+        )
+        self.assertEqual(resp.status_code, 302)
+
+        self.item.refresh_from_db()
+        req1.refresh_from_db()
+        req2.refresh_from_db()
+        req3.refresh_from_db()
+
+        self.assertEqual(self.item.status, "REQUESTED")
+        self.assertEqual(req1.status, "ACCEPTED")
+        self.assertEqual(req2.status, "REJECTED")
+        self.assertEqual(req3.status, "CANCELLED")
+        self.assertEqual(
+            self.item.requests.filter(status="ACCEPTED").count(), 1
+        )
+
+        # Accepted user receives acceptance email; only previously PENDING req2 receives rejection email
+        self.assertEqual(len(mail.outbox), 2)
+        subjects_by_recipient = {m.to[0]: m.subject for m in mail.outbox}
+        self.assertIn("Accepted", subjects_by_recipient[self.req_user_1.email])
+        self.assertIn("Update on your request", subjects_by_recipient[self.req_user_2.email])
+        self.assertNotIn(self.req_user_3.email, subjects_by_recipient)
+
+    def test_cannot_accept_second_request_after_one_already_accepted(self):
+        req1 = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.req_user_1,
+            message="First request",
+            status="PENDING",
+        )
+        req2 = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.req_user_2,
+            message="Second request",
+            status="PENDING",
+        )
+
+        self.client.force_login(self.donor)
+        self.client.get(
+            reverse("respond_request", kwargs={"request_id": req1.id, "action": "accept"})
+        )
+
+        # Attempt to accept req2 (now REJECTED) or a stray PENDING req3 after req1 is accepted
+        req3 = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.req_user_3,
+            message="Stale pending request",
+            status="PENDING",
+        )
+
+        mail.outbox.clear()
+        resp_rej = self.client.get(
+            reverse("respond_request", kwargs={"request_id": req2.id, "action": "accept"})
+        )
+        resp_pending = self.client.get(
+            reverse("respond_request", kwargs={"request_id": req3.id, "action": "accept"})
+        )
+        # Re-accepting already accepted req1 should also be a no-op with no duplicate email
+        resp_same = self.client.get(
+            reverse("respond_request", kwargs={"request_id": req1.id, "action": "accept"})
+        )
+
+        self.assertEqual(resp_rej.status_code, 302)
+        self.assertEqual(resp_pending.status_code, 302)
+        self.assertEqual(resp_same.status_code, 302)
+
+        self.item.refresh_from_db()
+        req1.refresh_from_db()
+        req2.refresh_from_db()
+        req3.refresh_from_db()
+
+        self.assertEqual(self.item.status, "REQUESTED")
+        self.assertEqual(req1.status, "ACCEPTED")
+        self.assertEqual(req2.status, "REJECTED")
+        self.assertEqual(req3.status, "PENDING")
+        self.assertEqual(self.item.requests.filter(status="ACCEPTED").count(), 1)
+        self.assertEqual(len(mail.outbox), 0)
+
+        # A new user cannot submit a request while the item is REQUESTED
+        new_user = User.objects.create_user(
+            username="late_requester",
+            email="late@example.com",
+            password="StrongPass123!",
+            is_active=True,
+        )
+        self.client.force_login(new_user)
+        late_resp = self.client.post(
+            reverse("request_item", kwargs={"pk": self.item.pk}),
+            {"message": "Still available?", "contact_info": "555-9999"},
+        )
+        self.assertEqual(late_resp.status_code, 302)
+        self.assertFalse(
+            ItemRequest.objects.filter(item=self.item, requester=new_user).exists()
+        )
+
+    def test_stale_in_memory_accept_race_cannot_produce_two_accepted_requests(self):
+        from .views import _accept_item_request
+
+        req1 = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.req_user_1,
+            message="First",
+            status="PENDING",
+        )
+        req2 = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.req_user_2,
+            message="Second",
+            status="PENDING",
+        )
+
+        # Snapshot stale in-memory objects before req1 is accepted
+        stale_item = Item.objects.get(pk=self.item.pk)
+        stale_req2 = ItemRequest.objects.get(pk=req2.pk)
+
+        outcome1, _ = _accept_item_request(self.item, req1)
+        self.assertEqual(outcome1, "accepted")
+
+        # Second call with stale in-memory state must fail safely
+        outcome2, rejected2 = _accept_item_request(stale_item, stale_req2)
+        self.assertIn(outcome2, ("conflict_accepted", "item_unavailable", "invalid_status"))
+        self.assertEqual(rejected2, [])
+        self.assertEqual(self.item.requests.filter(status="ACCEPTED").count(), 1)
+
+    def test_rejecting_pending_request_preserves_requested_status_when_another_accepted(self):
+        req1 = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.req_user_1,
+            message="Accepted requester",
+            status="ACCEPTED",
+        )
+        self.item.status = "REQUESTED"
+        self.item.save()
+
+        req2 = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.req_user_2,
+            message="Unrelated pending request",
+            status="PENDING",
+        )
+
+        mail.outbox.clear()
+        self.client.force_login(self.donor)
+        resp = self.client.get(
+            reverse("respond_request", kwargs={"request_id": req2.id, "action": "reject"})
+        )
+        self.assertEqual(resp.status_code, 302)
+
+        self.item.refresh_from_db()
+        req1.refresh_from_db()
+        req2.refresh_from_db()
+
+        self.assertEqual(req2.status, "REJECTED")
+        self.assertEqual(req1.status, "ACCEPTED")
+        self.assertEqual(self.item.status, "REQUESTED")
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_rejecting_pending_request_with_no_accepted_leaves_item_available(self):
+        req1 = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.req_user_1,
+            message="Decline me",
+            status="PENDING",
+        )
+
+        mail.outbox.clear()
+        self.client.force_login(self.donor)
+        resp = self.client.get(
+            reverse("respond_request", kwargs={"request_id": req1.id, "action": "reject"})
+        )
+        self.assertEqual(resp.status_code, 302)
+
+        self.item.refresh_from_db()
+        req1.refresh_from_db()
+        self.assertEqual(req1.status, "REJECTED")
+        self.assertEqual(self.item.status, "AVAILABLE")
+        self.assertEqual(len(mail.outbox), 1)
+
+        # Repeating reject on an already rejected request sends no duplicate email
+        mail.outbox.clear()
+        self.client.get(
+            reverse("respond_request", kwargs={"request_id": req1.id, "action": "reject"})
+        )
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_mark_available_blocked_while_accepted_request_exists(self):
+        ItemRequest.objects.create(
+            item=self.item,
+            requester=self.req_user_1,
+            message="Accepted",
+            status="ACCEPTED",
+        )
+        self.item.status = "REQUESTED"
+        self.item.save()
+
+        self.client.force_login(self.donor)
+        resp = self.client.post(reverse("mark_available", kwargs={"pk": self.item.pk}))
+        self.assertEqual(resp.status_code, 302)
+
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.status, "REQUESTED")
+
+    def test_rejecting_accepted_request_restores_available_unless_another_accepted(self):
+        req1 = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.req_user_1,
+            message="Accepted first",
+            status="ACCEPTED",
+        )
+        self.item.status = "REQUESTED"
+        self.item.save()
+
+        # Rejecting the sole accepted request restores item to AVAILABLE
+        self.client.force_login(self.donor)
+        resp = self.client.get(
+            reverse("respond_request", kwargs={"request_id": req1.id, "action": "reject"})
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.item.refresh_from_db()
+        req1.refresh_from_db()
+        self.assertEqual(req1.status, "REJECTED")
+        self.assertEqual(self.item.status, "AVAILABLE")
+
+        # Guard: if legacy data somehow has another ACCEPTED request, rejecting one keeps REQUESTED
+        req2 = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.req_user_2,
+            message="Accepted 2",
+            status="ACCEPTED",
+        )
+        req3 = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.req_user_3,
+            message="Accepted 3",
+            status="ACCEPTED",
+        )
+        self.item.status = "REQUESTED"
+        self.item.save()
+
+        self.client.get(
+            reverse("respond_request", kwargs={"request_id": req2.id, "action": "reject"})
+        )
+        self.item.refresh_from_db()
+        req2.refresh_from_db()
+        req3.refresh_from_db()
+        self.assertEqual(req2.status, "REJECTED")
+        self.assertEqual(req3.status, "ACCEPTED")
+        self.assertEqual(self.item.status, "REQUESTED")
+
+    def test_completing_accepted_request_updates_request_and_item(self):
+        req1 = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.req_user_1,
+            message="I can collect today",
+            status="PENDING",
+        )
+
+        self.client.force_login(self.donor)
+        self.client.get(
+            reverse("respond_request", kwargs={"request_id": req1.id, "action": "accept"})
+        )
+
+        mail.outbox.clear()
+        complete_resp = self.client.get(
+            reverse("respond_request", kwargs={"request_id": req1.id, "action": "complete"})
+        )
+        self.assertEqual(complete_resp.status_code, 302)
+
+        self.item.refresh_from_db()
+        req1.refresh_from_db()
+        self.assertEqual(req1.status, "COMPLETED")
+        self.assertEqual(self.item.status, "GIVEN_AWAY")
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("Completed", mail.outbox[0].subject)
+
+        # Completing an already completed or rejected request is blocked
+        req2 = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.req_user_2,
+            message="Not accepted",
+            status="REJECTED",
+        )
+        mail.outbox.clear()
+        self.client.get(
+            reverse("respond_request", kwargs={"request_id": req2.id, "action": "complete"})
+        )
+        req2.refresh_from_db()
+        self.assertEqual(req2.status, "REJECTED")
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_public_explore_and_search_only_display_available_items(self):
+        requested_item = Item.objects.create(
+            donor=self.donor,
+            category=self.category,
+            title="Requested Oak Chair",
+            description="Oak chair already accepted.",
+            condition="GOOD",
+            pickup_location="Maple Avenue",
+            status="REQUESTED",
+            moderation_status="APPROVED",
+        )
+        given_item = Item.objects.create(
+            donor=self.donor,
+            category=self.category,
+            title="Given Away Table",
+            description="Oak table already collected.",
+            condition="GOOD",
+            pickup_location="Maple Avenue",
+            status="GIVEN_AWAY",
+            moderation_status="APPROVED",
+        )
+        cancelled_item = Item.objects.create(
+            donor=self.donor,
+            category=self.category,
+            title="Cancelled Shelf",
+            description="Oak shelf cancelled.",
+            condition="GOOD",
+            pickup_location="Maple Avenue",
+            status="CANCELLED",
+            moderation_status="APPROVED",
+        )
+        other_available_item = Item.objects.create(
+            donor=self.donor,
+            category=self.other_category,
+            title="Python Cookbook",
+            description="Clean paperback copy.",
+            condition="LIKE_NEW",
+            pickup_location="Pine Street",
+            status="AVAILABLE",
+            moderation_status="APPROVED",
+        )
+
+        home_url = reverse("home")
+
+        # Default public explore view shows only AVAILABLE items
+        default_resp = self.client.get(home_url)
+        self.assertEqual(default_resp.status_code, 200)
+        self.assertContains(default_resp, self.item.title)
+        self.assertContains(default_resp, other_available_item.title)
+        self.assertNotContains(default_resp, requested_item.title)
+        self.assertNotContains(default_resp, given_item.title)
+        self.assertNotContains(default_resp, cancelled_item.title)
+
+        # ?status=REQUESTED and ?status=ALL cannot expose unavailable items
+        for status_param in ("REQUESTED", "ALL", "GIVEN_AWAY", "CANCELLED"):
+            resp = self.client.get(home_url, {"status": status_param})
+            self.assertEqual(resp.status_code, 200)
+            self.assertContains(resp, self.item.title)
+            self.assertNotContains(resp, requested_item.title)
+            self.assertNotContains(resp, given_item.title)
+            self.assertNotContains(resp, cancelled_item.title)
+
+        # Search query with ?status=ALL still returns only matching AVAILABLE items
+        search_resp = self.client.get(home_url, {"q": "Oak", "status": "ALL"})
+        self.assertEqual(search_resp.status_code, 200)
+        self.assertContains(search_resp, self.item.title)
+        self.assertNotContains(search_resp, requested_item.title)
+        self.assertNotContains(search_resp, given_item.title)
+        self.assertNotContains(search_resp, cancelled_item.title)
+        self.assertNotContains(search_resp, other_available_item.title)
+
+        # Category filter with ?status=REQUESTED still returns only AVAILABLE items in that category
+        cat_resp = self.client.get(
+            home_url, {"category": self.category.slug, "status": "REQUESTED"}
+        )
+        self.assertEqual(cat_resp.status_code, 200)
+        self.assertContains(cat_resp, self.item.title)
+        self.assertNotContains(cat_resp, requested_item.title)
+        self.assertNotContains(cat_resp, other_available_item.title)
+
+        # Donor's private dashboard still shows REQUESTED and GIVEN_AWAY items
+        self.client.force_login(self.donor)
+        my_listings_resp = self.client.get(reverse("my_listings"))
+        self.assertEqual(my_listings_resp.status_code, 200)
+        self.assertContains(my_listings_resp, self.item.title)
+        self.assertContains(my_listings_resp, requested_item.title)
+        self.assertContains(my_listings_resp, given_item.title)
+
+
+@override_settings(BREVO_API_KEY="")
+class ConcurrentItemRequestTests(TransactionTestCase):
+    """Concurrency tests verifying simultaneous acceptance cannot yield multiple ACCEPTED requests."""
+
+    def setUp(self):
+        self.donor = User.objects.create_user(
+            username="concurrent_donor",
+            email="cdonor@example.com",
+            password="StrongPass123!",
+            is_active=True,
+        )
+        self.user_a = User.objects.create_user(
+            username="concurrent_a",
+            email="ca@example.com",
+            password="StrongPass123!",
+            is_active=True,
+        )
+        self.user_b = User.objects.create_user(
+            username="concurrent_b",
+            email="cb@example.com",
+            password="StrongPass123!",
+            is_active=True,
+        )
+        self.category = Category.objects.create(name="Tools", description="Hand tools")
+        self.item = Item.objects.create(
+            donor=self.donor,
+            category=self.category,
+            title="Cordless Drill",
+            description="Works well with battery charger.",
+            condition="GOOD",
+            pickup_location="Oak Street",
+            status="AVAILABLE",
+            moderation_status="APPROVED",
+        )
+        self.req_a = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.user_a,
+            message="Need for home repair",
+            status="PENDING",
+        )
+        self.req_b = ItemRequest.objects.create(
+            item=self.item,
+            requester=self.user_b,
+            message="Can pick up now",
+            status="PENDING",
+        )
+
+    def test_simultaneous_acceptance_produces_only_one_accepted_request(self):
+        client_a = Client()
+        client_b = Client()
+        client_a.force_login(self.donor)
+        client_b.force_login(self.donor)
+
+        mail.outbox.clear()
+        barrier = threading.Barrier(2)
+        errors = []
+        statuses = []
+
+        def accept_in_thread(client, req_id):
+            try:
+                barrier.wait(timeout=5)
+                resp = client.get(
+                    reverse(
+                        "respond_request",
+                        kwargs={"request_id": req_id, "action": "accept"},
+                    )
+                )
+                statuses.append(resp.status_code)
+            except Exception:
+                errors.append(traceback.format_exc())
+            finally:
+                connections.close_all()
+
+        t1 = threading.Thread(target=accept_in_thread, args=(client_a, self.req_a.id))
+        t2 = threading.Thread(target=accept_in_thread, args=(client_b, self.req_b.id))
+        t1.start()
+        t2.start()
+        t1.join(timeout=15)
+        t2.join(timeout=15)
+
+        self.item.refresh_from_db()
+        self.req_a.refresh_from_db()
+        self.req_b.refresh_from_db()
+
+        accepted_count = ItemRequest.objects.filter(
+            item=self.item, status="ACCEPTED"
+        ).count()
+        rejected_count = ItemRequest.objects.filter(
+            item=self.item, status="REJECTED"
+        ).count()
+
+        self.assertEqual(errors, [])
+        self.assertEqual(statuses, [302, 302])
+        self.assertEqual(self.item.status, "REQUESTED")
+        self.assertEqual(accepted_count, 1)
+        self.assertEqual(rejected_count, 1)
+        self.assertEqual(len(mail.outbox), 2)
